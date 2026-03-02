@@ -1,0 +1,223 @@
+/* Dashboard Page Styles - Shared across roles */
+
+.welcomeSection {
+    margin-bottom: var(--space-8);
+}
+
+.welcomeSection h2 {
+    font-size: var(--text-3xl);
+    margin-bottom: var(--space-2);
+}
+
+/* Quick Actions */
+.quickActions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+}
+
+.actionCard {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-5);
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all var(--transition-base);
+    border: 1px solid var(--border-light);
+}
+
+.actionCard:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+}
+
+.actionIcon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.actionCard h4 {
+    font-size: var(--text-base);
+    margin-bottom: var(--space-1);
+}
+
+.actionCard p {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+/* Stats */
+.statsGrid {
+    margin-bottom: var(--space-8);
+}
+
+.statCard {
+    text-align: center;
+    padding: var(--space-6);
+}
+
+.statValue {
+    font-family: var(--font-heading);
+    font-size: var(--text-3xl);
+    font-weight: var(--font-bold);
+    color: var(--color-primary);
+    margin: var(--space-2) 0;
+}
+
+/* Properties Table / Grid */
+.propertiesHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-6);
+}
+
+.propertiesHeader h3 {
+    font-size: var(--text-2xl);
+}
+
+/* Property Cards */
+.propertyGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-6);
+}
+
+.propertyCard {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    transition: all var(--transition-base);
+}
+
+.propertyCard:hover {
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-2px);
+}
+
+.propertyImage {
+    width: 100%;
+    height: 200px;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    position: relative;
+}
+
+.propertyImage img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.propertyBadge {
+    position: absolute;
+    top: var(--space-3);
+    right: var(--space-3);
+}
+
+.propertyInfo {
+    padding: var(--space-5);
+}
+
+.propertyInfo h4 {
+    margin-bottom: var(--space-2);
+    font-size: var(--text-lg);
+}
+
+.propertyMeta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-top: var(--space-3);
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+
+.propertyPrice {
+    font-family: var(--font-heading);
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    color: var(--color-primary);
+    margin-top: var(--space-3);
+}
+
+.propertyPrice span {
+    font-size: var(--text-sm);
+    font-weight: var(--font-regular);
+    color: var(--text-muted);
+}
+
+/* Empty States */
+.emptyState {
+    text-align: center;
+    padding: var(--space-16) var(--space-4);
+    color: var(--text-muted);
+}
+
+.emptyState .emptyIcon {
+    font-size: 3rem;
+    margin-bottom: var(--space-4);
+}
+
+.emptyState h3 {
+    margin-bottom: var(--space-2);
+    color: var(--text-primary);
+}
+
+.emptyState p {
+    margin-bottom: var(--space-6);
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Data Table */
+.dataTable {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.dataTable th {
+    text-align: left;
+    padding: var(--space-4) var(--space-5);
+    background: var(--bg-secondary);
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.dataTable td {
+    padding: var(--space-4) var(--space-5);
+    font-size: var(--text-sm);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.dataTable tr:last-child td {
+    border-bottom: none;
+}
+
+.dataTable tr:hover td {
+    background: rgba(253, 168, 41, 0.03);
+}
+
+@media (max-width: 768px) {
+    .quickActions {
+        grid-template-columns: 1fr;
+    }
+}

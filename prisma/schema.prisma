@@ -1,0 +1,533 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// USER & AUTH
+// ==========================================
+
+model User {
+  id           Int        @id @default(autoincrement())
+  email        String     @unique
+  phone        String?    @unique
+  passwordHash String     @map("password_hash")
+  role         UserRole   @default(TENANT)
+  adminRole    AdminRole? @map("admin_role")
+  firstName    String     @map("first_name")
+  lastName     String     @map("last_name")
+  avatar       String?
+  ninNumber    String?    @unique @map("nin_number")
+  ninStatus    NinStatus  @default(PENDING) @map("nin_status")
+  status       UserStatus @default(ACTIVE)
+  bankName     String?    @map("bank_name")
+  bankAccount  String?    @map("bank_account")
+  bankCode     String?    @map("bank_code")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  properties          Property[]           @relation("LandlordProperties")
+  verifiedProperties  Property[]           @relation("VerifiedByAdmin")
+  rentals             Rental[]             @relation("TenantRentals")
+  scoutLeads          ScoutLead[]
+  scoutArea           ScoutArea[]
+  affiliateReferrals  AffiliateReferral[]
+  commissions         Commission[]
+  maintenanceRequests MaintenanceRequest[]
+  sentMessages        Message[]            @relation("SentMessages")
+  receivedMessages    Message[]            @relation("ReceivedMessages")
+  notifications       Notification[]
+  releasedEscrows     Escrow[]             @relation("ReleasedByAdmin")
+  wallet              Wallet?
+
+  @@map("users")
+}
+
+enum UserRole {
+  TENANT
+  LANDLORD
+  SCOUT
+  AFFILIATE
+  ADMIN
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  VERIFICATION_OFFICER
+  SUPPORT
+}
+
+enum NinStatus {
+  PENDING
+  VERIFIED
+  FAILED
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BLACKLISTED
+}
+
+// ==========================================
+// PROPERTY
+// ==========================================
+
+model Property {
+  id                 Int                @id @default(autoincrement())
+  landlordId         Int                @map("landlord_id")
+  title              String
+  description        String             @db.Text
+  rentPrice          Decimal            @map("rent_price") @db.Decimal(12, 2)
+  type               PropertyType
+  address            String
+  area               PropertyArea
+  city               String             @default("Ilorin")
+  state              String             @default("Kwara")
+  latitude           Decimal?           @db.Decimal(10, 8)
+  longitude          Decimal?           @db.Decimal(11, 8)
+  amenities          Json?
+  status             PropertyStatus     @default(PENDING)
+  verificationStatus VerificationStatus @default(UNVERIFIED) @map("verification_status")
+  verifiedAt         DateTime?          @map("verified_at")
+  verifiedById       Int?               @map("verified_by_id")
+  scoutLeadId        Int?               @map("scout_lead_id")
+  ownershipDoc       String?            @map("ownership_doc")
+  studentFriendly    Boolean            @default(false) @map("student_friendly")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  landlord        User             @relation("LandlordProperties", fields: [landlordId], references: [id])
+  verifiedBy      User?            @relation("VerifiedByAdmin", fields: [verifiedById], references: [id])
+  scoutLead       ScoutLead?       @relation(fields: [scoutLeadId], references: [id])
+  images          PropertyImage[]
+  inspectionSlots InspectionSlot[]
+  rentals         Rental[]
+
+  @@index([landlordId])
+  @@index([area])
+  @@index([status])
+  @@index([rentPrice])
+  @@map("properties")
+}
+
+model PropertyImage {
+  id         Int      @id @default(autoincrement())
+  propertyId Int      @map("property_id")
+  url        String
+  caption    String?
+  isPrimary  Boolean  @default(false) @map("is_primary")
+  latitude   Decimal? @db.Decimal(10, 8)
+  longitude  Decimal? @db.Decimal(11, 8)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("property_images")
+}
+
+enum PropertyType {
+  SELF_CON
+  SINGLE_ROOM
+  FLAT
+  TWO_BEDROOM
+  THREE_BEDROOM
+}
+
+enum PropertyArea {
+  TANKE
+  BASIN
+  MALETE
+  OTHER
+}
+
+enum PropertyStatus {
+  PENDING
+  VERIFIED
+  RENTED
+  INACTIVE
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  IN_PROGRESS
+  VERIFIED
+  REJECTED
+}
+
+// ==========================================
+// RENTAL & ESCROW
+// ==========================================
+
+model Rental {
+  id                  Int          @id @default(autoincrement())
+  propertyId          Int          @map("property_id")
+  tenantId            Int          @map("tenant_id")
+  rentAmount          Decimal      @map("rent_amount") @db.Decimal(12, 2)
+  serviceFee          Decimal      @map("service_fee") @db.Decimal(12, 2)
+  totalPaid           Decimal      @map("total_paid") @db.Decimal(12, 2)
+  startDate           DateTime     @map("start_date")
+  endDate             DateTime     @map("end_date")
+  status              RentalStatus @default(PENDING)
+  affiliateReferralId Int?         @map("affiliate_referral_id")
+  paystackRef         String?      @unique @map("paystack_ref")
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  property            Property             @relation(fields: [propertyId], references: [id])
+  tenant              User                 @relation("TenantRentals", fields: [tenantId], references: [id])
+  escrow              Escrow?
+  agreement           RentalAgreement?
+  payments            Payment[]
+  maintenanceRequests MaintenanceRequest[]
+  affiliateReferral   AffiliateReferral?   @relation(fields: [affiliateReferralId], references: [id])
+
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("rentals")
+}
+
+model Escrow {
+  id            Int          @id @default(autoincrement())
+  rentalId      Int          @unique @map("rental_id")
+  amount        Decimal      @db.Decimal(12, 2)
+  status        EscrowStatus @default(HELD)
+  releasedAt    DateTime?    @map("released_at")
+  releasedById  Int?         @map("released_by_id")
+  disputeReason String?      @map("dispute_reason") @db.Text
+  autoReleaseAt DateTime?    @map("auto_release_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  rental      Rental       @relation(fields: [rentalId], references: [id])
+  releasedBy  User?        @relation("ReleasedByAdmin", fields: [releasedById], references: [id])
+  commissions Commission[]
+
+  @@map("escrows")
+}
+
+model Payment {
+  id          Int           @id @default(autoincrement())
+  rentalId    Int           @map("rental_id")
+  amount      Decimal       @db.Decimal(12, 2)
+  paystackRef String        @unique @map("paystack_ref")
+  status      PaymentStatus @default(PENDING)
+  paidAt      DateTime?     @map("paid_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  rental Rental @relation(fields: [rentalId], references: [id])
+
+  @@index([rentalId])
+  @@map("payments")
+}
+
+model Commission {
+  id         Int              @id @default(autoincrement())
+  escrowId   Int              @map("escrow_id")
+  userId     Int              @map("user_id")
+  type       CommissionType
+  amount     Decimal          @db.Decimal(12, 2)
+  percentage Decimal          @db.Decimal(5, 2)
+  status     CommissionStatus @default(PENDING)
+  expiresAt  DateTime?        @map("expires_at")
+  paidAt     DateTime?        @map("paid_at")
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  escrow Escrow @relation(fields: [escrowId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([escrowId])
+  @@index([userId])
+  @@map("commissions")
+}
+
+enum RentalStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  DISPUTED
+  CANCELLED
+}
+
+enum EscrowStatus {
+  HELD
+  RELEASED
+  DISPUTED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum CommissionType {
+  SCOUT
+  AFFILIATE
+  PLATFORM
+}
+
+enum CommissionStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+// ==========================================
+// SCOUT & AFFILIATE
+// ==========================================
+
+model ScoutLead {
+  id              Int          @id @default(autoincrement())
+  scoutId         Int          @map("scout_id")
+  landlordName    String       @map("landlord_name")
+  landlordPhone   String       @map("landlord_phone")
+  propertyAddress String       @map("property_address")
+  propertyArea    PropertyArea @map("property_area")
+  latitude        Decimal?     @db.Decimal(10, 8)
+  longitude       Decimal?     @db.Decimal(11, 8)
+  notes           String?      @db.Text
+  status          LeadStatus   @default(SUBMITTED)
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  scout      User       @relation(fields: [scoutId], references: [id])
+  properties Property[]
+
+  @@index([scoutId])
+  @@map("scout_leads")
+}
+
+model ScoutArea {
+  id     Int          @id @default(autoincrement())
+  userId Int          @map("user_id")
+  area   PropertyArea
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, area])
+  @@map("scout_areas")
+}
+
+model AffiliateReferral {
+  id           Int      @id @default(autoincrement())
+  affiliateId  Int      @map("affiliate_id")
+  referralCode String   @unique @map("referral_code")
+  clicks       Int      @default(0)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  affiliate User     @relation(fields: [affiliateId], references: [id])
+  rentals   Rental[]
+
+  @@index([affiliateId])
+  @@map("affiliate_referrals")
+}
+
+enum LeadStatus {
+  SUBMITTED
+  REVIEWING
+  APPROVED
+  REJECTED
+}
+
+// ==========================================
+// INSPECTION
+// ==========================================
+
+model InspectionSlot {
+  id         Int              @id @default(autoincrement())
+  propertyId Int              @map("property_id")
+  date       DateTime
+  startTime  String           @map("start_time")
+  endTime    String           @map("end_time")
+  status     InspectionStatus @default(AVAILABLE)
+  bookedById Int?             @map("booked_by_id")
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([date])
+  @@map("inspection_slots")
+}
+
+enum InspectionStatus {
+  AVAILABLE
+  BOOKED
+  COMPLETED
+  CANCELLED
+}
+
+// ==========================================
+// RENTAL AGREEMENT
+// ==========================================
+
+model RentalAgreement {
+  id               Int       @id @default(autoincrement())
+  rentalId         Int       @unique @map("rental_id")
+  documentUrl      String?   @map("document_url")
+  tenantSigned     Boolean   @default(false) @map("tenant_signed")
+  landlordSigned   Boolean   @default(false) @map("landlord_signed")
+  tenantSignedAt   DateTime? @map("tenant_signed_at")
+  landlordSignedAt DateTime? @map("landlord_signed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  rental Rental @relation(fields: [rentalId], references: [id])
+
+  @@map("rental_agreements")
+}
+
+// ==========================================
+// MAINTENANCE
+// ==========================================
+
+model MaintenanceRequest {
+  id          Int               @id @default(autoincrement())
+  rentalId    Int               @map("rental_id")
+  tenantId    Int               @map("tenant_id")
+  category    String
+  title       String
+  description String            @db.Text
+  images      Json?
+  status      MaintenanceStatus @default(SUBMITTED)
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  rental Rental @relation(fields: [rentalId], references: [id])
+  tenant User   @relation(fields: [tenantId], references: [id])
+
+  @@index([rentalId])
+  @@index([tenantId])
+  @@map("maintenance_requests")
+}
+
+enum MaintenanceStatus {
+  SUBMITTED
+  IN_PROGRESS
+  RESOLVED
+}
+
+// ==========================================
+// MESSAGING
+// ==========================================
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  senderId   Int      @map("sender_id")
+  receiverId Int      @map("receiver_id")
+  rentalId   Int?     @map("rental_id")
+  content    String   @db.Text
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  sender   User @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([rentalId])
+  @@map("messages")
+}
+
+// ==========================================
+// NOTIFICATIONS
+// ==========================================
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  type      String
+  title     String
+  message   String   @db.Text
+  isRead    Boolean  @default(false) @map("is_read")
+  link      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+// ==========================================
+// WALLET SYSTEM
+// ==========================================
+
+model Wallet {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique @map("user_id")
+  balance        Decimal  @default(0.00) @db.Decimal(12, 2)
+  totalEarned    Decimal  @default(0.00) @map("total_earned") @db.Decimal(12, 2)
+  totalWithdrawn Decimal  @default(0.00) @map("total_withdrawn") @db.Decimal(12, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user               User                @relation(fields: [userId], references: [id])
+  transactions       Transaction[]
+  withdrawalRequests WithdrawalRequest[]
+
+  @@map("wallets")
+}
+
+model Transaction {
+  id            Int             @id @default(autoincrement())
+  walletId      Int             @map("wallet_id")
+  amount        Decimal         @db.Decimal(12, 2)
+  type          TransactionType
+  description   String?
+  referenceId   String?         @map("reference_id") // Could be Escrow ID, Commission ID, or Withdrawal ID
+  referenceType String?         @map("reference_type") // e.g., 'ESCROW', 'COMMISSION', 'WITHDRAWAL'
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  wallet Wallet @relation(fields: [walletId], references: [id])
+
+  @@index([walletId])
+  @@index([type])
+  @@map("transactions")
+}
+
+model WithdrawalRequest {
+  id            Int              @id @default(autoincrement())
+  walletId      Int              @map("wallet_id")
+  amount        Decimal          @db.Decimal(12, 2)
+  status        WithdrawalStatus @default(PENDING)
+  bankName      String           @map("bank_name")
+  bankAccount   String           @map("bank_account")
+  bankCode      String?          @map("bank_code")
+  processedAt   DateTime?        @map("processed_at")
+  processedById Int?             @map("processed_by_id") // Admin ID who processed it
+  adminNotes    String?          @map("admin_notes") @db.Text
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  wallet Wallet @relation(fields: [walletId], references: [id])
+
+  @@index([walletId])
+  @@index([status])
+  @@map("withdrawal_requests")
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  PROCESSED
+  FAILED
+  REJECTED
+}

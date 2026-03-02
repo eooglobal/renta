@@ -1,0 +1,62 @@
+import { prisma } from '@/lib/db';
+import { NextResponse } from 'next/server';
+import { validateWebhookSignature } from '@/lib/paystack';
+
+// POST /api/webhooks/paystack — Handle Paystack webhook
+export async function POST(request) {
+    try {
+        const body = await request.json();
+        const signature = request.headers.get('x-paystack-signature');
+
+        // Validate webhook signature
+        if (!validateWebhookSignature(body, signature)) {
+            return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+        }
+
+        const event = body.event;
+        const data = body.data;
+
+        switch (event) {
+            case 'charge.success': {
+                const reference = data.reference;
+
+                const payment = await prisma.payment.findFirst({
+                    where: { paymentRef: reference },
+                });
+
+                if (payment && payment.status !== 'SUCCESS') {
+                    await prisma.payment.update({
+                        where: { id: payment.id },
+                        data: {
+                            status: 'SUCCESS',
+                            paidAt: new Date(data.paid_at),
+                        },
+                    });
+
+                    await prisma.rental.update({
+                        where: { id: payment.rentalId },
+                        data: { status: 'ACTIVE' },
+                    });
+                }
+                break;
+            }
+
+            case 'transfer.success': {
+                // Handle successful transfer to landlord
+                console.log('Transfer successful:', data.reference);
+                break;
+            }
+
+            case 'transfer.failed': {
+                // Handle failed transfer
+                console.log('Transfer failed:', data.reference);
+                break;
+            }
+        }
+
+        return NextResponse.json({ status: 'ok' });
+    } catch (error) {
+        console.error('Webhook error:', error);
+        return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
+    }
+}

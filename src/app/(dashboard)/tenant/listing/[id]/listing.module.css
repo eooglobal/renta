@@ -1,0 +1,169 @@
+.container {
+    padding: var(--space-4) 0;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+    gap: var(--space-4);
+}
+
+.titleArea h1 {
+    font-size: 2rem;
+    margin-bottom: var(--space-2);
+}
+
+.meta {
+    display: flex;
+    gap: var(--space-4);
+    align-items: center;
+    color: var(--color-gray-600);
+    flex-wrap: wrap;
+}
+
+.priceArea {
+    text-align: right;
+    background: var(--color-white);
+    padding: var(--space-4) var(--space-6);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-gray-200);
+}
+
+.price {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    font-family: var(--font-heading);
+}
+
+.price sub {
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+    font-weight: 400;
+}
+
+.totalPrice {
+    font-size: 0.875rem;
+    color: var(--color-gray-600);
+    margin-top: var(--space-1);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--space-6);
+}
+
+.images {
+    margin-bottom: var(--space-6);
+}
+
+.mainImage {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-4);
+    background: var(--color-gray-100);
+}
+
+.thumbnailGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-4);
+}
+
+.thumbnail {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.thumbnail.active {
+    border-color: var(--color-primary);
+}
+
+.section {
+    background: var(--color-white);
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--space-6);
+    border: 1px solid var(--color-gray-200);
+}
+
+.sectionTitle {
+    font-size: 1.25rem;
+    margin-bottom: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.section p {
+    color: var(--color-gray-700);
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+.amenitiesList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.amenity {
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+    padding: var(--space-2) var(--space-4);
+    border-radius: 999px;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.sidebarSection {
+    background: var(--color-white);
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--space-6);
+    border: 1px solid var(--color-gray-200);
+}
+
+.sidebarAction {
+    width: 100%;
+    margin-bottom: var(--space-4);
+}
+
+.warningBox {
+    background: #FEF2F2;
+    border: 1px solid #FCA5A5;
+    color: #991B1B;
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+}
+
+@media (max-width: 900px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .priceArea {
+        width: 100%;
+        text-align: left;
+    }
+}

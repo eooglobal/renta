@@ -1,0 +1,71 @@
+/* Tenant Search Page Styles */
+
+.filtersCard {
+    margin-bottom: var(--space-6);
+}
+
+.searchBar {
+    display: flex;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.searchBar input {
+    flex: 1;
+}
+
+.filterRow {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filterRow select {
+    flex: 1;
+    min-width: 150px;
+}
+
+.sfToggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    padding: var(--space-3) var(--space-4);
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.sfToggle:has(input:checked) {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+}
+
+.sfToggle input {
+    display: none;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    margin-top: var(--space-8);
+}
+
+@media (max-width: 768px) {
+    .searchBar {
+        flex-direction: column;
+    }
+
+    .filterRow {
+        flex-direction: column;
+    }
+
+    .filterRow select {
+        width: 100%;
+    }
+}
