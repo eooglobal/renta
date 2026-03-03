@@ -79,7 +79,10 @@ export async function GET(request) {
                         select: { id: true, firstName: true, lastName: true, ninStatus: true },
                     },
                 },
-                orderBy: { createdAt: 'desc' },
+                orderBy: [
+                    { isFeatured: 'desc' },
+                    { createdAt: 'desc' }
+                ],
                 skip,
                 take: limit,
             }),

@@ -99,6 +99,8 @@ model Property {
   scoutLeadId        Int?               @map("scout_lead_id")
   ownershipDoc       String?            @map("ownership_doc")
   studentFriendly    Boolean            @default(false) @map("student_friendly")
+  isFeatured         Boolean            @default(false) @map("is_featured")
+  featuredUntil      DateTime?          @map("featured_until")
   createdAt          DateTime           @default(now()) @map("created_at")
   updatedAt          DateTime           @updatedAt @map("updated_at")
 

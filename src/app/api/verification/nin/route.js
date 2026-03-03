@@ -23,7 +23,7 @@ export async function POST(request) {
         if (nin.endsWith('000')) {
             await prisma.user.update({
                 where: { id: parseInt(session.user.id) },
-                data: { ninStatus: 'REJECTED' }
+                data: { ninStatus: 'FAILED' }
             });
             return NextResponse.json({ error: 'NIN Verification failed. Identity could not be confirmed.' }, { status: 400 });
         }

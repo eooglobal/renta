@@ -38,6 +38,24 @@ export async function POST(request) {
                         data: { status: 'ACTIVE' },
                     });
                 }
+
+                // Handle Featured Listing Payments
+                if (data.metadata?.type === 'FEATURE_LISTING') {
+                    const propertyId = data.metadata.propertyId;
+
+                    // Set featured expiry to 7 days from now
+                    const featuredUntil = new Date();
+                    featuredUntil.setDate(featuredUntil.getDate() + 7);
+
+                    await prisma.property.update({
+                        where: { id: parseInt(propertyId) },
+                        data: {
+                            isFeatured: true,
+                            featuredUntil: featuredUntil
+                        }
+                    });
+                    console.log(`Property ${propertyId} featured successfully via webhook.`);
+                }
                 break;
             }
 

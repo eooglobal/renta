@@ -8,6 +8,7 @@ import styles from '../../tenant/dashboard.module.css';
 export default function LandlordPropertiesPage() {
     const [properties, setProperties] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [promotingId, setPromotingId] = useState(null);
 
     useEffect(() => {
         fetchProperties();
@@ -50,6 +51,32 @@ export default function LandlordPropertiesPage() {
             THREE_BEDROOM: '3 Bedroom',
         };
         return map[type] || type;
+    };
+
+    const handlePromote = async (e, propertyId) => {
+        e.preventDefault(); // Prevent navigating to the edit page
+        setPromotingId(propertyId);
+        try {
+            const res = await fetch(`/api/properties/${propertyId}/feature`, {
+                method: 'POST'
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                alert(`Error: ${data.error}`);
+                return;
+            }
+
+            // Redirect to Paystack
+            if (data.authorization_url) {
+                window.location.href = data.authorization_url;
+            }
+        } catch (error) {
+            console.error('Promotion error:', error);
+            alert('An error occurred while initializing promotion.');
+        } finally {
+            setPromotingId(null);
+        }
     };
 
     if (loading) {
@@ -105,7 +132,25 @@ export default function LandlordPropertiesPage() {
                                         ₦{Number(property.rentPrice).toLocaleString()}
                                         <span> /year</span>
                                     </div>
-                                    <p className="text-xs mt-2" style={{ color: 'var(--color-primary)' }}>Click to edit →</p>
+
+                                    <div className="flex justify-between items-center mt-3">
+                                        <p className="text-xs" style={{ color: 'var(--color-primary)' }}>Click to edit →</p>
+
+                                        {property.isFeatured ? (
+                                            <span className="badge" style={{ background: 'var(--color-primary)', color: 'white' }}>
+                                                ★ Featured
+                                            </span>
+                                        ) : property.status === 'VERIFIED' ? (
+                                            <button
+                                                onClick={(e) => handlePromote(e, property.id)}
+                                                className="btn btn-sm btn-outline"
+                                                disabled={promotingId === property.id}
+                                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                            >
+                                                {promotingId === property.id ? 'Loading...' : 'Promote (₦5,000)'}
+                                            </button>
+                                        ) : null}
+                                    </div>
                                 </div>
                             </div>
                         </Link>
