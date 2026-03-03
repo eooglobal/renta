@@ -26,7 +26,7 @@ export default function TenantDashboard() {
                             <p style={{ fontSize: '14px', margin: '0 0 12px 0', color: 'var(--text-color)' }}>
                                 To unlock all features and ensure community safety, please complete your NIN verification.
                             </p>
-                            <a href="/profile" className="btn btn-sm" style={{ background: 'var(--color-error)', color: 'white', border: 'none' }}>
+                            <a href="/tenant/profile" className="btn btn-sm" style={{ background: 'var(--color-error)', color: 'white', border: 'none' }}>
                                 Verify Now
                             </a>
                         </div>

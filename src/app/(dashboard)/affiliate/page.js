@@ -27,7 +27,7 @@ export default function AffiliateDashboard() {
                             <p style={{ fontSize: '14px', margin: '0 0 12px 0', color: 'var(--text-color)' }}>
                                 To start earning commissions, please complete your National Identity Number (NIN) verification.
                             </p>
-                            <Link href="/profile" className="btn btn-sm" style={{ background: 'var(--color-error)', color: 'white', border: 'none' }}>
+                            <Link href="/affiliate/profile" className="btn btn-sm" style={{ background: 'var(--color-error)', color: 'white', border: 'none' }}>
                                 Verify Now
                             </Link>
                         </div>
