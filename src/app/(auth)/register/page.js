@@ -126,7 +126,7 @@ function RegisterForm() {
 
                         {/* Role Selection */}
                         <div className="form-group">
-                            <label className="form-label">I want to</label>
+                            <label className="form-label">I am a</label>
                             <div className={styles.roleGrid}>
                                 {ROLES.map((role) => (
                                     <label key={role.value} className={styles.roleOption}>
