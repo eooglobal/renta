@@ -6,9 +6,7 @@ import styles from './SupportWidget.module.css';
 
 export default function SupportWidget() {
     const [isOpen, setIsOpen] = useState(false);
-    const [messages, setMessages] = useState([
-        { role: 'assistant', content: "Hi! I'm Renta AI. How can I help you today?" }
-    ]);
+    const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const scrollRef = useRef(null);
@@ -20,11 +18,32 @@ export default function SupportWidget() {
         "How does escrow work?"
     ];
 
+    // Initialize messages from localStorage
+    useEffect(() => {
+        const saved = localStorage.getItem('renta_support_chat');
+        if (saved) {
+            try {
+                setMessages(JSON.parse(saved));
+            } catch (e) {
+                setMessages([{ role: 'assistant', content: "Hi! I'm Renta AI. How can I help you today?" }]);
+            }
+        } else {
+            setMessages([{ role: 'assistant', content: "Hi! I'm Renta AI. How can I help you today?" }]);
+        }
+    }, []);
+
+    // Save to localStorage whenever messages change
+    useEffect(() => {
+        if (messages.length > 0) {
+            localStorage.setItem('renta_support_chat', JSON.stringify(messages));
+        }
+    }, [messages]);
+
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, [messages]);
+    }, [messages, isOpen]);
 
     const handleSend = async (e, customInput) => {
         if (e) e.preventDefault();
@@ -57,6 +76,12 @@ export default function SupportWidget() {
         }
     };
 
+    const resetChat = () => {
+        const initial = [{ role: 'assistant', content: "Hi! I'm Renta AI. How can I help you today?" }];
+        setMessages(initial);
+        localStorage.setItem('renta_support_chat', JSON.stringify(initial));
+    };
+
     return (
         <div className={styles.widgetWrapper}>
             {/* Toggle Button */}
@@ -82,9 +107,16 @@ export default function SupportWidget() {
                                 <p>AI Assistant • Always Online</p>
                             </div>
                         </div>
-                        <button onClick={() => setIsOpen(false)} className={styles.closeBtn}>
-                            <X size={18} />
-                        </button>
+                        <div className="flex gap-1">
+                            {messages.length > 1 && (
+                                <button onClick={resetChat} className={styles.headerBtn} title="Reset Chat">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /></svg>
+                                </button>
+                            )}
+                            <button onClick={() => setIsOpen(false)} className={styles.closeBtn}>
+                                <X size={18} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className={styles.messagesContainer} ref={scrollRef}>
