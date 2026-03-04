@@ -24,7 +24,15 @@ const transporter = nodemailer.createTransport({
     pass: process.env.SMTP_PASS,
   },
   debug: true, // show debug output
-  logger: true // log information in console
+  logger: true, // log information in console
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
+  tls: {
+    // Correctly handle STARTTLS
+    ciphers: 'SSLv3',
+    rejectUnauthorized: false
+  }
 });
 
 // Diagnostic log to verify env vars are loaded (masked)
