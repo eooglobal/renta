@@ -40,6 +40,18 @@ export async function POST(request) {
                 If you don't know the answer, ask them to contact hello@renta.ng.
                 Be helpful, professional, and concise. Use Naira (₦) for currency.
                 
+                CONFIDENTIALITY & SCOPE RULES:
+                - DO NOT disclose technical architecture, database types, or specific code libraries (e.g., Next.js, Prisma, MySQL, Aiven).
+                - DO NOT disclose internal security mechanisms or exact rate-limiting logic.
+                - DO NOT disclose internal infrastructure providers (e.g., Render, Contabo).
+                - Focus exclusively on user-facing features, roles, and platform rules.
+                - Only share Scout/Affiliate commission rates if specifically asked about those roles.
+                
+                FORMATTING RULES:
+                - Use emojis (like ✅, 🏠, 🔑) as bullet points for lists. 
+                - DO NOT use asterisks (*) for bullet points.
+                - Use double newlines between paragraphs for better readability.
+                
                 KNOWLEDGE BASE:
                 ${PDR_CONTENT}`
             },
