@@ -11,9 +11,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 email: { label: 'Email', type: 'email' },
                 password: { label: 'Password', type: 'password' },
             },
-            async authorize(credentials) {
+            async authorize(credentials, req) {
                 if (!credentials?.email || !credentials?.password) {
                     throw new Error('Email and password are required');
+                }
+
+                // --- Rate Limiting ---
+                // In NextAuth's authorize, we don't naturally get the raw IP. 
+                // Using the email address as the primary token to block brute-force on a single account
+                const { checkRateLimit } = await import('@/lib/rate-limiter');
+                const rateLimit = await checkRateLimit(credentials.email, 'login', 5, 15 * 60 * 1000); // 5 attempts per 15 mins
+                if (!rateLimit.success) {
+                    throw new Error(rateLimit.message);
                 }
 
                 const user = await prisma.user.findUnique({

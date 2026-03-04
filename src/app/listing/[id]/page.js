@@ -1,23 +1,32 @@
 import { prisma } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { MapPin, Home as HomeIcon, CheckCircle } from 'lucide-react';
+import { MapPin, Home as HomeIcon, CheckCircle, Info, Sparkles, UserPlus } from 'lucide-react';
 import styles from '@/app/(dashboard)/tenant/listing/[id]/listing.module.css';
 
-// 1. Generate SEO Metadata for social sharing (Twitter, WhatsApp, etc.)
+const formatType = (type) => {
+    return type.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
+};
+
+// 1. Generate SEO Metadata for social sharing
 export async function generateMetadata({ params }) {
-    const property = await prisma.property.findUnique({
-        where: { id: parseInt(params.id) },
-        include: { images: true }
+    const { id } = await params;
+    const property = await prisma.property.findFirst({
+        where: {
+            OR: [
+                { id: id },
+                { slug: id }
+            ]
+        },
+        include: { images: true, city: true, area: true }
     });
 
     if (!property) return { title: 'Property Not Found - Renta' };
 
-    const formattedType = property.type.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
-    const title = `${formattedType} in ${property.area}, ${property.city} | Renta`;
+    const formattedType = formatType(property.type);
+    const title = `${property.title} - ${formattedType} in ${property.area.name} | Renta`;
     const description = property.description.substring(0, 160) + '...';
 
-    // Choose the primary image or a fallback
     const primaryImage = property.images.find(img => img.isPrimary)?.url || property.images[0]?.url || '/placeholder.jpg';
 
     return {
@@ -26,93 +35,136 @@ export async function generateMetadata({ params }) {
         openGraph: {
             title,
             description,
-            url: `https://renta-app.com/listing/${property.id}`,
-            images: [
-                {
-                    url: primaryImage,
-                    width: 800,
-                    height: 600,
-                    alt: property.title,
-                }
-            ],
+            url: `https://renta-app.com/listing/${property.slug || property.id}`,
+            images: [{ url: primaryImage, width: 1200, height: 630, alt: property.title }],
             type: 'article',
         }
     };
 }
 
-// 2. Render a fast server component preview
+// 2. Render Premium Public Page
 export default async function PublicListingPage({ params }) {
-    const property = await prisma.property.findUnique({
-        where: { id: parseInt(params.id) },
-        include: { images: true }
+    const { id } = await params;
+    const property = await prisma.property.findFirst({
+        where: {
+            OR: [
+                { id: id },
+                { slug: id }
+            ]
+        },
+        include: { images: { orderBy: { isPrimary: 'desc' } }, city: true, area: true }
     });
 
     if (!property) notFound();
 
-    const formattedType = property.type.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
-    const primaryImage = property.images.find(img => img.isPrimary)?.url || property.images[0]?.url;
+    const formattedType = formatType(property.type);
+    const primaryImage = property.images[0]?.url;
 
     return (
-        <div className={`container ${styles.container}`} style={{ marginTop: '80px', marginBottom: '80px' }}>
-            <div className={styles.header}>
-                <div className={styles.titleArea}>
-                    <h1>{property.title}</h1>
-                    <div className={styles.meta}>
-                        <span className="flex items-center gap-1"><MapPin size={16} /> {property.area}</span>
-                        <span className="flex items-center gap-1"><HomeIcon size={16} /> {formattedType}</span>
-                        {property.verificationStatus === 'VERIFIED' && (
-                            <span className="badge badge-verified"><CheckCircle size={14} /> Verified</span>
-                        )}
-                        <span className="badge badge-info">{property.status}</span>
+        <div className={`fade-in ${styles.container}`} style={{ marginTop: '80px', marginBottom: '80px' }}>
+            {/* Hero Header */}
+            <div className={styles.hero}>
+                {primaryImage ? (
+                    <img src={primaryImage} className={styles.heroImage} alt={property.title} />
+                ) : (
+                    <div className={styles.heroImage} style={{ background: 'var(--color-gray-200)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <HomeIcon size={80} style={{ opacity: 0.1 }} />
                     </div>
-                </div>
-
-                <div className={styles.priceArea}>
-                    <div className={styles.price}>
-                        ₦{Number(property.rentPrice).toLocaleString()} <sub>/yr</sub>
+                )}
+                <div className={styles.heroOverlay}>
+                    <div className={styles.titleArea}>
+                        <h1>{property.title}</h1>
+                        <div className={styles.meta}>
+                            <span><MapPin size={20} /> {property.area.name}, {property.city.name}</span>
+                            <span><HomeIcon size={20} /> {formattedType}</span>
+                            {property.verificationStatus === 'VERIFIED' && (
+                                <span className={styles.badgePremium}><CheckCircle size={16} /> Verified Renta Listing</span>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div className={styles.grid}>
                 <div className={styles.content}>
-                    {/* Image Area - Static Server Render */}
-                    <div className={styles.images}>
-                        {primaryImage ? (
-                            <img
-                                src={primaryImage}
-                                className={styles.mainImage}
-                                alt={property.title}
-                            />
-                        ) : (
-                            <div className={styles.mainImage} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <HomeIcon size={64} style={{ opacity: 0.2 }} />
+                    {/* Visual Gallery Preview for Logged Out Users */}
+                    <div className={styles.gallery}>
+                        {property.images.slice(1, 5).map((img) => (
+                            <div key={img.id} style={{ position: 'relative' }}>
+                                <img src={img.url} className={styles.thumbnail} alt="Property view" />
+                                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.1)', borderRadius: 'var(--radius-xl)' }}></div>
+                            </div>
+                        ))}
+                        {property.images.length > 5 && (
+                            <div className={styles.thumbnail} style={{ background: 'var(--color-gray-900)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                                +{property.images.length - 5}
                             </div>
                         )}
                     </div>
 
                     <div className={styles.section}>
-                        <h3 className={styles.sectionTitle}>About This Property</h3>
-                        <p>{property.description}</p>
+                        <h3 className={styles.sectionTitle}>
+                            <Info size={24} className="text-primary" /> About This Home
+                        </h3>
+                        <p className={styles.description}>{property.description}</p>
                     </div>
+
+                    {/* Restricted Amenities Preview */}
+                    {property.amenities && (
+                        <div className={styles.section}>
+                            <h3 className={styles.sectionTitle}>
+                                <Sparkles size={24} className="text-primary" /> Facilities
+                            </h3>
+                            <div className={styles.amenitiesGrid}>
+                                {JSON.parse(property.amenities).slice(0, 4).map((amenity, i) => (
+                                    <div key={i} className={styles.amenityItem}>
+                                        <CheckCircle size={16} className="text-success" /> {amenity}
+                                    </div>
+                                ))}
+                                <div className={styles.amenityItem} style={{ borderStyle: 'dashed', opacity: 0.6 }}>
+                                    Sign in for details...
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                {/* Public Call To Action Sidebar */}
+                {/* Public Sticky Sidebar */}
                 <div className={styles.sidebar}>
-                    <div className="card shadow-md">
-                        <h3 className="text-xl mb-4 font-bold">Interested in this property?</h3>
-                        <p className="text-sm text-gray-600 mb-6">
-                            Sign up to view all images, book a free inspection, and pay securely via Renta's Escrow.
-                        </p>
-                        <Link href="/register" className="btn btn-primary btn-full btn-lg mb-3">
-                            Create Free Account
+                    <div className={styles.paymentCard}>
+                        <div className={styles.priceTag}>
+                            <div className={styles.priceDisplay}>
+                                ₦{Number(property.rentPrice).toLocaleString()} <sub>/yr</sub>
+                            </div>
+                            <div className="text-muted text-sm mt-2">Available for Rent</div>
+                        </div>
+
+                        <div className="mb-8">
+                            <h4 className="font-bold mb-4">Interested in this property?</h4>
+                            <p className="text-sm text-gray-600 leading-relaxed">
+                                Join 10k+ users on Renta to view full images, book free inspections, and pay securely using our Escrow system.
+                            </p>
+                        </div>
+
+                        <Link href="/register" className="btn btn-primary btn-lg sidebarAction mb-4" style={{ height: '64px', fontSize: '1.25rem' }}>
+                            <UserPlus size={20} className="mr-2" /> Start Free Application
                         </Link>
-                        <Link href="/login" className="btn btn-outline btn-full">
-                            Log In
+
+                        <Link href="/login" className="btn btn-outline btn-lg sidebarAction" style={{ height: '64px', border: '2px solid var(--color-gray-200)' }}>
+                            Log In to Your Account
                         </Link>
-                        <p className="text-xs text-center text-gray-500 mt-4">
-                            You won't be charged anything to view or inspect the apartment.
+
+                        <p className="text-xs text-center text-gray-500 mt-6">
+                            Verified Listings • 24/7 Support • Zero Agency Fees
                         </p>
+                    </div>
+
+                    <div className={styles.ctaBox} style={{ background: 'var(--color-black)' }}>
+                        <h3 style={{ color: 'white' }}>Property Manager?</h3>
+                        <p style={{ color: 'rgba(255,255,255,0.7)' }}>List your own properties and reach thousands of verified tenants.</p>
+                        <Link href="/register?role=LANDLORD" className="btn btn-white btn-sm" style={{ color: 'black' }}>
+                            Start Listing
+                        </Link>
                     </div>
                 </div>
             </div>

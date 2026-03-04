@@ -9,11 +9,21 @@ export default auth((req) => {
     // Public routes that don't need auth
     const publicRoutes = ['/', '/login', '/register', '/listings', '/about', '/contact', '/terms'];
     const isPublicRoute = publicRoutes.some(route => pathname === route) || pathname.startsWith('/listing/');
-    const isApiRoute = pathname.startsWith('/api/');
+
+    // Explicit allowlist for public API routes
+    const publicApiRoutes = [
+        '/api/properties',       // Property listings
+        '/api/locations/cities', // Fetching cities
+        '/api/locations/areas',  // Fetching areas
+        '/api/webhooks/paystack' // Payment webhooks
+    ];
+    // Allow public API routes exactly, or any NextAuth routes which handle their own sessions
+    const isPublicApiRoute = publicApiRoutes.includes(pathname) || pathname.startsWith('/api/auth');
+
     const isAuthRoute = pathname === '/login' || pathname === '/register';
 
-    // Allow public routes and API routes
-    if (isPublicRoute || isApiRoute) {
+    // Allow public routes and explicit public API routes
+    if (isPublicRoute || isPublicApiRoute) {
         // Redirect logged-in users away from auth pages
         if (isAuthRoute && isLoggedIn) {
             const roleRoutes = {

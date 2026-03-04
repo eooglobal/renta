@@ -1,6 +1,6 @@
-import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
+import { createNotification } from '@/lib/notifications';
 
 // GET: Fetch conversations (grouped by the other party)
 export async function GET(request) {
@@ -125,6 +125,14 @@ export async function POST(request) {
             include: {
                 sender: { select: { id: true, firstName: true, lastName: true, role: true } },
             }
+        });
+
+        // Notify Receiver
+        createNotification(receiverId, {
+            type: 'MESSAGE',
+            title: `New message from ${message.sender.firstName}`,
+            message: content.substring(0, 50) + (content.length > 50 ? '...' : ''),
+            link: `/${session.user.role.toLowerCase()}/messages?withUserId=${session.user.id}`
         });
 
         return NextResponse.json(message, { status: 201 });

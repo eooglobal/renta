@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Camera, X, ArrowLeft, ArrowRight } from 'lucide-react';
 import styles from './new-property.module.css';
@@ -14,12 +14,7 @@ const PROPERTY_TYPES = [
     { value: 'THREE_BEDROOM', label: '3 Bedroom' },
 ];
 
-const AREAS = [
-    { value: 'TANKE', label: 'Tanke' },
-    { value: 'BASIN', label: 'Basin' },
-    { value: 'MALETE', label: 'Malete' },
-    { value: 'OTHER', label: 'Other' },
-];
+// Areas will be fetched dynamically from the /api/locations/cities endpoint
 
 const AMENITIES_OPTIONS = [
     'Water', 'Electricity', 'Security', 'Parking', 'Tiled Floor',
@@ -44,10 +39,27 @@ export default function NewPropertyPage() {
         rentPrice: '',
         type: '',
         address: '',
-        area: '',
+        cityId: '',
+        areaId: '',
         amenities: [],
         studentFriendly: false,
     });
+    const [cities, setCities] = useState([]);
+
+    useEffect(() => {
+        const fetchLocations = async () => {
+            try {
+                const res = await fetch('/api/locations/cities');
+                if (res.ok) {
+                    const data = await res.json();
+                    setCities(data);
+                }
+            } catch (err) {
+                console.error('Failed to fetch cities', err);
+            }
+        };
+        fetchLocations();
+    }, []);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -129,6 +141,8 @@ export default function NewPropertyPage() {
                 body: JSON.stringify({
                     ...formData,
                     rentPrice: parseFloat(formData.rentPrice),
+                    cityId: parseInt(formData.cityId),
+                    areaId: parseInt(formData.areaId),
                     uploadLatitude: location?.latitude || null,
                     uploadLongitude: location?.longitude || null,
                 }),
@@ -137,7 +151,11 @@ export default function NewPropertyPage() {
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.error || 'Failed to create property');
+                if (res.status === 401) {
+                    setError('Session expired or user not found. Please log out and log back in to refresh your account.');
+                } else {
+                    setError(data.error || 'Failed to create property');
+                }
                 setLoading(false);
                 return;
             }
@@ -211,25 +229,40 @@ export default function NewPropertyPage() {
 
                         <div className="flex gap-4">
                             <div className="form-group flex-1">
-                                <label htmlFor="type" className="form-label">Property Type</label>
-                                <select id="type" name="type" className="form-input"
-                                    value={formData.type} onChange={handleChange} required>
-                                    <option value="">Select type</option>
-                                    {PROPERTY_TYPES.map(t => (
-                                        <option key={t.value} value={t.value}>{t.label}</option>
+                                <label htmlFor="cityId" className="form-label">City</label>
+                                <select id="cityId" name="cityId" className="form-input"
+                                    value={formData.cityId}
+                                    onChange={e => setFormData({ ...formData, cityId: e.target.value, areaId: '' })}
+                                    required>
+                                    <option value="">Select city</option>
+                                    {cities.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
                                 </select>
                             </div>
                             <div className="form-group flex-1">
-                                <label htmlFor="area" className="form-label">Area</label>
-                                <select id="area" name="area" className="form-input"
-                                    value={formData.area} onChange={handleChange} required>
+                                <label htmlFor="areaId" className="form-label">Area / Neighborhood</label>
+                                <select id="areaId" name="areaId" className="form-input"
+                                    value={formData.areaId}
+                                    disabled={!formData.cityId}
+                                    onChange={handleChange}
+                                    required>
                                     <option value="">Select area</option>
-                                    {AREAS.map(a => (
-                                        <option key={a.value} value={a.value}>{a.label}</option>
+                                    {formData.cityId && cities.find(c => c.id === parseInt(formData.cityId))?.areas.map(a => (
+                                        <option key={a.id} value={a.id}>{a.name}</option>
                                     ))}
                                 </select>
                             </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="type" className="form-label">Property Type</label>
+                            <select id="type" name="type" className="form-input" value={formData.type} onChange={handleChange} required>
+                                <option value="">Select type</option>
+                                {PROPERTY_TYPES.map(t => (
+                                    <option key={t.value} value={t.value}>{t.label}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="form-group">
@@ -266,11 +299,12 @@ export default function NewPropertyPage() {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Amenities</label>
+                            <label className="form-label">Amenities (Optional)</label>
                             <div className={styles.amenitiesGrid}>
-                                {AMENITIES_OPTIONS.map(amenity => (
-                                    <label key={amenity} className={styles.amenityChip}>
+                                {AMENITIES_OPTIONS.map((amenity, idx) => (
+                                    <label key={amenity} htmlFor={`amenity-${idx}`} className={styles.amenityChip}>
                                         <input
+                                            id={`amenity-${idx}`}
                                             type="checkbox"
                                             checked={formData.amenities.includes(amenity)}
                                             onChange={() => toggleAmenity(amenity)}
@@ -292,8 +326,8 @@ export default function NewPropertyPage() {
 
                         <div className={styles.formActions}>
                             <button type="button" className="btn btn-primary btn-lg" onClick={() => {
-                                if (!formData.title || !formData.type || !formData.area || !formData.address || !formData.rentPrice || !formData.description) {
-                                    setError('Please fill in all required fields');
+                                if (!formData.title || !formData.type || !formData.cityId || !formData.areaId || !formData.address || !formData.rentPrice) {
+                                    setError('Please fill in all required fields (Type, City, Area, Address, Rent)');
                                     return;
                                 }
                                 setStep(2);
@@ -368,8 +402,12 @@ export default function NewPropertyPage() {
                                 <strong>{PROPERTY_TYPES.find(t => t.value === formData.type)?.label}</strong>
                             </div>
                             <div className={styles.reviewItem}>
+                                <span className="text-muted text-sm">City</span>
+                                <strong>{cities.find(c => c.id === parseInt(formData.cityId))?.name}</strong>
+                            </div>
+                            <div className={styles.reviewItem}>
                                 <span className="text-muted text-sm">Area</span>
-                                <strong>{AREAS.find(a => a.value === formData.area)?.label}</strong>
+                                <strong>{cities.find(c => c.id === parseInt(formData.cityId))?.areas.find(a => a.id === parseInt(formData.areaId))?.name}</strong>
                             </div>
                             <div className={styles.reviewItem}>
                                 <span className="text-muted text-sm">Address</span>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { Users, Building, Shield, AlertTriangle } from 'lucide-react';
+import { Users, Building, Shield, AlertTriangle, ClipboardList } from 'lucide-react';
 import styles from '../tenant/dashboard.module.css';
 
 export default function AdminDashboard() {
@@ -52,34 +52,51 @@ export default function AdminDashboard() {
 
             {/* Quick Actions */}
             <div className={styles.quickActions}>
-                <Link href="/admin/users" className={styles.actionCard}>
-                    <span className={styles.actionIcon}><Users size={24} /></span>
-                    <div>
-                        <h4>User Management</h4>
-                        <p>Verify and manage user accounts</p>
-                    </div>
-                </Link>
-                <Link href="/admin/properties" className={styles.actionCard}>
-                    <span className={styles.actionIcon}><Building size={24} /></span>
-                    <div>
-                        <h4>Property Verification</h4>
-                        <p>Review and verify property listings</p>
-                    </div>
-                </Link>
-                <Link href="/admin/escrow" className={styles.actionCard}>
-                    <span className={styles.actionIcon}><Shield size={24} /></span>
-                    <div>
-                        <h4>Escrow Management</h4>
-                        <p>Monitor and manage escrow payments</p>
-                    </div>
-                </Link>
-                <Link href="/admin/disputes" className={styles.actionCard}>
-                    <span className={styles.actionIcon}><AlertTriangle size={24} /></span>
-                    <div>
-                        <h4>Disputes</h4>
-                        <p>Handle tenant/landlord disputes</p>
-                    </div>
-                </Link>
+                {(!session?.user?.adminRole || session.user.adminRole === 'SUPER_ADMIN' || session.user.adminRole === 'SUPPORT') && (
+                    <Link href="/admin/users" className={styles.actionCard}>
+                        <span className={styles.actionIcon}><Users size={24} /></span>
+                        <div>
+                            <h4>User Management</h4>
+                            <p>Verify and manage user accounts</p>
+                        </div>
+                    </Link>
+                )}
+                {(!session?.user?.adminRole || session.user.adminRole === 'SUPER_ADMIN' || session.user.adminRole === 'VERIFICATION_OFFICER') && (
+                    <Link href="/admin/leads" className={styles.actionCard}>
+                        <span className={styles.actionIcon}><ClipboardList size={24} /></span>
+                        <div>
+                            <h4>Scout Leads</h4>
+                            <p>Review and verify property leads</p>
+                        </div>
+                    </Link>
+                )}
+                {(!session?.user?.adminRole || session.user.adminRole === 'SUPER_ADMIN' || session.user.adminRole === 'VERIFICATION_OFFICER') && (
+                    <Link href="/admin/properties" className={styles.actionCard}>
+                        <span className={styles.actionIcon}><Building size={24} /></span>
+                        <div>
+                            <h4>Property Verification</h4>
+                            <p>Review and verify property listings</p>
+                        </div>
+                    </Link>
+                )}
+                {(!session?.user?.adminRole || session.user.adminRole === 'SUPER_ADMIN') && (
+                    <Link href="/admin/escrow" className={styles.actionCard}>
+                        <span className={styles.actionIcon}><Shield size={24} /></span>
+                        <div>
+                            <h4>Escrow Management</h4>
+                            <p>Monitor and manage escrow payments</p>
+                        </div>
+                    </Link>
+                )}
+                {(!session?.user?.adminRole || session.user.adminRole === 'SUPER_ADMIN' || session.user.adminRole === 'SUPPORT' || session.user.adminRole === 'VERIFICATION_OFFICER') && (
+                    <Link href="/admin/disputes" className={styles.actionCard}>
+                        <span className={styles.actionIcon}><AlertTriangle size={24} /></span>
+                        <div>
+                            <h4>Disputes</h4>
+                            <p>Handle tenant/landlord disputes</p>
+                        </div>
+                    </Link>
+                )}
             </div>
 
             {/* Stats */}
@@ -121,19 +138,32 @@ export default function AdminDashboard() {
                     </div>
                 ) : (
                     <div className="flex flex-col gap-3">
-                        {metrics.pendingProperties > 0 && (
+                        {metrics.pendingProperties > 0 && (!session?.user?.adminRole || session.user.adminRole === 'SUPER_ADMIN' || session.user.adminRole === 'VERIFICATION_OFFICER') && (
                             <Link href="/admin/properties" className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-100 hover:bg-yellow-100 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <Building size={20} className="text-yellow-600" />
                                     <div>
                                         <h5 className="font-medium text-yellow-800 m-0">Properties Awaiting Verification</h5>
-                                        <p className="text-sm text-yellow-700 m-0">Review newly uploaded properties and scout leads.</p>
+                                        <p className="text-sm text-yellow-700 m-0">Review newly uploaded properties.</p>
                                     </div>
                                 </div>
                                 <span className="badge badge-warning">{metrics.pendingProperties} pending</span>
                             </Link>
                         )}
-                        {metrics.pendingWithdrawals > 0 && (
+                        {/* We should ideally have a separate metric for scout leads, but for now we'll add the link */}
+                        {(!session?.user?.adminRole || session.user.adminRole === 'SUPER_ADMIN' || session.user.adminRole === 'VERIFICATION_OFFICER') && (
+                            <Link href="/admin/leads" className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-100 hover:bg-purple-100 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <ClipboardList size={20} className="text-purple-600" />
+                                    <div>
+                                        <h5 className="font-medium text-purple-800 m-0">New Scout Leads</h5>
+                                        <p className="text-sm text-purple-700 m-0">Review submitted leads and contact landlords.</p>
+                                    </div>
+                                </div>
+                                <span className="badge" style={{ background: 'var(--color-primary)', color: 'var(--color-black)' }}>Action Required</span>
+                            </Link>
+                        )}
+                        {metrics.pendingWithdrawals > 0 && (!session?.user?.adminRole || session.user.adminRole === 'SUPER_ADMIN' || session.user.adminRole === 'SUPPORT') && (
                             <Link href="/admin/escrow" className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <Shield size={20} className="text-blue-600" />

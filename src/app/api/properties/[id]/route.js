@@ -2,14 +2,20 @@ import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { getPriceBreakdown } from '@/lib/commission';
+import { generatePropertySlug } from '@/lib/slugs';
 
 // GET /api/properties/[id] — Get single property details
 export async function GET(request, { params }) {
     try {
         const { id } = await params;
 
-        const property = await prisma.property.findUnique({
-            where: { id: parseInt(id) },
+        const property = await prisma.property.findFirst({
+            where: {
+                OR: [
+                    { id: id },
+                    { slug: id }
+                ]
+            },
             include: {
                 images: { orderBy: { isPrimary: 'desc' } },
                 landlord: {
@@ -26,6 +32,8 @@ export async function GET(request, { params }) {
                     orderBy: { date: 'asc' },
                     take: 10,
                 },
+                city: true,
+                area: true,
             },
         });
 
@@ -36,12 +44,21 @@ export async function GET(request, { params }) {
             );
         }
 
-        // Add price breakdown
+        // Add price breakdown and parse amenities
         const priceBreakdown = getPriceBreakdown(Number(property.rentPrice));
+        let amenities = [];
+        try {
+            amenities = JSON.parse(property.amenities || '[]');
+        } catch (e) {
+            console.warn('Failed to parse amenities:', e);
+        }
 
         return NextResponse.json({
-            property,
-            priceBreakdown,
+            property: {
+                ...property,
+                amenities,
+                breakdown: priceBreakdown,
+            }
         });
     } catch (error) {
         console.error('Property detail error:', error);
@@ -61,8 +78,14 @@ export async function PUT(request, { params }) {
         }
 
         const { id } = await params;
-        const property = await prisma.property.findUnique({
-            where: { id: parseInt(id) },
+        const property = await prisma.property.findFirst({
+            where: {
+                OR: [
+                    { id: id },
+                    { slug: id }
+                ]
+            },
+            include: { city: true, area: true }
         });
 
         if (!property) {
@@ -79,7 +102,7 @@ export async function PUT(request, { params }) {
 
         const body = await request.json();
         const {
-            title, description, rentPrice, type, address, area,
+            title, description, rentPrice, type, address, cityId, areaId,
             latitude, longitude, amenities, studentFriendly, status,
         } = body;
 
@@ -89,11 +112,20 @@ export async function PUT(request, { params }) {
         if (rentPrice !== undefined) updateData.rentPrice = rentPrice;
         if (type !== undefined) updateData.type = type;
         if (address !== undefined) updateData.address = address;
-        if (area !== undefined) updateData.area = area.toUpperCase();
+        if (cityId !== undefined) updateData.cityId = parseInt(cityId);
+        if (areaId !== undefined) updateData.areaId = parseInt(areaId);
         if (latitude !== undefined) updateData.latitude = latitude;
         if (longitude !== undefined) updateData.longitude = longitude;
-        if (amenities !== undefined) updateData.amenities = amenities;
+        if (amenities !== undefined) updateData.amenities = JSON.stringify(amenities);
         if (studentFriendly !== undefined) updateData.studentFriendly = studentFriendly;
+
+        // Regenerate slug if identifying details change
+        if (title || cityId || areaId) {
+            const finalTitle = title || property.title;
+            const finalCity = cityId ? (await prisma.city.findUnique({ where: { id: parseInt(cityId) } }))?.name : property.city.name;
+            const finalArea = areaId ? (await prisma.area.findUnique({ where: { id: parseInt(areaId) } }))?.name : property.area.name;
+            updateData.slug = generatePropertySlug(finalTitle, finalCity, finalArea);
+        }
 
         // Only admin can change status
         if (status !== undefined && isAdmin) {
@@ -101,7 +133,7 @@ export async function PUT(request, { params }) {
         }
 
         const updated = await prisma.property.update({
-            where: { id: parseInt(id) },
+            where: { id: id },
             data: updateData,
             include: { images: true },
         });
@@ -123,7 +155,7 @@ export async function DELETE(request, { params }) {
 
         const { id } = await params;
         const property = await prisma.property.findUnique({
-            where: { id: parseInt(id) },
+            where: { id: id },
             include: { rentals: { where: { status: 'ACTIVE' } } },
         });
 
@@ -145,7 +177,7 @@ export async function DELETE(request, { params }) {
             );
         }
 
-        await prisma.property.delete({ where: { id: parseInt(id) } });
+        await prisma.property.delete({ where: { id: id } });
 
         return NextResponse.json({ message: 'Property deleted' });
     } catch (error) {

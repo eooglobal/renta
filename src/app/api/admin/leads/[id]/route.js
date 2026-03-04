@@ -9,6 +9,12 @@ export async function PATCH(request, { params }) {
             return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 403 });
         }
 
+        // Only Super Admin and Verification Officer can manage leads
+        const adminRole = session.user.adminRole;
+        if (adminRole === 'SUPPORT') {
+            return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+        }
+
         const leadId = parseInt(params.id);
         const body = await request.json();
         const { status } = body;

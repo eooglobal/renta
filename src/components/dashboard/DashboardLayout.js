@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { useState } from 'react';
 import styles from './DashboardLayout.module.css';
+import NotificationCenter from '@/components/NotificationCenter';
 
 import {
     Home, Search, FileText, Wrench, MessageSquare, User,
@@ -48,6 +49,7 @@ const MENU_ITEMS = {
         { href: '/admin', icon: Home, label: 'Dashboard' },
         { href: '/admin/users', icon: Users, label: 'Users' },
         { href: '/admin/properties', icon: Building, label: 'Properties' },
+        { href: '/admin/leads', icon: ClipboardList, label: 'Scout Leads' },
         { href: '/admin/rentals', icon: FileText, label: 'Rentals' },
         { href: '/admin/escrow', icon: Shield, label: 'Escrow' },
         { href: '/admin/commissions', icon: DollarSign, label: 'Commissions' },
@@ -90,7 +92,19 @@ export default function DashboardLayout({ children }) {
                 </div>
 
                 <nav className={styles.sidebarNav}>
-                    {menuItems.map((item) => (
+                    {menuItems.filter(item => {
+                        if (role !== 'ADMIN' || !session?.user?.adminRole || session.user.adminRole === 'SUPER_ADMIN') return true;
+
+                        // Role-based filtering for admins
+                        const adminRole = session.user.adminRole;
+                        if (adminRole === 'VERIFICATION_OFFICER') {
+                            return ['Dashboard', 'Properties', 'Scout Leads', 'Disputes'].includes(item.label);
+                        }
+                        if (adminRole === 'SUPPORT') {
+                            return ['Dashboard', 'Users', 'Disputes', 'Rentals', 'Commissions'].includes(item.label);
+                        }
+                        return true;
+                    }).map((item) => (
                         <Link
                             key={item.href}
                             href={item.href}
@@ -132,6 +146,7 @@ export default function DashboardLayout({ children }) {
                         <Menu size={24} />
                     </button>
                     <div className={styles.topbarRight}>
+                        <NotificationCenter />
                         <span className={`badge badge-${role === 'ADMIN' ? 'info' : 'primary'}`}>
                             {role}
                         </span>

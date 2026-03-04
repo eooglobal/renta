@@ -14,7 +14,7 @@ export async function POST(request, { params }) {
 
         const { id } = await params;
         const property = await prisma.property.findUnique({
-            where: { id: parseInt(id) },
+            where: { id: id },
         });
 
         if (!property) {
@@ -37,7 +37,7 @@ export async function POST(request, { params }) {
 
         // Check total images count (max 10)
         const existingCount = await prisma.propertyImage.count({
-            where: { propertyId: parseInt(id) },
+            where: { propertyId: id },
         });
 
         if (existingCount + files.length > 10) {
@@ -53,13 +53,25 @@ export async function POST(request, { params }) {
 
         const savedImages = [];
 
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
+
+            if (!allowedMimeTypes.includes(file.type)) {
+                return NextResponse.json({ error: `Invalid file type: ${file.name}. Only JPEG, PNG, and WebP are allowed.` }, { status: 400 });
+            }
+
+            if (file.size > MAX_FILE_SIZE) {
+                return NextResponse.json({ error: `File too large: ${file.name}. Maximum size is 5MB.` }, { status: 400 });
+            }
+
             const bytes = await file.arrayBuffer();
             const buffer = Buffer.from(bytes);
 
-            // Generate unique filename
-            const ext = file.name.split('.').pop();
+            // Generate unique filename, deriving extension securely from MIME type
+            const ext = file.type.split('/')[1];
             const filename = `${Date.now()}-${i}.${ext}`;
             const filepath = path.join(uploadDir, filename);
 
@@ -67,7 +79,7 @@ export async function POST(request, { params }) {
 
             const imageRecord = await prisma.propertyImage.create({
                 data: {
-                    propertyId: parseInt(id),
+                    propertyId: id,
                     url: `/uploads/properties/${id}/${filename}`,
                     isPrimary: isPrimary && i === 0 && existingCount === 0,
                 },
@@ -114,7 +126,7 @@ export async function DELETE(request, { params }) {
         const image = await prisma.propertyImage.findFirst({
             where: {
                 id: parseInt(imageId),
-                propertyId: parseInt(id),
+                propertyId: id,
             },
             include: { property: true },
         });

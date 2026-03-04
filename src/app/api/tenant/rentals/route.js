@@ -15,7 +15,8 @@ export async function GET() {
                     select: {
                         title: true,
                         address: true,
-                        area: true,
+                        area: { select: { name: true } },
+                        city: { select: { name: true } },
                         type: true,
                         images: { take: 1, where: { isPrimary: true } }
                     }

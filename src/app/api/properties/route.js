@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
+import { generatePropertySlug } from '@/lib/slugs';
 
 // GET /api/properties — List properties with filters
 export async function GET(request) {
@@ -9,7 +10,8 @@ export async function GET(request) {
 
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '12');
-        const area = searchParams.get('area');
+        const cityId = searchParams.get('cityId');
+        const areaId = searchParams.get('areaId');
         const type = searchParams.get('type');
         const minPrice = searchParams.get('minPrice');
         const maxPrice = searchParams.get('maxPrice');
@@ -35,8 +37,12 @@ export async function GET(request) {
             where.status = status;
         }
 
-        if (area) {
-            where.area = area.toUpperCase();
+        if (cityId) {
+            where.cityId = parseInt(cityId);
+        }
+
+        if (areaId) {
+            where.areaId = parseInt(areaId);
         }
 
         if (type) {
@@ -121,32 +127,52 @@ export async function POST(request) {
 
         if (!session || session.user.role !== 'LANDLORD') {
             return NextResponse.json(
-                { error: 'Only landlords can create properties' },
+                { error: 'Only landlords can list properties' },
                 { status: 403 }
             );
         }
 
-        const body = await request.json();
+        // --- Rate Limiting ---
+        const ip = request.headers.get('x-forwarded-for') || 'unknown';
+        const { checkRateLimit } = await import('@/lib/rate-limiter');
+        // Max 5 properties per 10 minutes
+        const rateLimit = await checkRateLimit(`${ip}-${session.user.id}`, 'create_property', 5, 10 * 60 * 1000);
+
+        if (!rateLimit.success) {
+            return NextResponse.json(
+                { error: rateLimit.message },
+                { status: 429 }
+            );
+        }
+
+        // Verify the user exists in the database to prevent foreign key violations with stale sessions
+        const dbUser = await prisma.user.findUnique({
+            where: { id: parseInt(session.user.id) }
+        });
+
+        if (!dbUser) {
+            return NextResponse.json(
+                { error: 'Session expired or user not found. Please log out and log back in.' },
+                { status: 401 }
+            );
+        }
+
+        // Validation using Zod
+        const { propertyCreationSchema } = await import('@/lib/validations');
+        const validationResult = propertyCreationSchema.safeParse(body);
+
+        if (!validationResult.success) {
+            return NextResponse.json(
+                { error: 'Invalid data format', details: validationResult.error.format() },
+                { status: 400 }
+            );
+        }
+
         const {
-            title, description, rentPrice, type, address, area,
+            title, description, rentPrice, type, address, cityId, areaId,
             latitude, longitude, amenities, studentFriendly,
             uploadLatitude, uploadLongitude
-        } = body;
-
-        // Validation
-        if (!title || !description || !rentPrice || !type || !address || !area) {
-            return NextResponse.json(
-                { error: 'All required fields must be provided' },
-                { status: 400 }
-            );
-        }
-
-        if (rentPrice <= 0) {
-            return NextResponse.json(
-                { error: 'Rent price must be greater than zero' },
-                { status: 400 }
-            );
-        }
+        } = validationResult.data;
 
         const validTypes = ['SELF_CON', 'SINGLE_ROOM', 'FLAT', 'TWO_BEDROOM', 'THREE_BEDROOM'];
         if (!validTypes.includes(type)) {
@@ -156,10 +182,15 @@ export async function POST(request) {
             );
         }
 
-        const validAreas = ['TANKE', 'BASIN', 'MALETE', 'OTHER'];
-        if (!validAreas.includes(area.toUpperCase())) {
+        // Verify that the area belongs to the city
+        const areaExists = await prisma.area.findUnique({
+            where: { id: parseInt(areaId) },
+            include: { city: true }
+        });
+
+        if (!areaExists || areaExists.cityId !== parseInt(cityId)) {
             return NextResponse.json(
-                { error: 'Invalid area. Must be Tanke, Basin, Malete, or Other' },
+                { error: 'Invalid city or area selection' },
                 { status: 400 }
             );
         }
@@ -168,19 +199,22 @@ export async function POST(request) {
         let initialVerificationStatus = 'UNVERIFIED';
         let geoDistance = null;
 
-        if (uploadLatitude && uploadLongitude && area !== 'OTHER') {
-            const { calculateHaversineDistance, AREA_COORDINATES } = await import('@/lib/geoUtils');
-            const targetCoords = AREA_COORDINATES[area.toUpperCase()];
+        if (uploadLatitude && uploadLongitude && areaExists) {
+            const { calculateHaversineDistance } = await import('@/lib/geoUtils');
+            const targetCoords = {
+                lat: parseFloat(areaExists.latitude),
+                lon: parseFloat(areaExists.longitude)
+            };
 
-            if (targetCoords) {
+            if (targetCoords.lat && targetCoords.lon) {
                 geoDistance = calculateHaversineDistance(
                     uploadLatitude, uploadLongitude,
                     targetCoords.lat, targetCoords.lon
                 );
 
-                // If uploaded > 5km from the declared area, flag as suspicious
-                if (geoDistance > 5) {
-                    console.log(`[FRAUD ALERT] User ${session.user.id} uploaded property in ${area} from ${geoDistance.toFixed(2)}km away.`);
+                // If uploaded > 10km from the declared area center, flag as suspicious
+                if (geoDistance > 10) {
+                    console.log(`[FRAUD ALERT] User ${session.user.id} uploaded property in ${areaExists.name} from ${geoDistance.toFixed(2)}km away.`);
                     initialVerificationStatus = 'SUSPICIOUS';
                 }
             }
@@ -208,13 +242,15 @@ export async function POST(request) {
                 rentPrice,
                 type,
                 address,
-                area: area.toUpperCase(),
+                cityId: parseInt(cityId),
+                areaId: parseInt(areaId),
                 latitude: latitude || null,
                 longitude: longitude || null,
-                amenities: amenities || [],
+                amenities: JSON.stringify(amenities || []),
                 studentFriendly: studentFriendly || false,
                 status: 'PENDING',
                 verificationStatus: initialVerificationStatus,
+                slug: generatePropertySlug(title, areaExists.city.name, areaExists.name),
             },
             include: {
                 images: true,
@@ -228,7 +264,7 @@ export async function POST(request) {
     } catch (error) {
         console.error('Property create error:', error);
         return NextResponse.json(
-            { error: 'Failed to create property' },
+            { error: `Failed to create property: ${error.message}` },
             { status: 500 }
         );
     }

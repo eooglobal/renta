@@ -1,6 +1,6 @@
-import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
+import { createNotification } from '@/lib/notifications';
 
 // GET: Fetch inspection slots for a property
 export async function GET(request) {
@@ -41,7 +41,10 @@ export async function POST(request) {
         }
 
         // Check slot is available
-        const slot = await prisma.inspectionSlot.findUnique({ where: { id: parseInt(slotId) } });
+        const slot = await prisma.inspectionSlot.findUnique({
+            where: { id: slotId },
+            include: { property: true }
+        });
 
         if (!slot || slot.status !== 'AVAILABLE') {
             return NextResponse.json({ error: 'This slot is no longer available' }, { status: 400 });
@@ -53,6 +56,14 @@ export async function POST(request) {
                 status: 'BOOKED',
                 bookedById: parseInt(session.user.id)
             }
+        });
+
+        // Notify landlord
+        createNotification(slot.property.landlordId, {
+            type: 'INSPECTION',
+            title: 'New Inspection Booked',
+            message: `A tenant has booked an inspection for "${slot.property.title}" on ${new Date(slot.date).toLocaleDateString()}.`,
+            link: '/landlord/properties'
         });
 
         return NextResponse.json({ message: 'Inspection booked successfully!', slot: updatedSlot });

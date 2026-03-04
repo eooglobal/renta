@@ -193,7 +193,6 @@
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
     margin-bottom: var(--space-6);
-    -webkit-overflow-scrolling: touch;
 }
 
 .dataTable {

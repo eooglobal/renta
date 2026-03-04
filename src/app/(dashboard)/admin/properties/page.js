@@ -3,6 +3,21 @@
 import { useState, useEffect } from 'react';
 import styles from '../../tenant/dashboard.module.css';
 
+const statusLabel = (status) => {
+    const map = { PENDING: 'Pending', VERIFIED: 'Available', RENTED: 'Rented', INACTIVE: 'Frozen' };
+    return map[status] || status;
+};
+
+const statusBadge = (status) => {
+    const map = { PENDING: 'pending', VERIFIED: 'verified', RENTED: 'info', INACTIVE: 'error' };
+    return map[status] || 'pending';
+};
+
+const verificationBadge = (vs) => {
+    const map = { UNVERIFIED: 'pending', IN_PROGRESS: 'pending', VERIFIED: 'verified', REJECTED: 'error', SUSPICIOUS: 'error' };
+    return map[vs] || 'pending';
+};
+
 export default function AdminPropertiesPage() {
     const [properties, setProperties] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -18,7 +33,6 @@ export default function AdminPropertiesPage() {
         try {
             const params = new URLSearchParams();
             if (filter) params.set('status', filter);
-
             const res = await fetch(`/api/admin/properties?${params}`);
             const data = await res.json();
             setProperties(data.properties || []);
@@ -37,7 +51,6 @@ export default function AdminPropertiesPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ propertyId, action }),
             });
-
             if (res.ok) {
                 fetchProperties();
             }
@@ -56,15 +69,22 @@ export default function AdminPropertiesPage() {
         return map[type] || type;
     };
 
+    const filters = [
+        { value: 'PENDING', label: 'Pending' },
+        { value: 'VERIFIED', label: 'Available' },
+        { value: 'RENTED', label: 'Rented' },
+        { value: 'INACTIVE', label: 'Frozen' },
+    ];
+
     return (
         <div className="fade-in">
             <div className={styles.propertiesHeader}>
                 <h3>Property Verification</h3>
                 <div className="flex gap-2">
-                    {['PENDING', 'VERIFIED', 'INACTIVE'].map(s => (
-                        <button key={s} onClick={() => setFilter(s)}
-                            className={`btn btn-sm ${filter === s ? 'btn-primary' : 'btn-outline'}`}>
-                            {s}
+                    {filters.map(f => (
+                        <button key={f.value} onClick={() => setFilter(f.value)}
+                            className={`btn btn-sm ${filter === f.value ? 'btn-primary' : 'btn-outline'}`}>
+                            {f.label}
                         </button>
                     ))}
                 </div>
@@ -77,7 +97,7 @@ export default function AdminPropertiesPage() {
             ) : properties.length === 0 ? (
                 <div className={styles.emptyState}>
                     <div className={styles.emptyIcon}>📋</div>
-                    <h3>No {filter.toLowerCase()} properties</h3>
+                    <h3>No {filters.find(f => f.value === filter)?.label.toLowerCase()} properties</h3>
                     <p>All caught up! No properties to review.</p>
                 </div>
             ) : (
@@ -90,7 +110,7 @@ export default function AdminPropertiesPage() {
                                 <th>Area</th>
                                 <th>Type</th>
                                 <th>Price</th>
-                                <th>Status</th>
+                                <th>Availability</th>
                                 <th>Verification</th>
                                 <th>Actions</th>
                             </tr>
@@ -108,16 +128,16 @@ export default function AdminPropertiesPage() {
                                             <span className="badge badge-verified" style={{ marginLeft: 4 }}>NIN ✓</span>
                                         )}
                                     </td>
-                                    <td>{property.area}</td>
+                                    <td>{property.area?.name || property.area}</td>
                                     <td>{formatType(property.type)}</td>
                                     <td>₦{Number(property.rentPrice).toLocaleString()}</td>
                                     <td>
-                                        <span className={`badge badge-${property.status === 'VERIFIED' ? 'verified' : property.status === 'PENDING' ? 'pending' : 'error'}`}>
-                                            {property.status}
+                                        <span className={`badge badge-${statusBadge(property.status)}`}>
+                                            {statusLabel(property.status)}
                                         </span>
                                     </td>
                                     <td>
-                                        <span className={`badge badge-${property.verificationStatus === 'VERIFIED' ? 'verified' : property.verificationStatus === 'SUSPICIOUS' ? 'error' : 'pending'}`}>
+                                        <span className={`badge badge-${verificationBadge(property.verificationStatus)}`}>
                                             {property.verificationStatus}
                                         </span>
                                     </td>
@@ -128,7 +148,7 @@ export default function AdminPropertiesPage() {
                                                     style={{ background: 'var(--color-success)', color: 'white' }}
                                                     onClick={() => handleAction(property.id, 'verify')}
                                                     disabled={actionLoading === property.id}>
-                                                    ✓ Verify
+                                                    ✓ Approve
                                                 </button>
                                                 <button className="btn btn-sm btn-outline"
                                                     style={{ borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
@@ -147,7 +167,7 @@ export default function AdminPropertiesPage() {
                                         {property.status === 'INACTIVE' && (
                                             <button className="btn btn-sm btn-outline" onClick={() => handleAction(property.id, 'activate')}
                                                 disabled={actionLoading === property.id}>
-                                                Activate
+                                                Unfreeze
                                             </button>
                                         )}
                                     </td>

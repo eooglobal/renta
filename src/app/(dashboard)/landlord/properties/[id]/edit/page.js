@@ -12,12 +12,7 @@ const PROPERTY_TYPES = [
     { value: 'THREE_BEDROOM', label: '3 Bedroom' },
 ];
 
-const AREAS = [
-    { value: 'TANKE', label: 'Tanke' },
-    { value: 'BASIN', label: 'Basin' },
-    { value: 'MALETE', label: 'Malete' },
-    { value: 'OTHER', label: 'Other' },
-];
+// Areas will be fetched dynamically from the /api/locations/cities endpoint
 
 const AMENITIES_OPTIONS = [
     'Water', 'Electricity', 'Security', 'Parking', 'Tiled Floor',
@@ -42,10 +37,27 @@ export default function EditPropertyPage() {
         rentPrice: '',
         type: '',
         address: '',
-        area: '',
+        cityId: '',
+        areaId: '',
         amenities: [],
         studentFriendly: false,
     });
+    const [cities, setCities] = useState([]);
+
+    useEffect(() => {
+        const fetchLocations = async () => {
+            try {
+                const res = await fetch('/api/locations/cities');
+                if (res.ok) {
+                    const data = await res.json();
+                    setCities(data);
+                }
+            } catch (err) {
+                console.error('Failed to fetch cities', err);
+            }
+        };
+        fetchLocations();
+    }, []);
 
     useEffect(() => {
         const fetchProperty = async () => {
@@ -67,7 +79,8 @@ export default function EditPropertyPage() {
                     rentPrice: Number(p.rentPrice) || '',
                     type: p.type || '',
                     address: p.address || '',
-                    area: p.area || '',
+                    cityId: p.cityId?.toString() || '',
+                    areaId: p.areaId?.toString() || '',
                     amenities: p.amenities || [],
                     studentFriendly: p.studentFriendly || false,
                 });
@@ -107,6 +120,8 @@ export default function EditPropertyPage() {
                 body: JSON.stringify({
                     ...form,
                     rentPrice: parseFloat(form.rentPrice),
+                    cityId: parseInt(form.cityId),
+                    areaId: parseInt(form.areaId),
                 }),
             });
             const data = await res.json();
@@ -223,19 +238,36 @@ export default function EditPropertyPage() {
 
                     <div className="grid grid-2">
                         <div className="form-group">
-                            <label className="form-label">Property Type</label>
-                            <select name="type" className="form-input" value={form.type} onChange={handleChange} required>
-                                <option value="">Select type</option>
-                                {PROPERTY_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                            <label className="form-label">City</label>
+                            <select name="cityId" className="form-input"
+                                value={form.cityId}
+                                onChange={e => setForm({ ...form, cityId: e.target.value, areaId: '' })}
+                                required>
+                                <option value="">Select city</option>
+                                {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Area</label>
-                            <select name="area" className="form-input" value={form.area} onChange={handleChange} required>
+                            <label className="form-label">Area / Neighborhood</label>
+                            <select name="areaId" className="form-input"
+                                value={form.areaId}
+                                disabled={!form.cityId}
+                                onChange={handleChange}
+                                required>
                                 <option value="">Select area</option>
-                                {AREAS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+                                {form.cityId && cities.find(c => c.id === parseInt(form.cityId))?.areas.map(a => (
+                                    <option key={a.id} value={a.id}>{a.name}</option>
+                                ))}
                             </select>
                         </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label">Property Type</label>
+                        <select name="type" className="form-input" value={form.type} onChange={handleChange} required>
+                            <option value="">Select type</option>
+                            {PROPERTY_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                        </select>
                     </div>
 
                     <div className="form-group">

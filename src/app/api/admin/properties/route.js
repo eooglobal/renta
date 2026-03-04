@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { sendPropertyVerifiedEmail } from '@/lib/email';
+import { createNotification } from '@/lib/notifications';
 
 // GET /api/admin/properties — List all properties for admin review
 export async function GET(request) {
@@ -9,6 +10,11 @@ export async function GET(request) {
         const session = await auth();
         if (!session || session.user.role !== 'ADMIN') {
             return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+        }
+
+        // Support role doesn't manage properties (unless they are also Super Admin)
+        if (session.user.adminRole === 'SUPPORT') {
+            return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
         }
 
         const { searchParams } = new URL(request.url);
@@ -55,6 +61,10 @@ export async function PATCH(request) {
             return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
         }
 
+        if (session.user.adminRole === 'SUPPORT') {
+            return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+        }
+
         const body = await request.json();
         const { propertyId, action, reason } = body;
 
@@ -86,12 +96,25 @@ export async function PATCH(request) {
                     landlord: property.landlord,
                     property,
                 }).catch(console.error);
+
+                createNotification(property.landlordId, {
+                    type: 'VERIFICATION',
+                    title: 'Property Verified ✓',
+                    message: `Your property "${property.title}" has been verified and is now live.`,
+                    link: '/landlord/properties'
+                });
                 break;
 
             case 'reject':
                 updateData = {
                     verificationStatus: 'REJECTED',
                 };
+                createNotification(property.landlordId, {
+                    type: 'VERIFICATION',
+                    title: 'Property Rejected',
+                    message: `Your property listing "${property.title}" was not approved. ${reason || 'Please check your details.'}`,
+                    link: '/landlord/properties'
+                });
                 break;
 
             case 'freeze':

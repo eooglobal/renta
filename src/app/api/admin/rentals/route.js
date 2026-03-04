@@ -26,8 +26,8 @@ export async function GET(request) {
                         select: {
                             id: true,
                             title: true,
-                            city: true,
-                            area: true,
+                            city: { select: { name: true } },
+                            area: { select: { name: true } },
                             landlord: {
                                 select: {
                                     id: true,

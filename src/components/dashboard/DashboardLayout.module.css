@@ -176,6 +176,8 @@
     position: sticky;
     top: 0;
     z-index: 10;
+    pointer-events: none;
+    /* Allow clicks to pass through transparent areas */
 }
 
 .menuToggle {
@@ -186,6 +188,8 @@
     border: none;
     cursor: pointer;
     padding: var(--space-2);
+    pointer-events: auto;
+    /* Re-enable clicks for the button */
 }
 
 .menuToggle span {
@@ -200,6 +204,8 @@
     align-items: center;
     gap: var(--space-4);
     margin-left: auto;
+    pointer-events: auto;
+    /* Re-enable clicks for the items */
 }
 
 /* Page Content */

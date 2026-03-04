@@ -7,12 +7,7 @@ import { Search, GraduationCap, MapPin, Home, CheckCircle } from 'lucide-react';
 import styles from './search.module.css';
 import dashStyles from '../dashboard.module.css';
 
-const AREAS = [
-    { value: '', label: 'All Areas' },
-    { value: 'TANKE', label: 'Tanke' },
-    { value: 'BASIN', label: 'Basin' },
-    { value: 'MALETE', label: 'Malete' },
-];
+// Areas will be fetched dynamically from the /api/locations/cities endpoint
 
 const PROPERTY_TYPES = [
     { value: '', label: 'All Types' },
@@ -34,16 +29,32 @@ const PRICE_RANGES = [
 
 export default function TenantSearchPage() {
     const [properties, setProperties] = useState([]);
+    const [cities, setCities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
-        area: '', type: '', priceRange: '',
+        cityId: '', areaId: '', type: '', priceRange: '',
         studentFriendly: false, search: '',
     });
     const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
 
     useEffect(() => {
+        const fetchLocations = async () => {
+            try {
+                const res = await fetch('/api/locations/cities');
+                if (res.ok) {
+                    const data = await res.json();
+                    setCities(data);
+                }
+            } catch (err) {
+                console.error('Failed to fetch cities', err);
+            }
+        };
+        fetchLocations();
+    }, []);
+
+    useEffect(() => {
         fetchProperties();
-    }, [filters.area, filters.type, filters.priceRange, filters.studentFriendly]);
+    }, [filters.cityId, filters.areaId, filters.type, filters.priceRange, filters.studentFriendly]);
 
     const fetchProperties = async (page = 1) => {
         setLoading(true);
@@ -51,7 +62,8 @@ export default function TenantSearchPage() {
             const params = new URLSearchParams();
             params.set('page', page);
             params.set('limit', '12');
-            if (filters.area) params.set('area', filters.area);
+            if (filters.cityId) params.set('cityId', filters.cityId);
+            if (filters.areaId) params.set('areaId', filters.areaId);
             if (filters.type) params.set('type', filters.type);
             if (filters.studentFriendly) params.set('studentFriendly', 'true');
             if (filters.search) params.set('search', filters.search);
@@ -104,9 +116,27 @@ export default function TenantSearchPage() {
                 </form>
 
                 <div className={styles.filterRow}>
-                    <select className="form-input" value={filters.area}
-                        onChange={e => setFilters({ ...filters, area: e.target.value })}>
-                        {AREAS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+                    <select
+                        className="form-input"
+                        value={filters.cityId}
+                        onChange={e => setFilters({ ...filters, cityId: e.target.value, areaId: '' })}
+                    >
+                        <option value="">All Cities</option>
+                        {cities.map(city => (
+                            <option key={city.id} value={city.id}>{city.name}</option>
+                        ))}
+                    </select>
+
+                    <select
+                        className="form-input"
+                        value={filters.areaId}
+                        disabled={!filters.cityId}
+                        onChange={e => setFilters({ ...filters, areaId: e.target.value })}
+                    >
+                        <option value="">All Neighborhoods</option>
+                        {filters.cityId && cities.find(c => c.id === parseInt(filters.cityId))?.areas.map(area => (
+                            <option key={area.id} value={area.id}>{area.name}</option>
+                        ))}
                     </select>
                     <select className="form-input" value={filters.type}
                         onChange={e => setFilters({ ...filters, type: e.target.value })}>
@@ -144,7 +174,7 @@ export default function TenantSearchPage() {
                 <>
                     <div className={dashStyles.propertyGrid}>
                         {properties.map(property => (
-                            <Link key={property.id} href={`/listing/${property.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <Link key={property.id} href={`/listing/${property.slug || property.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                 <div className={`${dashStyles.propertyCard} card-interactive ${property.isFeatured ? 'border-primary' : ''}`} style={property.isFeatured ? { border: '2px solid var(--color-primary)' } : {}}>
                                     <div className={dashStyles.propertyImage}>
                                         {property.images?.[0] ? (
@@ -174,7 +204,7 @@ export default function TenantSearchPage() {
                                     <div className={dashStyles.propertyInfo}>
                                         <h4>{property.title}</h4>
                                         <div className={dashStyles.propertyMeta}>
-                                            <span className="flex items-center gap-1"><MapPin size={14} /> {property.area}</span>
+                                            <span className="flex items-center gap-1"><MapPin size={14} /> {property.area?.name || 'Unknown'}</span>
                                             <span className="flex items-center gap-1"><Home size={14} /> {formatType(property.type)}</span>
                                             {property.studentFriendly && <span title="Student Friendly"><GraduationCap size={14} /></span>}
                                         </div>

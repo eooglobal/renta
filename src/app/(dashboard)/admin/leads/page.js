@@ -1,12 +1,31 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Phone, CheckCircle, XCircle, Clock, MapPin } from 'lucide-react';
+import { Phone, CheckCircle, XCircle, Clock, MapPin, AlertCircle } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import styles from '../../tenant/dashboard.module.css';
 
 export default function AdminScoutLeadsPage() {
+    const { data: session } = useSession();
     const [leads, setLeads] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
+    // Role-based access check
+    if (session?.user?.role === 'ADMIN' && session?.user?.adminRole === 'SUPPORT') {
+        return (
+            <div className="fade-in flex flex-col items-center justify-center p-12 text-center">
+                <div className="p-4 bg-red-50 rounded-full mb-4">
+                    <AlertCircle className="text-red-500" size={48} />
+                </div>
+                <h3>Access Denied</h3>
+                <p className="text-muted max-w-md">
+                    Support staff are restricted from viewing or managing Scout Leads.
+                    Please contact a Super Admin if you believe this is an error.
+                </p>
+            </div>
+        );
+    }
 
     const fetchLeads = async () => {
         try {

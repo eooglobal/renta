@@ -6,30 +6,32 @@ import { NextResponse } from 'next/server';
 export async function POST(request) {
     try {
         const body = await request.json();
-        const { email, password, firstName, lastName, phone, role } = body;
 
-        // Validation
-        if (!email || !password || !firstName || !lastName) {
+        // --- Rate Limiting ---
+        const ip = request.headers.get('x-forwarded-for') || 'unknown';
+        const { checkRateLimit } = await import('@/lib/rate-limiter');
+        // Max 3 registrations per IP per 15 minutes
+        const rateLimit = await checkRateLimit(ip, 'register', 3, 15 * 60 * 1000);
+
+        if (!rateLimit.success) {
             return NextResponse.json(
-                { error: 'All fields are required' },
+                { error: rateLimit.message },
+                { status: 429 }
+            );
+        }
+
+        // Validation using Zod
+        const { userRegistrationSchema } = await import('@/lib/validations');
+        const validationResult = userRegistrationSchema.safeParse(body);
+
+        if (!validationResult.success) {
+            return NextResponse.json(
+                { error: 'Invalid data format', details: validationResult.error.format() },
                 { status: 400 }
             );
         }
 
-        if (password.length < 8) {
-            return NextResponse.json(
-                { error: 'Password must be at least 8 characters' },
-                { status: 400 }
-            );
-        }
-
-        const validRoles = ['TENANT', 'LANDLORD', 'SCOUT', 'AFFILIATE'];
-        if (role && !validRoles.includes(role)) {
-            return NextResponse.json(
-                { error: 'Invalid role selected' },
-                { status: 400 }
-            );
-        }
+        const { email, password, firstName, lastName, phone, role, ref } = validationResult.data;
 
         // Check if email already exists
         const existingUser = await prisma.user.findUnique({
@@ -56,9 +58,6 @@ export async function POST(request) {
                 );
             }
         }
-
-        // Extract optional referral code
-        const ref = body.ref;
 
         // Hashes password
         const passwordHash = await bcrypt.hash(password, 12);
