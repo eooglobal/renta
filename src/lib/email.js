@@ -43,27 +43,43 @@ const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Renta';
 const FROM = process.env.EMAIL_FROM || 'noreply@renta.ng';
 
 /**
- * Send an email
+ * Send an email via Resend REST API (Bypasses SMTP port blocks)
  */
 export async function sendEmail({ to, subject, html }) {
+  const API_KEY = process.env.SMTP_PASS;
+
+  // Use the from address from env, fallback to onboarding@resend.dev
+  // IMPORTANT: Resend free tier requires the EXACT string 'onboarding@resend.dev' 
+  // if you haven't verified a custom domain yet.
+  const fromAddress = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+
   try {
-    const info = await transporter.sendMail({
-      from: `"${APP_NAME}" <${FROM}>`,
-      to,
-      subject,
-      html: wrapInTemplate(subject, html),
+    console.log(`[Resend API] Sending to: ${to} from: ${fromAddress}`);
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: fromAddress,
+        to: [to],
+        subject: subject,
+        html: wrapInTemplate(subject, html),
+      }),
     });
-    console.log('Email sent:', info.messageId);
-    console.log('Accepted:', info.accepted);
-    return { success: true, messageId: info.messageId };
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || JSON.stringify(data));
+    }
+
+    console.log('[Resend API] Success:', data.id);
+    return { success: true, messageId: data.id };
   } catch (error) {
-    console.error('CRITICAL Email Send Error:', {
-      message: error.message,
-      code: error.code,
-      command: error.command,
-      response: error.response,
-      stack: error.stack
-    });
+    console.error('[Resend API] CRITICAL Error:', error.message);
     return { success: false, error: error.message };
   }
 }
