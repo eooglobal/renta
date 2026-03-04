@@ -42,7 +42,7 @@ const FROM = process.env.EMAIL_FROM || 'noreply@renta.ng';
 /**
  * Send an email
  */
-async function sendEmail({ to, subject, html }) {
+export async function sendEmail({ to, subject, html }) {
   try {
     const info = await transporter.sendMail({
       from: `"${APP_NAME}" <${FROM}>`,
