@@ -18,11 +18,22 @@ import nodemailer from 'nodemailer';
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
+  secure: false, // true for 465, false for other ports
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  debug: true, // show debug output
+  logger: true // log information in console
+});
+
+// Diagnostic log to verify env vars are loaded (masked)
+console.log('Email Transport Config:', {
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  user: process.env.SMTP_USER,
+  pass: process.env.SMTP_PASS ? '********' : 'MISSING',
+  from: process.env.EMAIL_FROM
 });
 
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Renta';
@@ -40,9 +51,16 @@ async function sendEmail({ to, subject, html }) {
       html: wrapInTemplate(subject, html),
     });
     console.log('Email sent:', info.messageId);
+    console.log('Accepted:', info.accepted);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Email send error:', error);
+    console.error('CRITICAL Email Send Error:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      stack: error.stack
+    });
     return { success: false, error: error.message };
   }
 }
