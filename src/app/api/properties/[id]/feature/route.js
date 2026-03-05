@@ -43,7 +43,7 @@ export async function POST(request, { params }) {
                 landlordId: parseInt(session.user.id),
                 type: 'FEATURE_LISTING'
             },
-            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/landlord/properties` // Redirect back to their properties page
+            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/landlord?promoted=true` // Redirect to dashboard with success flag
         });
 
         if (!paymentInit.authorization_url) {

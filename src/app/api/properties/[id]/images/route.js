@@ -89,7 +89,7 @@ export async function POST(request, { params }) {
                 await writeFile(filepath, buffer);
                 console.log(`[IMAGE UPLOAD] File written to disk: ${filepath}`);
 
-                const imageUrl = `/uploads/properties/${id}/${filename}`;
+                const imageUrl = `/api/images/properties/${id}/${filename}`;
                 const imageRecord = await prisma.propertyImage.create({
                     data: {
                         propertyId: id,
