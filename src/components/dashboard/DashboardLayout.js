@@ -10,7 +10,7 @@ import NotificationCenter from '@/components/NotificationCenter';
 import {
     Home, Search, FileText, Wrench, MessageSquare, User,
     Building, Plus, Users, Wallet, ClipboardList, Link as LinkIcon,
-    Shield, DollarSign, AlertTriangle, Settings, LogOut, Menu, X
+    Shield, DollarSign, AlertTriangle, Settings, LogOut, Menu, X, Star
 } from 'lucide-react';
 
 const MENU_ITEMS = {
