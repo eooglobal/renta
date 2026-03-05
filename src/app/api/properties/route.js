@@ -29,8 +29,11 @@ export async function GET(request) {
             where.status = 'VERIFIED';
         }
 
-        if (landlordId) {
-            where.landlordId = parseInt(landlordId);
+        if (landlordId && landlordId !== 'undefined') {
+            const parsedLandlordId = parseInt(landlordId);
+            if (!isNaN(parsedLandlordId)) {
+                where.landlordId = parsedLandlordId;
+            }
         }
 
         if (status) {

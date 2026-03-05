@@ -13,14 +13,15 @@ export async function POST(request, { params }) {
 
         const { id } = await params;
         const property = await prisma.property.findUnique({
-            where: { id: parseInt(id) },
+            where: { id: id },
         });
 
         if (!property) {
             return NextResponse.json({ error: 'Property not found' }, { status: 404 });
         }
 
-        if (property.landlordId !== parseInt(session.user.id)) {
+        const lId = parseInt(session.user.id);
+        if (isNaN(lId) || property.landlordId !== lId) {
             return NextResponse.json({ error: 'You do not own this property' }, { status: 403 });
         }
 

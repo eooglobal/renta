@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { MapPin, Home as HomeIcon, CheckCircle, Info, Sparkles, UserPlus, MessageCircle } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import styles from '@/app/(dashboard)/tenant/listing/[id]/listing.module.css';

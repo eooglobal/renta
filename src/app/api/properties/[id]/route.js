@@ -112,8 +112,14 @@ export async function PUT(request, { params }) {
         if (rentPrice !== undefined) updateData.rentPrice = rentPrice;
         if (type !== undefined) updateData.type = type;
         if (address !== undefined) updateData.address = address;
-        if (cityId !== undefined) updateData.cityId = parseInt(cityId);
-        if (areaId !== undefined) updateData.areaId = parseInt(areaId);
+        if (cityId !== undefined) {
+            const pCityId = parseInt(cityId);
+            if (!isNaN(pCityId)) updateData.cityId = pCityId;
+        }
+        if (areaId !== undefined) {
+            const pAreaId = parseInt(areaId);
+            if (!isNaN(pAreaId)) updateData.areaId = pAreaId;
+        }
         if (latitude !== undefined) updateData.latitude = latitude;
         if (longitude !== undefined) updateData.longitude = longitude;
         if (amenities !== undefined) updateData.amenities = JSON.stringify(amenities);
@@ -122,8 +128,25 @@ export async function PUT(request, { params }) {
         // Regenerate slug if identifying details change
         if (title || cityId || areaId) {
             const finalTitle = title || property.title;
-            const finalCity = cityId ? (await prisma.city.findUnique({ where: { id: parseInt(cityId) } }))?.name : property.city.name;
-            const finalArea = areaId ? (await prisma.area.findUnique({ where: { id: parseInt(areaId) } }))?.name : property.area.name;
+
+            let finalCity = property.city.name;
+            if (cityId) {
+                const cId = parseInt(cityId);
+                if (!isNaN(cId)) {
+                    const cityObj = await prisma.city.findUnique({ where: { id: cId } });
+                    if (cityObj) finalCity = cityObj.name;
+                }
+            }
+
+            let finalArea = property.area.name;
+            if (areaId) {
+                const aId = parseInt(areaId);
+                if (!isNaN(aId)) {
+                    const areaObj = await prisma.area.findUnique({ where: { id: aId } });
+                    if (areaObj) finalArea = areaObj.name;
+                }
+            }
+
             updateData.slug = generatePropertySlug(finalTitle, finalCity, finalArea);
         }
 
