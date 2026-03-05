@@ -11,9 +11,15 @@ export async function checkRapidPropertyCreation(landlordId) {
     try {
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
+        const lId = parseInt(landlordId);
+        if (isNaN(lId)) {
+            console.error(`[FRAUD CHECK] Invalid landlordId: ${landlordId}`);
+            return false;
+        }
+
         const recentPropertiesCount = await prisma.property.count({
             where: {
-                landlordId: parseInt(landlordId),
+                landlordId: lId,
                 createdAt: {
                     gte: oneHourAgo,
                 },

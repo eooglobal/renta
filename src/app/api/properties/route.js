@@ -38,11 +38,13 @@ export async function GET(request) {
         }
 
         if (cityId) {
-            where.cityId = parseInt(cityId);
+            const parsedCityId = parseInt(cityId);
+            if (!isNaN(parsedCityId)) where.cityId = parsedCityId;
         }
 
         if (areaId) {
-            where.areaId = parseInt(areaId);
+            const parsedAreaId = parseInt(areaId);
+            if (!isNaN(parsedAreaId)) where.areaId = parsedAreaId;
         }
 
         if (type) {
@@ -145,9 +147,14 @@ export async function POST(request) {
             );
         }
 
+        const lId = parseInt(session.user.id);
+        if (isNaN(lId)) {
+            return NextResponse.json({ error: 'Invalid user session' }, { status: 401 });
+        }
+
         // Verify the user exists in the database to prevent foreign key violations with stale sessions
         const dbUser = await prisma.user.findUnique({
-            where: { id: parseInt(session.user.id) }
+            where: { id: lId }
         });
 
         if (!dbUser) {

@@ -49,7 +49,14 @@ export async function POST(request, { params }) {
 
         // Create upload directory
         const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'properties', id);
-        await mkdir(uploadDir, { recursive: true });
+        console.log(`[IMAGE UPLOAD] Target directory: ${uploadDir}`);
+
+        try {
+            await mkdir(uploadDir, { recursive: true });
+        } catch (dirError) {
+            console.error('[IMAGE UPLOAD] Fatal: Failed to create upload directory:', dirError);
+            return NextResponse.json({ error: 'Server could not create storage directory' }, { status: 500 });
+        }
 
         const savedImages = [];
 

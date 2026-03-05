@@ -13,37 +13,38 @@ export async function sendEmail({ to, subject, html }) {
 
   try {
     if (!API_KEY) {
-      console.error('[Resend API] ERROR: SMTP_PASS (API Key) is missing from environment.');
+      console.error('[Brevo API] ERROR: SMTP_PASS (API Key) is missing from environment.');
       return { success: false, error: 'API Key missing' };
     }
 
-    console.log(`[Resend API] Attempting to send to: ${to} from: ${fromAddress}`);
+    console.log(`[Brevo API] Attempting to send to: ${to} from: ${fromAddress}`);
 
-    const response = await fetch('https://api.resend.com/emails', {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
+        'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`,
+        'api-key': API_KEY,
       },
       body: JSON.stringify({
-        from: fromAddress,
-        to: [to],
+        sender: { email: fromAddress, name: APP_NAME },
+        to: [{ email: to }],
         subject: subject,
-        html: wrapInTemplate(subject, html),
+        htmlContent: wrapInTemplate(subject, html),
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('[Resend API] API ERROR:', JSON.stringify(data, null, 2));
+      console.error('[Brevo API] API ERROR:', JSON.stringify(data, null, 2));
       throw new Error(data.message || JSON.stringify(data));
     }
 
-    console.log('[Resend API] SUCCESS! Message ID:', data.id);
-    return { success: true, messageId: data.id };
+    console.log('[Brevo API] SUCCESS! Message ID:', data.messageId);
+    return { success: true, messageId: data.messageId };
   } catch (error) {
-    console.error('[Resend API] CRITICAL Error sending email:', error.message);
+    console.error('[Brevo API] CRITICAL Error sending email:', error.message);
     return { success: false, error: error.message };
   }
 }
