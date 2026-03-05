@@ -12,7 +12,12 @@ export async function sendEmail({ to, subject, html }) {
   const fromAddress = process.env.EMAIL_FROM || 'onboarding@resend.dev';
 
   try {
-    console.log(`[Resend API] Sending to: ${to} from: ${fromAddress}`);
+    if (!API_KEY) {
+      console.error('[Resend API] ERROR: SMTP_PASS (API Key) is missing from environment.');
+      return { success: false, error: 'API Key missing' };
+    }
+
+    console.log(`[Resend API] Attempting to send to: ${to} from: ${fromAddress}`);
 
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -31,13 +36,14 @@ export async function sendEmail({ to, subject, html }) {
     const data = await response.json();
 
     if (!response.ok) {
+      console.error('[Resend API] API ERROR:', JSON.stringify(data, null, 2));
       throw new Error(data.message || JSON.stringify(data));
     }
 
-    console.log('[Resend API] Success:', data.id);
+    console.log('[Resend API] SUCCESS! Message ID:', data.id);
     return { success: true, messageId: data.id };
   } catch (error) {
-    console.error('[Resend API] CRITICAL Error:', error.message);
+    console.error('[Resend API] CRITICAL Error sending email:', error.message);
     return { success: false, error: error.message };
   }
 }
