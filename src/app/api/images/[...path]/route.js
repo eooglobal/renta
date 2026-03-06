@@ -60,10 +60,24 @@ export async function GET(request, { params }) {
             });
         } catch (localErr) {
             console.error(`[IMAGE API] File not found locally or on R2: ${filePath}`);
-            return new NextResponse('Image not found', { status: 404 });
+
+            // Return a transparent 1x1 GIF to prevent Next.js <Image> from crashing on text/html 404s
+            const transparentPixelInfo = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+            return new NextResponse(transparentPixelInfo, {
+                status: 404,
+                headers: {
+                    'Content-Type': 'image/gif',
+                    'Cache-Control': 'no-store, max-age=0',
+                },
+            });
         }
     } catch (error) {
         console.error('[IMAGE API] Error serving image:', error);
-        return new NextResponse('Internal Server Error', { status: 500 });
+
+        const transparentPixelInfo = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+        return new NextResponse(transparentPixelInfo, {
+            status: 500,
+            headers: { 'Content-Type': 'image/gif' }
+        });
     }
 }

@@ -76,6 +76,7 @@ export async function POST(request) {
                 rentalId: rental.id,
                 amount: totalAmount,
                 paymentRef: reference,
+                paystackRef: reference, // Initialize with the same reference
                 method: 'PAYSTACK',
                 status: 'PENDING',
             },
