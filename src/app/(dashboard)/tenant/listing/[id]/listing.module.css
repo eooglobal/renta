@@ -2,8 +2,8 @@
     padding: var(--space-6) var(--space-4);
     width: 100%;
     margin: 0 auto;
-    overflow-x: hidden;
-    max-width: 100vw;
+    max-width: 1200px;
+    /* Constrains layout correctly without cutting off */
 }
 
 /* Hero Header Section */
@@ -207,14 +207,38 @@
 }
 
 @media (max-width: 768px) {
+    .container {
+        padding: var(--space-4) var(--space-2);
+    }
+
     .titleArea h1 {
-        font-size: 2.25rem;
+        font-size: 1.75rem;
+        word-wrap: break-word;
+        /* Prevent large titles from causing horizontal scroll */
     }
 
     .heroOverlay {
-        padding: var(--space-6);
+        padding: var(--space-4);
         flex-direction: column;
         align-items: flex-start;
         gap: var(--space-4);
+    }
+
+    .gallery {
+        grid-template-columns: repeat(2, 1fr);
+        /* 2x2 grid on mobile */
+    }
+
+    .amenitiesGrid {
+        grid-template-columns: 1fr 1fr;
+        /* 2 columns on mobile */
+    }
+
+    .paymentCard {
+        padding: var(--space-6) var(--space-4);
+    }
+
+    .section {
+        padding: var(--space-6) var(--space-4);
     }
 }

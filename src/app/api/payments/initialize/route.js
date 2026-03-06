@@ -44,7 +44,7 @@ export async function POST(request) {
 
         // Calculate amounts
         const breakdown = getPriceBreakdown(Number(property.rentPrice));
-        const totalAmount = breakdown.totalPayable;
+        const totalAmount = breakdown.total;
         const reference = generateReference();
 
         // Create pending rental
