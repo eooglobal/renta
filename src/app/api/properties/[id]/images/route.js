@@ -81,15 +81,27 @@ export async function POST(request, { params }) {
                 const bytes = await file.arrayBuffer();
                 const buffer = Buffer.from(bytes);
 
-                // Generate unique filename, deriving extension securely from MIME type
-                const ext = file.type.split('/')[1] || 'jpg';
-                const filename = `${Date.now()}-${i}.${ext}`;
-                const filepath = path.join(uploadDir, filename);
+                const filename = `${Date.now()}-${i}${path.extname(file.name)}`;
+                const r2Key = `properties/${id}/${filename}`;
 
-                await writeFile(filepath, buffer);
-                console.log(`[IMAGE UPLOAD] File written to disk: ${filepath}`);
+                let imageUrl;
 
-                const imageUrl = `/api/images/properties/${id}/${filename}`;
+                // Try to upload to R2, fallback to local file system if not configured
+                try {
+                    imageUrl = await uploadToR2(r2Key, buffer, file.type);
+                    console.log(`[IMAGE UPLOAD] Successfully uploaded to R2: ${imageUrl}`);
+                } catch (r2Error) {
+                    console.warn(`[IMAGE UPLOAD] R2 Upload failed or not configured, falling back to local storage: ${r2Error.message}`);
+
+                    // Fallback: Create upload directory and save locally
+                    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'properties', id);
+                    await mkdir(uploadDir, { recursive: true });
+                    const filepath = path.join(uploadDir, filename);
+                    await writeFile(filepath, buffer);
+                    console.log(`[IMAGE UPLOAD] File written to disk: ${filepath}`);
+                    imageUrl = `/api/images/properties/${id}/${filename}`;
+                }
+
                 const imageRecord = await prisma.propertyImage.create({
                     data: {
                         propertyId: id,

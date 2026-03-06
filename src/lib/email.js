@@ -6,10 +6,8 @@ const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Renta';
 export async function sendEmail({ to, subject, html }) {
   const API_KEY = process.env.SMTP_PASS;
 
-  // Use the from address from env, fallback to onboarding@resend.dev
-  // IMPORTANT: Resend free tier requires the EXACT string 'onboarding@resend.dev' 
-  // if you haven't verified a custom domain yet.
-  const fromAddress = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+  // Use the from address from env, fallback to noreply@renta-app.com
+  const fromAddress = process.env.EMAIL_FROM || 'noreply@renta-app.com';
 
   try {
     if (!API_KEY) {
@@ -28,6 +26,7 @@ export async function sendEmail({ to, subject, html }) {
       },
       body: JSON.stringify({
         sender: { email: fromAddress, name: APP_NAME },
+        replyTo: { email: fromAddress },
         to: [{ email: to }],
         subject: subject,
         htmlContent: wrapInTemplate(subject, html),

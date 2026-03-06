@@ -158,14 +158,43 @@ export default function TenantRentalsPage() {
                                                         Chat Landlord
                                                     </Link>
                                                     {rental.escrow?.status === 'HELD' && (
-                                                        <button
-                                                            className="btn btn-sm btn-outline"
-                                                            style={{ borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
-                                                            onClick={() => handleDispute(rental.escrow.id)}
-                                                        >
-                                                            <AlertTriangle size={14} style={{ marginRight: 4 }} />
-                                                            Raise Dispute
-                                                        </button>
+                                                        <>
+                                                            <button
+                                                                className="btn btn-sm"
+                                                                style={{ background: 'var(--color-success)', color: 'white' }}
+                                                                onClick={async () => {
+                                                                    if (confirm('Are you sure you want to confirm access and release the funds to the landlord? This cannot be undone.')) {
+                                                                        try {
+                                                                            const res = await fetch('/api/escrow/release', {
+                                                                                method: 'POST',
+                                                                                headers: { 'Content-Type': 'application/json' },
+                                                                                body: JSON.stringify({ rentalId: rental.id, action: 'confirm_access' })
+                                                                            });
+                                                                            const data = await res.json();
+                                                                            if (res.ok) {
+                                                                                alert(data.message);
+                                                                                window.location.reload();
+                                                                            } else {
+                                                                                alert(data.error);
+                                                                            }
+                                                                        } catch (e) {
+                                                                            alert('Failed to release funds');
+                                                                        }
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <CheckCircle size={14} style={{ marginRight: 4 }} />
+                                                                Release Funds
+                                                            </button>
+                                                            <button
+                                                                className="btn btn-sm btn-outline"
+                                                                style={{ borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
+                                                                onClick={() => handleDispute(rental.escrow.id)}
+                                                            >
+                                                                <AlertTriangle size={14} style={{ marginRight: 4 }} />
+                                                                Raise Dispute
+                                                            </button>
+                                                        </>
                                                     )}
                                                 </div>
                                             </div>

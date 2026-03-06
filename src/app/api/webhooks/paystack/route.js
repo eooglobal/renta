@@ -38,6 +38,23 @@ export async function POST(request) {
                         where: { id: payment.rentalId },
                         data: { status: 'ACTIVE' },
                     });
+
+                    // Update corresponding property to RENTED
+                    await prisma.property.update({
+                        where: { id: payment.rental.propertyId },
+                        data: { status: 'RENTED' }
+                    });
+
+                    // Set Escrow status to HELD
+                    const escrow = await prisma.escrow.findFirst({
+                        where: { rentalId: payment.rentalId }
+                    });
+                    if (escrow) {
+                        await prisma.escrow.update({
+                            where: { id: escrow.id },
+                            data: { status: 'HELD', heldAt: new Date() }
+                        });
+                    }
                 }
 
                 // Handle Featured Listing Payments
