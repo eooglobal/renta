@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { uploadToR2 } from '@/lib/r2';
 
 // POST /api/properties/[id]/images — Upload property images
 export async function POST(request, { params }) {
