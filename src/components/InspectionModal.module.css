@@ -79,10 +79,11 @@
 }
 
 .dateGrid {
+    display: flex;
+    flex-wrap: wrap;
     overflow-x: auto;
     gap: var(--space-3);
     padding-bottom: var(--space-4);
-    margin-bottom: var(--space-6);
     margin-bottom: var(--space-6);
     -ms-overflow-style: none;
     /* IE and Edge */

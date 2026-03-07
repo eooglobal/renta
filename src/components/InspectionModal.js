@@ -108,7 +108,7 @@ export default function InspectionModal({ propertyId, propertyTitle, onClose }) 
 
     return (
         <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
-            <div className={styles.modal} className="fade-in">
+            <div className={`${styles.modal} fade-in`}>
                 <button className={styles.closeButton} onClick={onClose}>
                     <X size={20} />
                 </button>

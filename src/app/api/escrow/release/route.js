@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { createNotification } from '@/lib/notifications';
+import { distributeEscrowFunds } from '@/lib/distributeEscrowFunds';
 
 export async function POST(request) {
     try {
@@ -24,11 +25,11 @@ export async function POST(request) {
                 property: {
                     include: {
                         landlord: true,
-                        scoutLead: true // Grab scout mapping if exists
+                        scoutLead: true
                     }
                 },
                 escrow: true,
-                affiliateReferral: true // Grab affiliate mapping if exists
+                affiliateReferral: true
             },
         });
 
@@ -50,157 +51,27 @@ export async function POST(request) {
                 }
 
                 // SECURE TRANSACTION: All or nothing DB updates
-                await prisma.$transaction(async (tx) => {
+                const distribution = await prisma.$transaction(async (tx) => {
                     // 1. Release Escrow
                     const releasedEscrow = await tx.escrow.update({
                         where: { id: rental.escrow.id },
                         data: { status: 'RELEASED', releasedAt: new Date() },
                     });
 
-                    // 2. Mark Rental Confirmed (Fallback mapping accessConfirmed if missing in schema)
-                    // The schema shows status as RentalStatus (PENDING, ACTIVE, COMPLETED).
-                    // Moving state to ACTIVE when tenant confirms access.
+                    // 2. Mark Rental as ACTIVE
                     await tx.rental.update({
                         where: { id: rental.id },
                         data: { status: 'ACTIVE' },
                     });
 
-                    // Utility to ensure a user has a wallet
-                    const ensureWallet = async (userId) => {
-                        let wallet = await tx.wallet.findUnique({ where: { userId } });
-                        if (!wallet) {
-                            wallet = await tx.wallet.create({ data: { userId, balance: 0, totalEarned: 0, totalWithdrawn: 0 } });
-                        }
-                        return wallet;
-                    };
-
-                    const rentAmountNum = Number(rental.rentAmount);
-
-                    // 3. Payout to Landlord (100% of rent price)
-                    const landlordWallet = await ensureWallet(rental.property.landlordId);
-                    await tx.wallet.update({
-                        where: { id: landlordWallet.id },
-                        data: {
-                            balance: { increment: rentAmountNum },
-                            totalEarned: { increment: rentAmountNum }
-                        }
-                    });
-
-                    await tx.transaction.create({
-                        data: {
-                            walletId: landlordWallet.id,
-                            amount: rentAmountNum,
-                            type: 'CREDIT',
-                            description: `Rental payout for ${rental.property.title}`,
-                            referenceId: String(releasedEscrow.id),
-                            referenceType: 'ESCROW'
-                        }
-                    });
-
-                    // Notify Landlord
-                    createNotification(rental.property.landlordId, {
-                        type: 'PAYMENT',
-                        title: 'Funds Released!',
-                        message: `₦${rentAmountNum.toLocaleString()} has been added to your wallet for ${rental.property.title}.`,
-                        link: '/landlord/payments'
-                    });
-
-                    // 4. Payout to Scout (3% of rent price)
-                    if (rental.property.scoutLead && rental.property.scoutLead.scoutId) {
-                        const scoutAmount = rentAmountNum * 0.03;
-                        const scoutWallet = await ensureWallet(rental.property.scoutLead.scoutId);
-
-                        // Create Official Commission Record
-                        const commission = await tx.commission.create({
-                            data: {
-                                escrowId: releasedEscrow.id,
-                                userId: rental.property.scoutLead.scoutId,
-                                type: 'SCOUT',
-                                amount: scoutAmount,
-                                percentage: 3.00,
-                                status: 'PAID',
-                                paidAt: new Date()
-                            }
-                        });
-
-                        await tx.wallet.update({
-                            where: { id: scoutWallet.id },
-                            data: {
-                                balance: { increment: scoutAmount },
-                                totalEarned: { increment: scoutAmount }
-                            }
-                        });
-
-                        await tx.transaction.create({
-                            data: {
-                                walletId: scoutWallet.id,
-                                amount: scoutAmount,
-                                type: 'CREDIT',
-                                description: `Scout commission (3%) for ${rental.property.title}`,
-                                referenceId: String(commission.id),
-                                referenceType: 'COMMISSION'
-                            }
-                        });
-
-                        // Notify Scout
-                        createNotification(rental.property.scoutLead.scoutId, {
-                            type: 'PAYMENT',
-                            title: 'Commission Earned!',
-                            message: `You earned ₦${scoutAmount.toLocaleString()} scout commission for ${rental.property.title}.`,
-                            link: '/scout/earnings'
-                        });
-                    }
-
-                    // 5. Payout to Affiliate (2% of rent price)
-                    if (rental.affiliateReferral && rental.affiliateReferral.affiliateId) {
-                        const affiliateAmount = rentAmountNum * 0.02;
-                        const affiliateWallet = await ensureWallet(rental.affiliateReferral.affiliateId);
-
-                        // Create Official Commission Record
-                        const commission = await tx.commission.create({
-                            data: {
-                                escrowId: releasedEscrow.id,
-                                userId: rental.affiliateReferral.affiliateId,
-                                type: 'AFFILIATE',
-                                amount: affiliateAmount,
-                                percentage: 2.00,
-                                status: 'PAID',
-                                paidAt: new Date()
-                            }
-                        });
-
-                        await tx.wallet.update({
-                            where: { id: affiliateWallet.id },
-                            data: {
-                                balance: { increment: affiliateAmount },
-                                totalEarned: { increment: affiliateAmount }
-                            }
-                        });
-
-                        await tx.transaction.create({
-                            data: {
-                                walletId: affiliateWallet.id,
-                                amount: affiliateAmount,
-                                type: 'CREDIT',
-                                description: `Affiliate commission (2%) for referral`,
-                                referenceId: String(commission.id),
-                                referenceType: 'COMMISSION'
-                            }
-                        });
-
-                        // Notify Affiliate
-                        createNotification(rental.affiliateReferral.affiliateId, {
-                            type: 'PAYMENT',
-                            title: 'Affiliate Commission!',
-                            message: `You earned ₦${affiliateAmount.toLocaleString()} for a successful referral.`,
-                            link: '/affiliate/earnings'
-                        });
-                    }
+                    // 3. Distribute funds to all parties
+                    return await distributeEscrowFunds(tx, rental, releasedEscrow);
                 });
 
                 return NextResponse.json({
-                    message: 'Access confirmed. Rent and commissions have been successfully deposited to the respective wallets.',
+                    message: 'Access confirmed. Rent and commissions distributed.',
                     status: 'released',
+                    distribution,
                 });
             }
 
@@ -228,26 +99,37 @@ export async function POST(request) {
             }
 
             case 'admin_release': {
-                // Admin-only action to force release
                 if (!isAdmin) {
                     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
                 }
 
-                if (rental.escrow) {
-                    await prisma.escrow.update({
-                        where: { id: rental.escrow.id },
-                        data: { status: 'RELEASED', releasedAt: new Date() },
-                    });
+                if (!rental.escrow || (rental.escrow.status !== 'HELD' && rental.escrow.status !== 'DISPUTED')) {
+                    return NextResponse.json({ error: 'No escrow available to release' }, { status: 400 });
                 }
 
+                const distribution = await prisma.$transaction(async (tx) => {
+                    // Release escrow
+                    const releasedEscrow = await tx.escrow.update({
+                        where: { id: rental.escrow.id },
+                        data: {
+                            status: 'RELEASED',
+                            releasedAt: new Date(),
+                            releasedById: parseInt(session.user.id),
+                        },
+                    });
+
+                    // Distribute funds to all parties
+                    return await distributeEscrowFunds(tx, rental, releasedEscrow);
+                });
+
                 return NextResponse.json({
-                    message: 'Escrow released by admin.',
+                    message: 'Escrow released by admin. Funds distributed.',
                     status: 'released',
+                    distribution,
                 });
             }
 
             case 'admin_refund': {
-                // Admin-only refund
                 if (!isAdmin) {
                     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
                 }
@@ -259,9 +141,41 @@ export async function POST(request) {
                     });
                 }
 
+                // Refund the tenant's wallet
+                const totalPaidNum = Number(rental.totalPaid);
+                const tenantWallet = await prisma.wallet.upsert({
+                    where: { userId: rental.tenantId },
+                    update: { balance: { increment: totalPaidNum } },
+                    create: { userId: rental.tenantId, balance: totalPaidNum, totalEarned: 0, totalWithdrawn: 0 },
+                });
+
+                await prisma.transaction.create({
+                    data: {
+                        walletId: tenantWallet.id,
+                        amount: totalPaidNum,
+                        type: 'CREDIT',
+                        description: `Refund for ${rental.property.title}`,
+                        referenceId: String(rental.escrow?.id || rental.id),
+                        referenceType: 'ESCROW_REFUND'
+                    }
+                });
+
                 await prisma.rental.update({
                     where: { id: rental.id },
                     data: { status: 'CANCELLED' },
+                });
+
+                // Make property available again
+                await prisma.property.update({
+                    where: { id: rental.propertyId },
+                    data: { status: 'VERIFIED' },
+                });
+
+                createNotification(rental.tenantId, {
+                    type: 'PAYMENT',
+                    title: 'Refund Processed',
+                    message: `₦${totalPaidNum.toLocaleString()} has been refunded to your wallet for ${rental.property.title}.`,
+                    link: '/tenant/wallet'
                 });
 
                 return NextResponse.json({

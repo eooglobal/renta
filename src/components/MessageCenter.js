@@ -230,8 +230,22 @@ export default function MessageCenter() {
                                 </div>
                                 <div>
                                     <p className="font-bold text-sm" style={{ color: 'var(--text-color)' }}>No conversations yet</p>
-                                    <p className="text-xs mt-2 leading-relaxed">When you contact a landlord or a tenant contacts you, your chat history will appear here.</p>
+                                    <p className="text-xs mt-2 leading-relaxed" style={{ maxWidth: '260px' }}>
+                                        You can message {session?.user?.role === 'LANDLORD' ? 'your tenants' : 'your landlords'} once you have an active rental.
+                                    </p>
                                 </div>
+                                <a
+                                    href={session?.user?.role === 'LANDLORD' ? '/landlord/tenants' : '/tenant/rentals'}
+                                    style={{
+                                        marginTop: '0.5rem', padding: '10px 24px', fontSize: '13px',
+                                        background: 'var(--color-primary)', color: 'var(--color-black)',
+                                        borderRadius: 'var(--radius-lg)', fontWeight: '600',
+                                        textDecoration: 'none', display: 'inline-block',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)', transition: 'transform 0.2s'
+                                    }}
+                                >
+                                    {session?.user?.role === 'LANDLORD' ? 'View My Tenants' : 'View My Rentals'}
+                                </a>
                             </div>
                         ) : (
                             conversations.map((conv) => (
