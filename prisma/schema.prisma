@@ -163,7 +163,7 @@ model Escrow {
   id            Int          @id @default(autoincrement())
   rentalId      Int          @unique @map("rental_id")
   amount        Decimal      @db.Decimal(12, 2)
-  status        EscrowStatus @default(HELD)
+  status        EscrowStatus @default(PENDING)
   releasedAt    DateTime?    @map("released_at")
   releasedById  Int?         @map("released_by_id")
   disputeReason String?      @map("dispute_reason") @db.Text
@@ -495,6 +495,7 @@ enum RentalStatus {
 }
 
 enum EscrowStatus {
+  PENDING
   HELD
   RELEASED
   DISPUTED

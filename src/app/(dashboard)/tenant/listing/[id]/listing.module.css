@@ -2,8 +2,9 @@
     padding: var(--space-6) var(--space-4);
     width: 100%;
     margin: 0 auto;
-    max-width: 1200px;
-    /* Constrains layout correctly without cutting off */
+    max-width: 100%;
+    /* Respect parent constraints */
+    box-sizing: border-box;
 }
 
 /* Hero Header Section */
@@ -18,13 +19,67 @@
     box-shadow: var(--shadow-2xl);
 }
 
-/* ... existing hero styles ... */
+.heroImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.heroOverlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--space-8);
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+}
+
+.titleArea h1 {
+    color: white;
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    margin-bottom: var(--space-2);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.meta {
+    display: flex;
+    gap: var(--space-4);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.95rem;
+    flex-wrap: wrap;
+}
+
+.meta span {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.badgePremium {
+    background: white;
+    color: var(--color-black);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-full);
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    white-space: nowrap;
+}
 
 /* Main Content Grid */
 .grid {
     display: grid;
-    grid-template-columns: 1fr 360px;
-    gap: var(--space-8);
+    grid-template-columns: minmax(0, 1fr) 340px;
+    /* minmax(0,...) prevents overflow */
+    gap: var(--space-6);
     align-items: start;
     width: 100%;
 }
@@ -33,6 +88,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-8);
+    min-width: 0;
+    /* Allow flex children to shrink */
 }
 
 /* Image Gallery */
@@ -65,44 +122,49 @@
 /* Sections */
 .section {
     background: var(--color-white);
-    padding: var(--space-10);
+    padding: var(--space-8);
     border-radius: var(--radius-2xl);
     border: 1px solid var(--color-gray-100);
     box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    /* Prevent inner content from overflowing sections */
 }
 
 .sectionTitle {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     font-weight: 800;
-    margin-bottom: var(--space-8);
+    margin-bottom: var(--space-6);
     display: flex;
     align-items: center;
-    gap: var(--space-4);
+    gap: var(--space-3);
     color: var(--color-black);
     letter-spacing: -0.02em;
 }
 
 .description {
-    font-size: 1.125rem;
+    font-size: 1.05rem;
     line-height: 1.8;
     color: var(--color-gray-600);
     white-space: pre-line;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .amenitiesGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-3);
 }
 
 .amenityItem {
     background: var(--color-gray-50);
-    padding: var(--space-4) var(--space-6);
+    padding: var(--space-3) var(--space-4);
     border-radius: var(--radius-xl);
     display: flex;
     align-items: center;
     gap: var(--space-3);
     font-weight: 600;
+    font-size: 0.9rem;
     color: var(--color-gray-700);
     border: 1px solid var(--color-gray-100);
 }
@@ -110,35 +172,36 @@
 /* Sticky Sidebar */
 .sidebar {
     position: sticky;
-    top: 100px;
+    top: 80px;
     display: flex;
     flex-direction: column;
-    gap: var(--space-6);
+    gap: var(--space-5);
+    min-width: 0;
 }
 
 .paymentCard {
     background: var(--color-white);
-    padding: var(--space-8);
-    border-radius: var(--radius-3xl);
+    padding: var(--space-6);
+    border-radius: var(--radius-2xl);
     border: 1px solid var(--color-gray-200);
     box-shadow: var(--shadow-xl);
 }
 
 .priceTag {
-    margin-bottom: var(--space-8);
-    padding-bottom: var(--space-6);
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-4);
     border-bottom: 1px solid var(--color-gray-100);
 }
 
 .priceDisplay {
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 900;
     color: var(--color-primary);
     letter-spacing: -0.04em;
 }
 
 .priceDisplay sub {
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: var(--color-gray-400);
     font-weight: 500;
 }
@@ -146,36 +209,47 @@
 .breakdown {
     list-style: none;
     padding: 0;
-    margin-bottom: var(--space-8);
+    margin-bottom: var(--space-6);
     display: flex;
     flex-direction: column;
-    gap: var(--space-4);
+    gap: var(--space-3);
 }
 
 .breakdownItem {
     display: flex;
     justify-content: space-between;
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: var(--color-gray-500);
 }
 
 .totalRow {
-    padding-top: var(--space-4);
+    padding-top: var(--space-3);
     border-top: 1px dashed var(--color-gray-200);
     color: var(--color-black);
     font-weight: 800;
-    font-size: 1.25rem;
+    font-size: 1.1rem;
 }
 
 .sidebarAction {
     width: 100%;
 }
 
+/* Warning Box */
+.warningBox {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: var(--radius-lg);
+    color: #856404;
+}
+
 .ctaBox {
     background: linear-gradient(135deg, var(--color-primary) 0%, #1a1aff 100%);
     color: white;
-    padding: var(--space-8);
-    border-radius: var(--radius-3xl);
+    padding: var(--space-6);
+    border-radius: var(--radius-2xl);
     text-align: center;
     box-shadow: var(--shadow-lg);
 }
@@ -187,11 +261,14 @@
 
 .ctaBox p {
     font-size: 0.875rem;
-    margin-bottom: var(--space-6);
+    margin-bottom: var(--space-4);
     opacity: 0.9;
 }
 
-@media (max-width: 1200px) {
+/* ==========================================
+   TABLET: Stack grid to single column
+   ========================================== */
+@media (max-width: 900px) {
     .grid {
         grid-template-columns: 1fr;
     }
@@ -203,42 +280,83 @@
 
     .hero {
         aspect-ratio: 16/9;
-    }
-}
-
-@media (max-width: 768px) {
-    .container {
-        padding: var(--space-4) var(--space-2);
-    }
-
-    .titleArea h1 {
-        font-size: 1.75rem;
-        word-wrap: break-word;
-        /* Prevent large titles from causing horizontal scroll */
-    }
-
-    .heroOverlay {
-        padding: var(--space-4);
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--space-4);
+        min-height: 200px;
     }
 
     .gallery {
-        grid-template-columns: repeat(2, 1fr);
-        /* 2x2 grid on mobile */
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ==========================================
+   MOBILE: Tighten spacing, smaller fonts
+   ========================================== */
+@media (max-width: 768px) {
+    .container {
+        padding: var(--space-3) var(--space-2);
+    }
+
+    .hero {
+        border-radius: var(--radius-xl);
+        min-height: 180px;
+    }
+
+    .titleArea h1 {
+        font-size: 1.5rem;
+    }
+
+    .heroOverlay {
+        padding: var(--space-3);
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-3);
+    }
+
+    .meta {
+        font-size: 0.8rem;
+        gap: var(--space-2);
+    }
+
+    .gallery {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-2);
     }
 
     .amenitiesGrid {
         grid-template-columns: 1fr 1fr;
-        /* 2 columns on mobile */
-    }
-
-    .paymentCard {
-        padding: var(--space-6) var(--space-4);
+        gap: var(--space-2);
     }
 
     .section {
-        padding: var(--space-6) var(--space-4);
+        padding: var(--space-4) var(--space-3);
+        border-radius: var(--radius-xl);
+    }
+
+    .sectionTitle {
+        font-size: 1.15rem;
+        margin-bottom: var(--space-4);
+    }
+
+    .paymentCard {
+        padding: var(--space-4) var(--space-3);
+        border-radius: var(--radius-xl);
+    }
+
+    .priceDisplay {
+        font-size: 1.6rem;
+    }
+
+    .ctaBox {
+        padding: var(--space-4);
+        border-radius: var(--radius-xl);
+    }
+
+    .description {
+        font-size: 0.95rem;
+    }
+
+    .amenityItem {
+        font-size: 0.8rem;
+        padding: var(--space-2) var(--space-3);
     }
 }

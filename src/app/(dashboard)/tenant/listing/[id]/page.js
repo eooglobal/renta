@@ -84,7 +84,7 @@ export default function TenantPropertyDetails() {
             if (!res.ok) throw new Error(data.error);
 
             // Redirect to Paystack
-            window.location.href = data.data.authorization_url;
+            window.location.href = data.paymentUrl;
         } catch (err) {
             alert(err.message);
         }

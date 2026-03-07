@@ -15,7 +15,7 @@ export async function GET(request) {
 
         // Find payment
         const payment = await prisma.payment.findFirst({
-            where: { paymentRef: reference },
+            where: { paystackRef: reference },
             include: {
                 rental: {
                     include: {
@@ -64,7 +64,7 @@ export async function GET(request) {
             if (payment.rental.escrow) {
                 await prisma.escrow.update({
                     where: { id: payment.rental.escrow.id },
-                    data: { status: 'HELD', heldAt: new Date() },
+                    data: { status: 'HELD' },
                 });
             }
 

@@ -161,7 +161,10 @@
     margin-left: var(--sidebar-width);
     min-height: 100vh;
     min-width: 0;
-    /* Allow the flex item to shrink below content size */
+    overflow-x: hidden;
+    /* Prevent horizontal scroll */
+    max-width: calc(100vw - var(--sidebar-width));
+    /* Never exceed remaining viewport */
 }
 
 /* Top Bar */
@@ -212,6 +215,10 @@
 .content {
     padding: var(--space-6);
     flex: 1;
+    max-width: 100%;
+    overflow-x: hidden;
+    /* Clip any wide children */
+    box-sizing: border-box;
 }
 
 /* Mobile Overlay */
@@ -242,6 +249,8 @@
 
     .main {
         margin-left: 0;
+        max-width: 100vw;
+        /* Full width on mobile */
     }
 
     .menuToggle {

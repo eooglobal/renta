@@ -19,7 +19,7 @@ export async function POST(request) {
 
         // Verify landlord owns the property
         const property = await prisma.property.findFirst({
-            where: { id: parseInt(propertyId), landlordId: parseInt(session.user.id) }
+            where: { id: propertyId, landlordId: parseInt(session.user.id) }
         });
 
         if (!property) {

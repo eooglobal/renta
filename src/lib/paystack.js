@@ -3,6 +3,8 @@
  * Handles payment initialization, verification, and webhook processing
  */
 
+import crypto from 'crypto';
+
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
 const PAYSTACK_BASE = 'https://api.paystack.co';
 
@@ -60,11 +62,6 @@ export function generateReference(prefix = 'RENTA') {
     const random = Math.random().toString(36).substring(2, 8);
     return `${prefix}_${timestamp}_${random}`.toUpperCase();
 }
-
-/**
- * Validate Paystack webhook signature
- */
-const crypto = require('crypto');
 
 /**
  * Validate Paystack webhook signature

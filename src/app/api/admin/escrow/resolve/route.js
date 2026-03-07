@@ -52,7 +52,7 @@ export async function POST(request) {
                         status: 'RELEASED',
                         releasedAt: new Date(),
                         releasedById: parseInt(session.user.id),
-                        adminNotes: escrow.adminNotes ? `${escrow.adminNotes}\n[ADMIN ${session.user.id}]: Released to Landlord.` : `[ADMIN ${session.user.id}]: Released to Landlord.`
+                        disputeReason: escrow.disputeReason ? `${escrow.disputeReason}\n[ADMIN ${session.user.id}]: Released to Landlord.` : `[ADMIN ${session.user.id}]: Released to Landlord.`
                     }
                 });
 
@@ -93,7 +93,7 @@ export async function POST(request) {
                         status: 'REFUNDED',
                         releasedAt: new Date(),
                         releasedById: parseInt(session.user.id),
-                        adminNotes: escrow.adminNotes ? `${escrow.adminNotes}\n[ADMIN ${session.user.id}]: Refunded to Tenant.` : `[ADMIN ${session.user.id}]: Refunded to Tenant.`
+                        disputeReason: escrow.disputeReason ? `${escrow.disputeReason}\n[ADMIN ${session.user.id}]: Refunded to Tenant.` : `[ADMIN ${session.user.id}]: Refunded to Tenant.`
                     }
                 });
 

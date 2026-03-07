@@ -14,6 +14,7 @@ const statusConfig = {
 };
 
 const escrowLabels = {
+    PENDING: 'Escrow Pending',
     HELD: 'Escrow Held',
     RELEASED: 'Escrow Released',
     DISPUTED: 'Escrow Disputed',

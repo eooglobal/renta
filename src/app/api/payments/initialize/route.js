@@ -61,23 +61,21 @@ export async function POST(request) {
             },
         });
 
-        // Create escrow record
+        // Create escrow record (PENDING until payment is confirmed by Paystack)
         const escrow = await prisma.escrow.create({
             data: {
                 rentalId: rental.id,
                 amount: totalAmount,
-                status: 'HELD',
+                status: 'PENDING',
             },
         });
 
-        // Create payment record
+        // Create payment record (schema fields: rentalId, amount, paystackRef, status)
         await prisma.payment.create({
             data: {
                 rentalId: rental.id,
                 amount: totalAmount,
-                paymentRef: reference,
-                paystackRef: reference, // Initialize with the same reference
-                method: 'PAYSTACK',
+                paystackRef: reference,
                 status: 'PENDING',
             },
         });

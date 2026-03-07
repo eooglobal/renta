@@ -22,7 +22,8 @@ export async function POST(request) {
                 const reference = data.reference;
 
                 const payment = await prisma.payment.findFirst({
-                    where: { paymentRef: reference },
+                    where: { paystackRef: reference },
+                    include: { rental: true },
                 });
 
                 if (payment && payment.status !== 'SUCCESS') {
@@ -52,7 +53,7 @@ export async function POST(request) {
                     if (escrow) {
                         await prisma.escrow.update({
                             where: { id: escrow.id },
-                            data: { status: 'HELD', heldAt: new Date() }
+                            data: { status: 'HELD' }
                         });
                     }
                 }
