@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import { Mail, MapPin, Phone } from 'lucide-react';
+import LandingHeader from '@/components/LandingHeader';
+import LandingFooter from '@/components/LandingFooter';
+import styles from '../page.module.css';
 
 export const metadata = {
     title: 'Contact Us | Renta',
@@ -8,7 +11,9 @@ export const metadata = {
 
 export default function ContactPage() {
     return (
-        <div style={{ backgroundColor: '#fafafa', minHeight: '100vh', paddingBottom: '4rem' }}>
+        <div className={styles.page}>
+            <LandingHeader />
+            <div style={{ backgroundColor: '#fafafa', minHeight: '100vh', paddingBottom: '4rem', paddingTop: '120px' }}>
             {/* Header */}
             <div style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e5e7eb', padding: '4rem 1rem', textAlign: 'center' }}>
                 <div className="container">
@@ -79,6 +84,8 @@ export default function ContactPage() {
                     </Link>
                 </div>
             </div>
+            </div>
+            <LandingFooter />
         </div>
     );
 }

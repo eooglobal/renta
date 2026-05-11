@@ -82,7 +82,13 @@ export async function POST(request, { params }) {
                 const bytes = await file.arrayBuffer();
                 const buffer = Buffer.from(bytes);
 
-                const filename = `${Date.now()}-${i}${path.extname(file.name)}`;
+                const mimeToExt = {
+                    'image/jpeg': '.jpg',
+                    'image/png': '.png',
+                    'image/webp': '.webp'
+                };
+                const ext = mimeToExt[file.type] || '.jpg';
+                const filename = `${Date.now()}-${i}${ext}`;
                 const r2Key = `properties/${id}/${filename}`;
 
                 let imageUrl;
@@ -172,6 +178,9 @@ export async function DELETE(request, { params }) {
         if (!isOwner && !isAdmin) {
             return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
         }
+
+        const { deleteFileByUrl } = await import('@/lib/fileCleanup');
+        await deleteFileByUrl(image.url);
 
         await prisma.propertyImage.delete({ where: { id: parseInt(imageId) } });
 

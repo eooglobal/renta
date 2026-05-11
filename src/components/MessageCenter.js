@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Send, User as UserIcon, Loader2, MessageSquare, ArrowLeft } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
+import { getPusherClient } from '@/lib/pusher';
 
 export default function MessageCenter() {
     const { data: session } = useSession();
@@ -20,21 +21,51 @@ export default function MessageCenter() {
 
     const messagesEndRef = useRef(null);
 
+    const activeContactRef = useRef(activeContact);
+    useEffect(() => {
+        activeContactRef.current = activeContact;
+    }, [activeContact]);
+
     useEffect(() => {
         fetchConversations();
-        // Poll for new messages every 10 seconds (in a real app, use WebSockets)
-        const interval = setInterval(fetchConversations, 10000);
-        return () => clearInterval(interval);
-    }, []);
+        if (!currentUserId) return;
+
+        let pusher;
+        const initPusher = async () => {
+            try {
+                const settingsRes = await fetch('/api/settings/public');
+                const settings = await settingsRes.json();
+                
+                pusher = getPusherClient(settings.NEXT_PUBLIC_PUSHER_KEY, settings.NEXT_PUBLIC_PUSHER_CLUSTER);
+                if (!pusher) return;
+
+                const channel = pusher.subscribe(`user-${currentUserId}`);
+                channel.bind('new-message', (data) => {
+                    fetchConversations();
+                    const currentActive = activeContactRef.current;
+                    if (currentActive && (data.senderId === currentActive.id || data.receiverId === currentActive.id)) {
+                        setMessages((prev) => {
+                            if (prev.some(m => m.id === data.id)) return prev;
+                            return [...prev, data];
+                        });
+                    }
+                });
+            } catch (err) {
+                console.error('Pusher init failed:', err);
+            }
+        };
+
+        initPusher();
+        return () => {
+            if (pusher) pusher.unsubscribe(`user-${currentUserId}`);
+        };
+    }, [currentUserId]);
 
     useEffect(() => {
         if (activeContact) {
             fetchMessages(activeContact.id);
-            // Poll active thread specifically
-            const interval = setInterval(() => fetchMessages(activeContact.id, true), 5000);
-            return () => clearInterval(interval);
         }
-    }, [activeContact]);
+    }, [activeContact?.id]);
 
     useEffect(() => {
         scrollToBottom();

@@ -112,13 +112,24 @@ export async function PUT(request, { params }) {
         if (rentPrice !== undefined) updateData.rentPrice = rentPrice;
         if (type !== undefined) updateData.type = type;
         if (address !== undefined) updateData.address = address;
-        if (cityId !== undefined) {
-            const pCityId = parseInt(cityId);
-            if (!isNaN(pCityId)) updateData.cityId = pCityId;
-        }
-        if (areaId !== undefined) {
-            const pAreaId = parseInt(areaId);
-            if (!isNaN(pAreaId)) updateData.areaId = pAreaId;
+        if (cityId !== undefined || areaId !== undefined) {
+            const finalCityId = cityId !== undefined ? parseInt(cityId) : property.cityId;
+            const finalAreaId = areaId !== undefined ? parseInt(areaId) : property.areaId;
+
+            if (!isNaN(finalCityId) && !isNaN(finalAreaId)) {
+                // Validate area belongs to city
+                const area = await prisma.area.findUnique({
+                    where: { id: finalAreaId },
+                    select: { cityId: true }
+                });
+
+                if (!area || area.cityId !== finalCityId) {
+                    return NextResponse.json({ error: 'Selected area does not belong to the selected city' }, { status: 400 });
+                }
+
+                if (cityId !== undefined) updateData.cityId = finalCityId;
+                if (areaId !== undefined) updateData.areaId = finalAreaId;
+            }
         }
         if (latitude !== undefined) updateData.latitude = latitude;
         if (longitude !== undefined) updateData.longitude = longitude;
@@ -199,6 +210,18 @@ export async function DELETE(request, { params }) {
                 { status: 400 }
             );
         }
+
+        // Fetch all images to delete them physically
+        const images = await prisma.propertyImage.findMany({
+            where: { propertyId: id }
+        });
+
+        const { deleteFileByUrl } = await import('@/lib/fileCleanup');
+        
+        // Non-blocking cleanup
+        Promise.all(images.map(img => deleteFileByUrl(img.url))).catch(err => {
+            console.error('Failed to cleanup property images:', err);
+        });
 
         await prisma.property.delete({ where: { id: id } });
 

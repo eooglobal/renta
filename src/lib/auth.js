@@ -6,6 +6,7 @@ import { authConfig } from '@/lib/auth.config';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     ...authConfig,
+    secret: process.env.AUTH_SECRET,
     providers: [
         Credentials({
             name: 'credentials',
@@ -20,7 +21,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
                 // --- Rate Limiting ---
                 const { checkRateLimit } = await import('@/lib/rate-limiter');
-                const rateLimit = await checkRateLimit(credentials.email, 'login', 5, 15 * 60 * 1000);
+                const rateLimit = await checkRateLimit(credentials.email, 'login', 5, 15 * 60 * 1000, { failClosed: true });
                 if (!rateLimit.success) {
                     throw new Error(rateLimit.message);
                 }

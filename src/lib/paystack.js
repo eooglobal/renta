@@ -4,18 +4,20 @@
  */
 
 import crypto from 'crypto';
+import { getSetting } from './settings';
 
-const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
 const PAYSTACK_BASE = 'https://api.paystack.co';
 
 /**
  * Initialize a Paystack transaction
  */
 export async function initializePayment({ email, amount, reference, metadata = {}, callbackUrl }) {
+    const secret = await getSetting('PAYSTACK_SECRET_KEY');
+    
     const res = await fetch(`${PAYSTACK_BASE}/transaction/initialize`, {
         method: 'POST',
         headers: {
-            Authorization: `Bearer ${PAYSTACK_SECRET}`,
+            Authorization: `Bearer ${secret}`,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -40,9 +42,11 @@ export async function initializePayment({ email, amount, reference, metadata = {
  * Verify a Paystack transaction
  */
 export async function verifyPayment(reference) {
+    const secret = await getSetting('PAYSTACK_SECRET_KEY');
+
     const res = await fetch(`${PAYSTACK_BASE}/transaction/verify/${encodeURIComponent(reference)}`, {
         headers: {
-            Authorization: `Bearer ${PAYSTACK_SECRET}`,
+            Authorization: `Bearer ${secret}`,
         },
     });
 
@@ -65,13 +69,13 @@ export function generateReference(prefix = 'RENTA') {
 
 /**
  * Validate Paystack webhook signature
- * Note: body MUST be the raw request text (string), not a JSON object
  */
-export function validateWebhookSignature(rawBody, signature) {
+export async function validateWebhookSignature(rawBody, signature) {
     if (!signature) return false;
+    const secret = await getSetting('PAYSTACK_SECRET_KEY');
 
     const hash = crypto
-        .createHmac('sha512', PAYSTACK_SECRET)
+        .createHmac('sha512', secret)
         .update(rawBody)
         .digest('hex');
     return hash === signature;

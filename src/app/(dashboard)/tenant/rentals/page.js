@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { FileText, Home, MapPin, Calendar, Shield, CheckCircle, Clock, AlertTriangle, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
+import SignaturePad from '@/components/SignaturePad';
 
 const statusConfig = {
     PENDING: { label: 'Pending', badge: 'badge-pending', icon: Clock },
@@ -24,18 +25,43 @@ const escrowLabels = {
 export default function TenantRentalsPage() {
     const [rentals, setRentals] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [signingRental, setSigningRental] = useState(null);
+
+    const fetchRentals = async () => {
+        try {
+            const res = await fetch('/api/tenant/rentals');
+            const data = await res.json();
+            if (res.ok) setRentals(data);
+        } catch (err) { console.error(err); }
+        finally { setLoading(false); }
+    };
 
     useEffect(() => {
-        const fetchRentals = async () => {
-            try {
-                const res = await fetch('/api/tenant/rentals');
-                const data = await res.json();
-                if (res.ok) setRentals(data);
-            } catch (err) { console.error(err); }
-            finally { setLoading(false); }
-        };
         fetchRentals();
     }, []);
+
+    const handleSign = async (signature) => {
+        if (!signingRental) return;
+        
+        try {
+            const res = await fetch(`/api/rentals/${signingRental.id}/sign`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ signature, role: 'TENANT' })
+            });
+
+            if (res.ok) {
+                alert('Agreement signed successfully!');
+                setSigningRental(null);
+                fetchRentals();
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Failed to sign agreement');
+            }
+        } catch (err) {
+            alert('Something went wrong');
+        }
+    };
 
     const handleDispute = async (escrowId) => {
         const reason = window.prompt("Please detail the reason for the dispute. This will halt escrow release until an Admin reviews it.");
@@ -158,6 +184,38 @@ export default function TenantRentalsPage() {
                                                         <MessageCircle size={14} style={{ marginRight: 4 }} />
                                                         Chat Landlord
                                                     </Link>
+                                                    <button
+                                                        onClick={() => setSigningRental(rental)}
+                                                        className={`btn btn-sm ${rental.agreement?.tenantSigned ? 'btn-ghost text-success' : 'btn-primary'}`}
+                                                        disabled={rental.agreement?.tenantSigned}
+                                                    >
+                                                        {rental.agreement?.tenantSigned ? (
+                                                            <><CheckCircle size={14} style={{ marginRight: 4 }} /> Signed</>
+                                                        ) : (
+                                                            <><FileText size={14} style={{ marginRight: 4 }} /> Sign Agreement</>
+                                                        )}
+                                                    </button>
+                                                    <button
+                                                        onClick={async () => {
+                                                            const { generateRentalReceipt } = await import('@/lib/receiptGenerator');
+                                                            generateRentalReceipt({
+                                                                tenantName: `${rental.tenant.firstName} ${rental.tenant.lastName}`,
+                                                                landlordName: `${rental.property.landlord.firstName} ${rental.property.landlord.lastName}`,
+                                                                propertyTitle: rental.property.title,
+                                                                propertyAddress: rental.property.address,
+                                                                rentalId: rental.id,
+                                                                paymentRef: rental.paystackRef || 'N/A',
+                                                                amount: rental.rentAmount,
+                                                                serviceFee: rental.serviceFee,
+                                                                totalPaid: rental.totalPaid,
+                                                                date: rental.createdAt
+                                                            });
+                                                        }}
+                                                        className="btn btn-sm btn-outline"
+                                                    >
+                                                        <FileText size={14} style={{ marginRight: 4 }} />
+                                                        Receipt
+                                                    </button>
                                                     {rental.escrow?.status === 'HELD' && (
                                                         <>
                                                             <button
@@ -206,6 +264,13 @@ export default function TenantRentalsPage() {
                         );
                     })}
                 </div>
+            )}
+            {signingRental && (
+                <SignaturePad 
+                    title={`Sign Agreement for ${signingRental.property?.title}`}
+                    onSave={handleSign}
+                    onCancel={() => setSigningRental(null)}
+                />
             )}
         </div>
     );

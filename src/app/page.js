@@ -2,6 +2,7 @@ import styles from './page.module.css';
 import Link from 'next/link';
 import { CheckCircle, DollarSign, Ghost, Search, Ban, MapPin, Check } from 'lucide-react';
 import LandingHeader from '@/components/LandingHeader';
+import LandingFooter from '@/components/LandingFooter';
 
 export const metadata = {
   title: 'Renta — Verified Apartments for Rent in Ilorin',
@@ -263,31 +264,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className={styles.footer}>
-        <div className={`container ${styles.footerInner}`}>
-          <div className={styles.footerBrand}>
-            <span className={styles.footerLogo}>Renta</span>
-            <p>Verified apartment rentals in Ilorin, Nigeria.</p>
-          </div>
-          <div className={styles.footerLinks}>
-            <div>
-              <h6>Platform</h6>
-              <Link href="/register">Browse Listings</Link>
-              <Link href="/register?role=landlord">List Property</Link>
-              <Link href="/register?role=scout">Become a Scout</Link>
-            </div>
-            <div>
-              <h6>Company</h6>
-              <Link href="/about">About Renta</Link>
-              <Link href="/contact">Contact</Link>
-              <Link href="/terms">Terms of Service</Link>
-            </div>
-          </div>
-          <div className={styles.footerBottom}>
-            <p>© {new Date().getFullYear()} Renta. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <LandingFooter />
     </div>
   );
 }

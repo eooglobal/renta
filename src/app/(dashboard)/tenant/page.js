@@ -1,11 +1,31 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Search, FileText, Wrench } from 'lucide-react';
 import styles from './dashboard.module.css';
 
 export default function TenantDashboard() {
     const { data: session } = useSession();
+    const [stats, setStats] = useState({ activeRentals: 0, escrowBalance: 0, savedListings: 0 });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await fetch('/api/tenant/stats');
+                if (res.ok) {
+                    const data = await res.json();
+                    setStats(data);
+                }
+            } catch (err) {
+                console.error('Failed to fetch stats', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        if (session) fetchStats();
+    }, [session]);
 
     return (
         <div className="fade-in">
@@ -62,19 +82,19 @@ export default function TenantDashboard() {
             {/* Stats Cards */}
             <div className={`grid grid-3 ${styles.statsGrid}`}>
                 <div className={`card ${styles.statCard}`}>
-                    <span className="text-muted text-sm">Active Rental</span>
-                    <div className={styles.statValue}>0</div>
-                    <span className="text-xs text-muted">No active rental</span>
+                    <span className="text-muted text-sm">Active Rentals</span>
+                    <div className={styles.statValue}>{loading ? '...' : stats.activeRentals}</div>
+                    <span className="text-xs text-muted">Current leases</span>
                 </div>
                 <div className={`card ${styles.statCard}`}>
                     <span className="text-muted text-sm">Escrow Balance</span>
-                    <div className={styles.statValue}>₦0</div>
-                    <span className="text-xs text-muted">No funds in escrow</span>
+                    <div className={styles.statValue}>{loading ? '...' : `₦${Number(stats.escrowBalance).toLocaleString()}`}</div>
+                    <span className="text-xs text-muted">Funds being held</span>
                 </div>
                 <div className={`card ${styles.statCard}`}>
                     <span className="text-muted text-sm">Saved Listings</span>
-                    <div className={styles.statValue}>0</div>
-                    <span className="text-xs text-muted">Save listings to compare</span>
+                    <div className={styles.statValue}>{loading ? '...' : stats.savedListings}</div>
+                    <span className="text-xs text-muted">Comparison shortlist</span>
                 </div>
             </div>
         </div>

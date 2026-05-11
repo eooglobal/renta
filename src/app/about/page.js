@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import { Shield, Users, Building, Heart } from 'lucide-react';
+import LandingHeader from '@/components/LandingHeader';
+import LandingFooter from '@/components/LandingFooter';
+import styles from '../page.module.css';
 
 export const metadata = {
     title: 'About Us | Renta',
@@ -8,7 +11,9 @@ export const metadata = {
 
 export default function AboutPage() {
     return (
-        <div style={{ backgroundColor: '#fafafa', minHeight: '100vh', paddingBottom: '4rem' }}>
+        <div className={styles.page}>
+            <LandingHeader />
+            <div style={{ backgroundColor: '#fafafa', minHeight: '100vh', paddingBottom: '4rem', paddingTop: '120px' }}>
             {/* Header/Hero */}
             <div style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e5e7eb', padding: '4rem 1rem', textAlign: 'center' }}>
                 <div className="container">
@@ -91,6 +96,8 @@ export default function AboutPage() {
                     </div>
                 </div>
             </div>
+            </div>
+            <LandingFooter />
         </div>
     );
 }

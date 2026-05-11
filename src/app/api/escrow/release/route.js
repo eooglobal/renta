@@ -80,16 +80,18 @@ export async function POST(request) {
                     return NextResponse.json({ error: 'Not authorized for disputes' }, { status: 403 });
                 }
 
-                if (rental.escrow) {
-                    await prisma.escrow.update({
-                        where: { id: rental.escrow.id },
+                await prisma.$transaction(async (tx) => {
+                    if (rental.escrow) {
+                        await tx.escrow.update({
+                            where: { id: rental.escrow.id },
+                            data: { status: 'DISPUTED' },
+                        });
+                    }
+
+                    await tx.rental.update({
+                        where: { id: rental.id },
                         data: { status: 'DISPUTED' },
                     });
-                }
-
-                await prisma.rental.update({
-                    where: { id: rental.id },
-                    data: { status: 'DISPUTED' },
                 });
 
                 return NextResponse.json({
@@ -134,49 +136,56 @@ export async function POST(request) {
                     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
                 }
 
-                if (rental.escrow) {
-                    await prisma.escrow.update({
-                        where: { id: rental.escrow.id },
-                        data: { status: 'REFUNDED', releasedAt: new Date() },
-                    });
-                }
-
-                // Refund the tenant's wallet
                 const totalPaidNum = Number(rental.totalPaid);
-                const tenantWallet = await prisma.wallet.upsert({
-                    where: { userId: rental.tenantId },
-                    update: { balance: { increment: totalPaidNum } },
-                    create: { userId: rental.tenantId, balance: totalPaidNum, totalEarned: 0, totalWithdrawn: 0 },
-                });
 
-                await prisma.transaction.create({
-                    data: {
-                        walletId: tenantWallet.id,
-                        amount: totalPaidNum,
-                        type: 'CREDIT',
-                        description: `Refund for ${rental.property.title}`,
-                        referenceId: String(rental.escrow?.id || rental.id),
-                        referenceType: 'ESCROW_REFUND'
+                await prisma.$transaction(async (tx) => {
+                    if (rental.escrow) {
+                        await tx.escrow.update({
+                            where: { id: rental.escrow.id },
+                            data: { status: 'REFUNDED', releasedAt: new Date() },
+                        });
                     }
+
+                    // Refund the tenant's wallet
+                    const tenantWallet = await tx.wallet.upsert({
+                        where: { userId: rental.tenantId },
+                        update: { balance: { increment: totalPaidNum } },
+                        create: { userId: rental.tenantId, balance: totalPaidNum, totalEarned: 0, totalWithdrawn: 0 },
+                    });
+
+                    await tx.transaction.create({
+                        data: {
+                            walletId: tenantWallet.id,
+                            amount: totalPaidNum,
+                            type: 'CREDIT',
+                            description: `Refund for ${rental.property.title}`,
+                            referenceId: String(rental.escrow?.id || rental.id),
+                            referenceType: 'ESCROW_REFUND'
+                        }
+                    });
+
+                    await tx.rental.update({
+                        where: { id: rental.id },
+                        data: { status: 'CANCELLED' },
+                    });
+
+                    // Make property available again
+                    await tx.property.update({
+                        where: { id: rental.propertyId },
+                        data: { status: 'VERIFIED' },
+                    });
                 });
 
-                await prisma.rental.update({
-                    where: { id: rental.id },
-                    data: { status: 'CANCELLED' },
-                });
-
-                // Make property available again
-                await prisma.property.update({
-                    where: { id: rental.propertyId },
-                    data: { status: 'VERIFIED' },
-                });
-
-                createNotification(rental.tenantId, {
-                    type: 'PAYMENT',
-                    title: 'Refund Processed',
-                    message: `₦${totalPaidNum.toLocaleString()} has been refunded to your wallet for ${rental.property.title}.`,
-                    link: '/tenant/wallet'
-                });
+                try {
+                    await createNotification(rental.tenantId, {
+                        type: 'PAYMENT',
+                        title: 'Refund Processed',
+                        message: `₦${totalPaidNum.toLocaleString()} has been refunded to your wallet for ${rental.property.title}.`,
+                        link: '/tenant/wallet'
+                    });
+                } catch (notifErr) {
+                    console.error('Failed to notify tenant of refund:', notifErr);
+                }
 
                 return NextResponse.json({
                     message: 'Escrow refunded to tenant.',

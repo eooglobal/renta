@@ -34,6 +34,6 @@ export const authConfig = {
         maxAge: 30 * 24 * 60 * 60, // 30 days
     },
     trustHost: true,
-    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+    secret: process.env.AUTH_SECRET,
     providers: [], // Providers that require Node (like Credentials) are injected in auth.js
 };

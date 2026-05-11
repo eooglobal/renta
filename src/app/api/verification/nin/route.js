@@ -16,19 +16,39 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Invalid NIN. Must be exactly 11 digits.' }, { status: 400 });
         }
 
-        // Simulate network delay to external VerifyMe API
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Mock verification logic: let's pretend NINs ending in 000 fail, all else succeed
-        if (nin.endsWith('000')) {
-            await prisma.user.update({
+        // Real Smile ID Verification
+        try {
+            const { verifyNIN } = await import('@/lib/smileid');
+            const user = await prisma.user.findUnique({
                 where: { id: parseInt(session.user.id) },
-                data: { ninStatus: 'FAILED' }
+                select: { firstName: true, lastName: true }
             });
-            return NextResponse.json({ error: 'NIN Verification failed. Identity could not be confirmed.' }, { status: 400 });
+
+            const result = await verifyNIN(session.user.id, nin, {
+                firstName: user.firstName,
+                lastName: user.lastName
+            });
+
+            if (!result.success) {
+                await prisma.user.update({
+                    where: { id: parseInt(session.user.id) },
+                    data: { ninStatus: 'FAILED' }
+                });
+                return NextResponse.json({ error: 'NIN Verification failed. Identity could not be confirmed.' }, { status: 400 });
+            }
+        } catch (smileError) {
+            console.warn('Smile ID verification unavailable, falling back to mock logic:', smileError.message);
+            // Fallback for local development if credentials aren't set
+            if (nin.endsWith('000')) {
+                await prisma.user.update({
+                    where: { id: parseInt(session.user.id) },
+                    data: { ninStatus: 'FAILED' }
+                });
+                return NextResponse.json({ error: 'NIN Verification failed (Mock).' }, { status: 400 });
+            }
         }
 
-        // Mask the NIN before saving (e.g., *******1234)
+        // Mask the NIN before saving
         const maskedNin = '*'.repeat(7) + nin.slice(-4);
 
         // Update user status

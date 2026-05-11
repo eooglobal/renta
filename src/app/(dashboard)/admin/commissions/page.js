@@ -65,7 +65,7 @@ export default function AdminCommissionsPage() {
                         <thead>
                             <tr>
                                 <th>Date</th>
-                                <th>Recipent</th>
+                                <th>Recipient</th>
                                 <th>Type</th>
                                 <th>Amount</th>
                                 <th>Property / Source</th>

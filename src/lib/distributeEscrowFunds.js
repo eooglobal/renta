@@ -50,12 +50,16 @@ export async function distributeEscrowFunds(tx, rental, escrow) {
             referenceType: 'ESCROW'
         }
     });
-    createNotification(rental.property.landlordId, {
-        type: 'PAYMENT',
-        title: 'Funds Released!',
-        message: `₦${rentAmountNum.toLocaleString()} has been added to your wallet for ${rental.property.title}.`,
-        link: '/landlord/payments'
-    });
+    try {
+        await createNotification(rental.property.landlordId, {
+            type: 'PAYMENT',
+            title: 'Funds Released!',
+            message: `₦${rentAmountNum.toLocaleString()} has been added to your wallet for ${rental.property.title}.`,
+            link: '/landlord/payments'
+        });
+    } catch (notifErr) {
+        console.error('Failed to notify landlord:', notifErr);
+    }
 
     // ── 2. Scout: 3% of rent (if attached + within 3 years) ──
     if (rental.property.scoutLead && rental.property.scoutLead.scoutId) {
@@ -98,12 +102,16 @@ export async function distributeEscrowFunds(tx, rental, escrow) {
                 }
             });
 
-            createNotification(rental.property.scoutLead.scoutId, {
-                type: 'PAYMENT',
-                title: 'Commission Earned!',
-                message: `You earned ₦${scoutAmount.toLocaleString()} scout commission for ${rental.property.title}.`,
-                link: '/scout/earnings'
-            });
+            try {
+                await createNotification(rental.property.scoutLead.scoutId, {
+                    type: 'PAYMENT',
+                    title: 'Commission Earned!',
+                    message: `You earned ₦${scoutAmount.toLocaleString()} scout commission for ${rental.property.title}.`,
+                    link: '/scout/earnings'
+                });
+            } catch (notifErr) {
+                console.error('Failed to notify scout:', notifErr);
+            }
         }
     }
 
@@ -144,21 +152,43 @@ export async function distributeEscrowFunds(tx, rental, escrow) {
             }
         });
 
-        createNotification(rental.affiliateReferral.affiliateId, {
-            type: 'PAYMENT',
-            title: 'Affiliate Commission!',
-            message: `You earned ₦${affiliateAmount.toLocaleString()} for a successful referral.`,
-            link: '/affiliate/earnings'
-        });
+        try {
+            await createNotification(rental.affiliateReferral.affiliateId, {
+                type: 'PAYMENT',
+                title: 'Affiliate Commission!',
+                message: `You earned ₦${affiliateAmount.toLocaleString()} for a successful referral.`,
+                link: '/affiliate/earnings'
+            });
+        } catch (notifErr) {
+            console.error('Failed to notify affiliate:', notifErr);
+        }
     }
 
     // ── 4. Platform: Gets the remainder of the service fee ──
     const platformAmount = Number((serviceFeeNum - scoutPaid - affiliatePaid).toFixed(2));
     if (platformAmount > 0) {
+        // Dynamically resolve the platform admin user ID
+        let platformUserId = 1; // fallback
+        try {
+            const setting = await tx.platformSetting.findUnique({ where: { key: 'platform_admin_id' } });
+            if (setting) {
+                platformUserId = parseInt(setting.value);
+            } else {
+                // Fallback: find the first SUPER_ADMIN
+                const superAdmin = await tx.user.findFirst({
+                    where: { role: 'ADMIN', adminRole: 'SUPER_ADMIN' },
+                    select: { id: true }
+                });
+                if (superAdmin) platformUserId = superAdmin.id;
+            }
+        } catch (lookupErr) {
+            console.error('Failed to resolve platform admin ID, using fallback:', lookupErr);
+        }
+
         await tx.commission.create({
             data: {
                 escrowId: escrow.id,
-                userId: 1, // Admin/platform user ID
+                userId: platformUserId,
                 type: 'PLATFORM',
                 amount: platformAmount,
                 percentage: Number(((platformAmount / rentAmountNum) * 100).toFixed(2)),

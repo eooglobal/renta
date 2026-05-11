@@ -1,4 +1,19 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+
+export async function deleteFromR2(key) {
+    if (!s3Client || !bucketName) return;
+
+    try {
+        const command = new DeleteObjectCommand({
+            Bucket: bucketName,
+            Key: key,
+        });
+        await s3Client.send(command);
+        console.log(`[R2] Deleted object: ${key}`);
+    } catch (err) {
+        console.error(`[R2] Delete failed for ${key}:`, err);
+    }
+}
 
 const accountId = process.env.R2_ACCOUNT_ID;
 const accessKeyId = process.env.R2_ACCESS_KEY_ID;

@@ -6,9 +6,11 @@ import { prisma } from '@/lib/db';
  * @param {string} endpoint - The name of the endpoint being rate limited
  * @param {number} maxRequests - Maximum allowed requests in the window
  * @param {number} windowMs - The time window in milliseconds
+ * @param {Object} options - Additional options
+ * @param {boolean} options.failClosed - If true, block requests when DB errors (use for security-critical endpoints like login)
  * @returns {Promise<{ success: boolean, message: string }>}
  */
-export async function checkRateLimit(ip, endpoint, maxRequests = 5, windowMs = 60000) {
+export async function checkRateLimit(ip, endpoint, maxRequests = 5, windowMs = 60000, { failClosed = false } = {}) {
     if (!ip) return { success: true, message: 'No IP provided' };
 
     try {
@@ -68,7 +70,11 @@ export async function checkRateLimit(ip, endpoint, maxRequests = 5, windowMs = 6
 
     } catch (error) {
         console.error('Rate Limiter Error:', error);
-        // Fail open in case of DB errors so we don't break the app
+        // Security-critical endpoints (login) should fail closed to prevent brute force during outages
+        if (failClosed) {
+            return { success: false, message: 'Service temporarily unavailable. Please try again later.' };
+        }
+        // Non-critical endpoints fail open so we don't break the app
         return { success: true, message: 'Rate limiter error, bypassing' };
     }
 }

@@ -1,71 +1,51 @@
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
+import { clearSettingsCache, checkPlatformHealth } from '@/lib/settings';
 
-// GET /api/admin/settings — List all platform settings
-export async function GET(request) {
+export async function GET() {
     try {
         const session = await auth();
         if (!session || session.user.role !== 'ADMIN') {
-            return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const settings = await prisma.platformSetting.findMany({
-            orderBy: [{ group: 'asc' }, { id: 'asc' }],
+            orderBy: { group: 'asc' }
         });
 
-        // Group settings by category
-        const grouped = settings.reduce((acc, setting) => {
-            if (!acc[setting.group]) acc[setting.group] = [];
-            acc[setting.group].push(setting);
-            return acc;
-        }, {});
+        const health = await checkPlatformHealth();
 
-        return NextResponse.json({ settings: grouped });
+        return NextResponse.json({ settings, health });
     } catch (error) {
-        console.error('Settings fetch error:', error);
-        return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
+        console.error('Error fetching settings:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
 
-// PUT /api/admin/settings — Update a setting (Super Admin only)
-export async function PUT(request) {
+export async function POST(request) {
     try {
         const session = await auth();
         if (!session || session.user.role !== 'ADMIN') {
-            return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-        }
-
-        // Only Super Admin can edit settings
-        if (session.user.adminRole !== 'SUPER_ADMIN') {
-            return NextResponse.json({ error: 'Only Super Admins can modify settings' }, { status: 403 });
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const body = await request.json();
         const { key, value } = body;
 
-        if (!key || value === undefined || value === null) {
-            return NextResponse.json({ error: 'Key and value are required' }, { status: 400 });
-        }
+        if (!key) return NextResponse.json({ error: 'Key is required' }, { status: 400 });
 
-        const setting = await prisma.platformSetting.findUnique({ where: { key } });
-        if (!setting) {
-            return NextResponse.json({ error: `Setting '${key}' does not exist` }, { status: 404 });
-        }
-
-        // Type validation
-        if (setting.type === 'number' && isNaN(Number(value))) {
-            return NextResponse.json({ error: `Value for '${key}' must be a number` }, { status: 400 });
-        }
-
-        const updated = await prisma.platformSetting.update({
+        const setting = await prisma.platformSetting.upsert({
             where: { key },
-            data: { value: String(value) },
+            update: { value },
+            create: { key, value, group: 'GENERAL', label: key }
         });
 
-        return NextResponse.json({ message: 'Setting updated', setting: updated });
+        clearSettingsCache();
+
+        return NextResponse.json({ message: 'Setting updated successfully', setting });
     } catch (error) {
-        console.error('Settings update error:', error);
-        return NextResponse.json({ error: 'Failed to update setting' }, { status: 500 });
+        console.error('Error updating setting:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

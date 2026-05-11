@@ -7,8 +7,27 @@ export default NextAuth(authConfig).auth((req) => {
     const isLoggedIn = !!session;
     const pathname = nextUrl.pathname;
 
+    // ── CSRF Protection for state-changing API requests ──
+    const isApiRoute = pathname.startsWith('/api/');
+    const isStateChangingMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
+    const isWebhook = pathname.startsWith('/api/webhooks/'); // Webhooks use HMAC signatures instead
+
+    if (isApiRoute && isStateChangingMethod && !isWebhook) {
+        const origin = req.headers.get('origin');
+        const host = req.headers.get('host');
+        if (origin) {
+            const originHost = new URL(origin).host;
+            if (originHost !== host) {
+                return NextResponse.json(
+                    { error: 'CSRF validation failed' },
+                    { status: 403 }
+                );
+            }
+        }
+    }
+
     // Public routes that don't need auth
-    const publicRoutes = ['/', '/login', '/register', '/listings', '/about', '/contact', '/terms'];
+    const publicRoutes = ['/', '/login', '/register', '/listings', '/about', '/contact', '/terms', '/privacy'];
     const isPublicRoute = publicRoutes.some(route => pathname === route) || pathname.startsWith('/listing/');
 
     // Explicit allowlist for public API routes

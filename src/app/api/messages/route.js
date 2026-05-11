@@ -128,7 +128,20 @@ export async function POST(request) {
             }
         });
 
-        // Notify Receiver
+        // Notify Receiver via Pusher (Real-time)
+        try {
+            const { getPusherServer } = await import('@/lib/pusher');
+            const pusher = await getPusherServer();
+            await pusher.trigger(
+                `user-${receiverId}`,
+                'new-message',
+                message
+            );
+        } catch (pusherError) {
+            console.error('Pusher trigger failed:', pusherError);
+        }
+
+        // Notify Receiver (Persistent Notification)
         createNotification(receiverId, {
             type: 'MESSAGE',
             title: `New message from ${message.sender.firstName}`,

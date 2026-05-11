@@ -3,8 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { Users, Building, Shield, AlertTriangle, ClipboardList } from 'lucide-react';
+import { Users, Building, Shield, AlertTriangle, ClipboardList, Settings } from 'lucide-react';
 import styles from '../tenant/dashboard.module.css';
+import { 
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+    AreaChart, Area, Legend 
+} from 'recharts';
 
 export default function AdminDashboard() {
     const { data: session } = useSession();
@@ -16,24 +20,33 @@ export default function AdminDashboard() {
         pendingProperties: 0,
         pendingWithdrawals: 0
     });
+    const [analytics, setAnalytics] = useState({ revenue: [], users: [], properties: [] });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchMetrics = async () => {
+        const fetchData = async () => {
             try {
-                const res = await fetch('/api/admin/metrics');
-                if (res.ok) {
-                    const data = await res.json();
+                const [metricsRes, analyticsRes] = await Promise.all([
+                    fetch('/api/admin/metrics'),
+                    fetch('/api/admin/analytics')
+                ]);
+                
+                if (metricsRes.ok) {
+                    const data = await metricsRes.json();
                     setMetrics(data.metrics);
                 }
+                if (analyticsRes.ok) {
+                    const data = await analyticsRes.json();
+                    setAnalytics(data);
+                }
             } catch (error) {
-                console.error('Failed to load admin metrics:', error);
+                console.error('Failed to load dashboard data:', error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchMetrics();
+        fetchData();
     }, []);
 
     return (
@@ -97,6 +110,15 @@ export default function AdminDashboard() {
                         </div>
                     </Link>
                 )}
+                {(!session?.user?.adminRole || session.user.adminRole === 'SUPER_ADMIN') && (
+                    <Link href="/admin/settings" className={styles.actionCard}>
+                        <span className={styles.actionIcon}><Settings size={24} /></span>
+                        <div>
+                            <h4>Platform Settings</h4>
+                            <p>Manage API keys and configurations</p>
+                        </div>
+                    </Link>
+                )}
             </div>
 
             {/* Stats */}
@@ -123,6 +145,50 @@ export default function AdminDashboard() {
                     <span className="text-muted text-sm">Platform Revenue</span>
                     <div className={styles.statValue}>
                         {loading ? <span className="spinner" style={{ width: 24, height: 24, margin: '8px 0' }}></span> : `₦${metrics.platformRevenue.toLocaleString()}`}
+                    </div>
+                </div>
+            </div>
+
+            {/* Visual Analytics */}
+            <div className="grid grid-2 gap-6 mb-8" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+                <div className="card" style={{ height: '400px', display: 'flex', flexDirection: 'column' }}>
+                    <h4 style={{ marginBottom: 'var(--space-4)', fontSize: '16px', fontWeight: '600' }}>Revenue Trend (6 Months)</h4>
+                    <div style={{ flex: 1, width: '100%' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={analytics.revenue}>
+                                <defs>
+                                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.8}/>
+                                        <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} tickFormatter={(val) => `₦${val/1000}k`} />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: 'var(--radius-lg)', border: 'none', boxShadow: 'var(--shadow-lg)' }}
+                                    formatter={(value) => [`₦${Number(value).toLocaleString()}`, 'Revenue']}
+                                />
+                                <Area type="monotone" dataKey="revenue" stroke="var(--color-primary)" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                <div className="card" style={{ height: '400px', display: 'flex', flexDirection: 'column' }}>
+                    <h4 style={{ marginBottom: 'var(--space-4)', fontSize: '16px', fontWeight: '600' }}>User Acquisition</h4>
+                    <div style={{ flex: 1, width: '100%' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={analytics.users}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                                <Tooltip contentStyle={{ borderRadius: 'var(--radius-lg)', border: 'none', boxShadow: 'var(--shadow-lg)' }} />
+                                <Legend iconType="circle" wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />
+                                <Bar dataKey="Tenants" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="Landlords" fill="var(--color-black)" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
                     </div>
                 </div>
             </div>

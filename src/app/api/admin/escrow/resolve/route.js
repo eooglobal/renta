@@ -129,12 +129,16 @@ export async function POST(request) {
                 });
             });
 
-            createNotification(escrow.rental.tenantId, {
-                type: 'PAYMENT',
-                title: 'Refund Processed',
-                message: `₦${Number(escrow.rental.totalPaid).toLocaleString()} has been refunded to your wallet.`,
-                link: '/tenant/wallet'
-            });
+            try {
+                await createNotification(escrow.rental.tenantId, {
+                    type: 'PAYMENT',
+                    title: 'Refund Processed',
+                    message: `₦${Number(escrow.rental.totalPaid).toLocaleString()} has been refunded to your wallet.`,
+                    link: '/tenant/wallet'
+                });
+            } catch (notifErr) {
+                console.error('Failed to notify tenant of refund:', notifErr);
+            }
 
             return NextResponse.json({
                 message: 'Dispute resolved. Full amount refunded to tenant.',

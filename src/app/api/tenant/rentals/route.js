@@ -15,13 +15,19 @@ export async function GET() {
                     select: {
                         title: true,
                         address: true,
+                        landlord: {
+                            select: { firstName: true, lastName: true }
+                        },
                         area: { select: { name: true } },
                         city: { select: { name: true } },
                         type: true,
                         images: { take: 1, where: { isPrimary: true } }
                     }
                 },
-                escrow: { select: { status: true } },
+                tenant: {
+                    select: { firstName: true, lastName: true }
+                },
+                escrow: { select: { id: true, status: true } },
                 agreement: { select: { tenantSigned: true, landlordSigned: true } }
             },
             orderBy: { createdAt: 'desc' }

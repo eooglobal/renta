@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Camera, X, ArrowLeft, ArrowRight } from 'lucide-react';
 import styles from './new-property.module.css';
 import dashStyles from '../../../tenant/dashboard.module.css';
+import AddressAutocomplete from '@/components/AddressAutocomplete';
 
 const PROPERTY_TYPES = [
     { value: 'SELF_CON', label: 'Self Contained' },
@@ -267,10 +268,17 @@ export default function NewPropertyPage() {
 
                         <div className="form-group">
                             <label htmlFor="address" className="form-label">Full Address</label>
-                            <input
-                                id="address" name="address" className="form-input"
+                            <AddressAutocomplete
+                                value={formData.address}
+                                onChange={handleChange}
                                 placeholder="e.g. Beside UniIlorin Gate, Tanke Road"
-                                value={formData.address} onChange={handleChange} required
+                                className="form-input"
+                                onLocationSelect={(coords) => {
+                                    setLocation({
+                                        latitude: coords.lat,
+                                        longitude: coords.lng
+                                    });
+                                }}
                             />
                         </div>
 

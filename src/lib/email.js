@@ -1,17 +1,16 @@
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Renta';
+import { getSetting } from './settings';
 
 /**
- * Send an email via Resend REST API (Bypasses SMTP port blocks)
+ * Send an email via Brevo API
  */
 export async function sendEmail({ to, subject, html }) {
-  const API_KEY = process.env.SMTP_PASS;
-
-  // Use the from address from env, fallback to noreply@renta-app.com
-  const fromAddress = process.env.EMAIL_FROM || 'noreply@renta-app.com';
+  const appName = await getSetting('NEXT_PUBLIC_APP_NAME', 'Renta');
+  const apiKey = await getSetting('SMTP_PASS');
+  const fromAddress = await getSetting('EMAIL_FROM', 'noreply@renta-app.com');
 
   try {
-    if (!API_KEY) {
-      console.error('[Brevo API] ERROR: SMTP_PASS (API Key) is missing from environment.');
+    if (!apiKey) {
+      console.error('[Brevo API] ERROR: API Key (SMTP_PASS) is missing from platform settings.');
       return { success: false, error: 'API Key missing' };
     }
 
@@ -22,14 +21,14 @@ export async function sendEmail({ to, subject, html }) {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'api-key': API_KEY,
+        'api-key': apiKey,
       },
       body: JSON.stringify({
-        sender: { email: fromAddress, name: APP_NAME },
+        sender: { email: fromAddress, name: appName },
         replyTo: { email: fromAddress },
         to: [{ email: to }],
         subject: subject,
-        htmlContent: wrapInTemplate(subject, html),
+        htmlContent: wrapInTemplate(appName, subject, html),
       }),
     });
 
@@ -51,7 +50,7 @@ export async function sendEmail({ to, subject, html }) {
 /**
  * Email template wrapper
  */
-function wrapInTemplate(title, content) {
+function wrapInTemplate(appName, title, content) {
   return `
     <!DOCTYPE html>
     <html>
@@ -68,7 +67,7 @@ function wrapInTemplate(title, content) {
               <!-- Header -->
               <tr>
                 <td style="background-color:#000000;padding:24px 32px;text-align:center;">
-                  <h1 style="margin:0;color:#FDA829;font-size:28px;font-weight:800;letter-spacing:-0.5px;">${APP_NAME}</h1>
+                  <h1 style="margin:0;color:#FDA829;font-size:28px;font-weight:800;letter-spacing:-0.5px;">${appName}</h1>
                 </td>
               </tr>
               <!-- Content -->
@@ -81,7 +80,7 @@ function wrapInTemplate(title, content) {
               <tr>
                 <td style="background-color:#E8E7E3;padding:20px 32px;text-align:center;">
                   <p style="margin:0;font-size:13px;color:#7a7a7a;">
-                    © ${new Date().getFullYear()} ${APP_NAME}. Verified apartment rentals in Ilorin.
+                    © ${new Date().getFullYear()} ${appName}. Verified apartment rentals in Ilorin.
                   </p>
                 </td>
               </tr>
@@ -99,9 +98,10 @@ function wrapInTemplate(title, content) {
 // ==========================================
 
 export async function sendWelcomeEmail(user) {
+  const appName = await getSetting('NEXT_PUBLIC_APP_NAME', 'Renta');
   return sendEmail({
     to: user.email,
-    subject: `Welcome to ${APP_NAME}!`,
+    subject: `Welcome to ${appName}!`,
     html: `
       <h2 style="color:#000;margin:0 0 16px;">Welcome, ${user.firstName}!</h2>
       <p style="color:#4a4a4a;line-height:1.6;">
@@ -156,13 +156,14 @@ export async function sendEscrowReleaseEmail({ landlord, property, rental }) {
 }
 
 export async function sendPropertyVerifiedEmail({ landlord, property }) {
+  const appName = await getSetting('NEXT_PUBLIC_APP_NAME', 'Renta');
   return sendEmail({
     to: landlord.email,
     subject: `Property Verified — ${property.title}`,
     html: `
       <h2 style="color:#000;margin:0 0 16px;">Property Verified ✓</h2>
       <p style="color:#4a4a4a;line-height:1.6;">
-        Great news! Your property <strong>${property.title}</strong> has been verified and is now live on ${APP_NAME}.
+        Great news! Your property <strong>${property.title}</strong> has been verified and is now live on ${appName}.
       </p>
       <div style="text-align:center;margin:24px 0;">
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/landlord/properties" 
@@ -186,7 +187,7 @@ export async function sendNinStatusEmail(user, status, reason = '') {
       <h2 style="color:#000;margin:0 0 16px;">Identity Verification</h2>
       <p style="color:#4a4a4a;line-height:1.6;">
         ${isApproved
-        ? `Congratulations ${user.firstName}! Your NIN verification was successful. You now have full access to the ${APP_NAME} platform.`
+        ? `Congratulations ${user.firstName}! Your NIN verification was successful. You now have full access to the platform.`
         : `Hello ${user.firstName}, unfortunately, your identity verification could not be completed at this time.`
       }
       </p>
@@ -309,13 +310,14 @@ export async function sendCommissionEarnedEmail(user, amount, type) {
  * New Message Alert Template
  */
 export async function sendNewMessageEmail(receiver, senderName) {
+  const appName = await getSetting('NEXT_PUBLIC_APP_NAME', 'Renta');
   return sendEmail({
     to: receiver.email,
     subject: `New Message from ${senderName}`,
     html: `
       <h2 style="color:#000;margin:0 0 16px;">You have a new message!</h2>
       <p style="color:#4a4a4a;line-height:1.6;">
-        <strong>${senderName}</strong> has sent you a message regarding your rental on ${APP_NAME}.
+        <strong>${senderName}</strong> has sent you a message regarding your rental on ${appName}.
       </p>
       <div style="text-align:center;margin:24px 0;">
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/messages" 

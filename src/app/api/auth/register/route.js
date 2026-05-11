@@ -95,14 +95,12 @@ export async function POST(request) {
                 // Let's ensure the referring user exists before mapping
                 if (affiliate && affiliate.role === 'AFFILIATE') {
                     try {
-                        await prisma.affiliateReferral.create({
-                            data: {
-                                affiliateId: affiliate.id,
-                                referredUserId: user.id
-                            }
+                        await prisma.user.update({
+                            where: { id: user.id },
+                            data: { referredById: affiliate.id }
                         });
                     } catch (err) {
-                        console.error('Failed to save affiliate referral:', err);
+                        console.error('Failed to link affiliate referral:', err);
                     }
                 }
             }
