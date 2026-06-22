@@ -105,7 +105,7 @@ export async function sendWelcomeEmail(user) {
     html: `
       <h2 style="color:#000;margin:0 0 16px;">Welcome, ${user.firstName}!</h2>
       <p style="color:#4a4a4a;line-height:1.6;">
-        Your ${APP_NAME} account has been created successfully. You're now part of a trusted community for verified apartment rentals in Ilorin.
+        Your ${appName} account has been created successfully. You're now part of a trusted community for verified apartment rentals in Ilorin.
       </p>
       <p style="color:#4a4a4a;line-height:1.6;">
         <strong>Your role:</strong> ${user.role}

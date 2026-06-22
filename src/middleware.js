@@ -32,10 +32,12 @@ export default NextAuth(authConfig).auth((req) => {
 
     // Explicit allowlist for public API routes
     const publicApiRoutes = [
-        '/api/properties',       // Property listings
-        '/api/locations/cities', // Fetching cities
-        '/api/locations/areas',  // Fetching areas
-        '/api/webhooks/paystack' // Payment webhooks
+        '/api/properties',        // Property listings
+        '/api/locations/cities',  // Fetching cities
+        '/api/locations/areas',   // Fetching areas
+        '/api/webhooks/paystack', // Payment webhooks
+        '/api/settings/public',   // Public platform settings (Pusher keys, Maps key)
+        '/api/health',            // Health check
     ];
     // Allow public API routes exactly, or any NextAuth routes which handle their own sessions
     const isPublicApiRoute = publicApiRoutes.includes(pathname) || pathname.startsWith('/api/auth');
