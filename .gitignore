@@ -38,7 +38,7 @@ yarn-error.log*
 .env.test
 .env.test.local
 .env.production.local
-# .env.production is kept (no secrets, just a template)
+.env.production
 
 # vercel
 .vercel
