@@ -1,11 +1,37 @@
 -- ============================================================
 -- Renta — Full Database Schema for cPanel / phpMyAdmin import
 -- Generated from prisma/schema.prisma (current state)
--- Import this file via phpMyAdmin into krwgocrr_renta
+-- Import this file via: mysql -u user -p dbname < cpanel-schema.sql
 -- ============================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+
+-- Drop all tables cleanly before recreating
+DROP TABLE IF EXISTS `withdrawal_requests`;
+DROP TABLE IF EXISTS `transactions`;
+DROP TABLE IF EXISTS `wallets`;
+DROP TABLE IF EXISTS `notifications`;
+DROP TABLE IF EXISTS `messages`;
+DROP TABLE IF EXISTS `maintenance_requests`;
+DROP TABLE IF EXISTS `rental_agreements`;
+DROP TABLE IF EXISTS `inspection_slots`;
+DROP TABLE IF EXISTS `commissions`;
+DROP TABLE IF EXISTS `payments`;
+DROP TABLE IF EXISTS `escrows`;
+DROP TABLE IF EXISTS `rentals`;
+DROP TABLE IF EXISTS `affiliate_referrals`;
+DROP TABLE IF EXISTS `scout_areas`;
+DROP TABLE IF EXISTS `property_images`;
+DROP TABLE IF EXISTS `properties`;
+DROP TABLE IF EXISTS `scout_leads`;
+DROP TABLE IF EXISTS `areas`;
+DROP TABLE IF EXISTS `cities`;
+DROP TABLE IF EXISTS `tenant_profiles`;
+DROP TABLE IF EXISTS `rate_limits`;
+DROP TABLE IF EXISTS `platform_settings`;
+DROP TABLE IF EXISTS `_prisma_migrations`;
+DROP TABLE IF EXISTS `users`;
 
 -- ── users ────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS `users` (
