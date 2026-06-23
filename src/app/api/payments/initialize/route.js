@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
-import { initializePayment, generateReference } from '@/lib/paystack';
+import { initializePayment, generateReference, getActiveGateway } from '@/lib/paymentGateway';
 import { getPriceBreakdown } from '@/lib/commission';
 
 // POST /api/payments/initialize — Start a rental payment
@@ -46,6 +46,7 @@ export async function POST(request) {
         const breakdown = getPriceBreakdown(Number(property.rentPrice));
         const totalAmount = breakdown.total;
         const reference = generateReference();
+        const gateway = await getActiveGateway();
 
         // Create pending rental
         const rental = await prisma.rental.create({
@@ -70,12 +71,13 @@ export async function POST(request) {
             },
         });
 
-        // Create payment record (schema fields: rentalId, amount, paystackRef, status)
+        // Create payment record (schema fields: rentalId, amount, paystackRef, nombaRef, status)
         await prisma.payment.create({
             data: {
                 rentalId: rental.id,
                 amount: totalAmount,
-                paystackRef: reference,
+                paystackRef: gateway === 'paystack' ? reference : null,
+                nombaRef: gateway === 'nomba' ? reference : null,
                 status: 'PENDING',
             },
         });

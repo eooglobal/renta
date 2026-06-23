@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
-import { initializePayment, generateReference } from '@/lib/paystack';
+import { initializePayment, generateReference } from '@/lib/paymentGateway';
 
 // POST /api/properties/[id]/feature
 export async function POST(request, { params }) {

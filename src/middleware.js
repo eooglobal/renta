@@ -35,7 +35,8 @@ export default NextAuth(authConfig).auth((req) => {
         '/api/properties',        // Property listings
         '/api/locations/cities',  // Fetching cities
         '/api/locations/areas',   // Fetching areas
-        '/api/webhooks/paystack', // Payment webhooks
+        '/api/webhooks/paystack', // Paystack payment webhooks
+        '/api/webhooks/nomba',    // Nomba payment webhooks
         '/api/settings/public',   // Public platform settings (Pusher keys, Maps key)
         '/api/health',            // Health check
     ];

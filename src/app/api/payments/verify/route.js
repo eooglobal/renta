@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
-import { verifyPayment } from '@/lib/paystack';
+import { verifyPayment } from '@/lib/paymentGateway';
 import { sendPaymentConfirmation } from '@/lib/email';
 
 // GET /api/payments/verify?reference=xxx — Verify payment after Paystack redirect
@@ -22,7 +22,7 @@ export async function GET(request) {
 
         // Find payment
         const payment = await prisma.payment.findFirst({
-            where: { paystackRef: reference },
+            where: { OR: [{ paystackRef: reference }, { nombaRef: reference }] },
             include: {
                 rental: {
                     include: {
@@ -47,10 +47,10 @@ export async function GET(request) {
             return NextResponse.json({ message: 'Payment already verified', payment });
         }
 
-        // Verify with Paystack
-        const paystackData = await verifyPayment(reference);
+        // Verify with payment gateway
+        const paymentData = await verifyPayment(reference);
 
-        if (paystackData.status === 'success') {
+        if (paymentData.status === 'success') {
             // ATOMIC TRANSACTION: All state changes succeed or fail together
             await prisma.$transaction(async (tx) => {
                 // Update payment
@@ -58,7 +58,7 @@ export async function GET(request) {
                     where: { id: payment.id },
                     data: {
                         status: 'SUCCESS',
-                        paidAt: new Date(paystackData.paid_at),
+                        paidAt: new Date(paymentData.paid_at),
                     },
                 });
 

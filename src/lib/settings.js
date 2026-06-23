@@ -63,6 +63,13 @@ export async function checkPlatformHealth() {
     ];
 
     const settings = await getPlatformSettings();
+
+    // Add Nomba keys to critical checks if Nomba is the active payment gateway
+    const activeGateway = settings['ACTIVE_PAYMENT_GATEWAY'];
+    if (activeGateway === 'nomba') {
+        criticalKeys.push('NOMBA_CLIENT_ID', 'NOMBA_CLIENT_SECRET', 'NOMBA_ACCOUNT_ID');
+    }
+
     const missing = [];
 
     for (const key of criticalKeys) {

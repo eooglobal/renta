@@ -17,6 +17,13 @@ async function seedSettings() {
         { key: 'maintenance_contact', value: '+234 800 123 4567', type: 'string', label: 'Maintenance Contact', group: 'platform', description: 'Phone number tenants and landlords can use for emergency maintenance support.' },
         { key: 'support_email', value: 'support@renta.com', type: 'string', label: 'Support Email', group: 'platform', description: 'Email address for customer support inquiries.' },
         { key: 'max_property_images', value: '10', type: 'number', label: 'Max Property Images', group: 'platform', description: 'Maximum number of images a landlord can upload per property listing.' },
+
+        // Payment Gateway
+        { key: 'ACTIVE_PAYMENT_GATEWAY', value: 'paystack', type: 'text', label: 'Active Gateway', group: 'PAYMENT_GATEWAY', description: 'Set to "paystack" or "nomba" to switch gateways' },
+        { key: 'NOMBA_CLIENT_ID', value: '', type: 'text', label: 'Nomba Client ID', group: 'PAYMENT_GATEWAY', description: 'Your Nomba API Client ID' },
+        { key: 'NOMBA_CLIENT_SECRET', value: '', type: 'password', label: 'Nomba Client Secret', group: 'PAYMENT_GATEWAY', description: 'Your Nomba API Client Secret. Keep private.' },
+        { key: 'NOMBA_ACCOUNT_ID', value: '', type: 'text', label: 'Nomba Account ID', group: 'PAYMENT_GATEWAY', description: 'Your Nomba Account ID for API authorization' },
+        { key: 'NOMBA_WEBHOOK_SECRET', value: '', type: 'password', label: 'Nomba Webhook Secret', group: 'PAYMENT_GATEWAY', description: 'Used to verify Nomba webhook signatures' },
     ];
 
     console.log('Seeding platform settings...');
@@ -24,7 +31,7 @@ async function seedSettings() {
     for (const setting of settings) {
         await prisma.platformSetting.upsert({
             where: { key: setting.key },
-            update: { value: setting.value, label: setting.label, description: setting.description },
+            update: { label: setting.label, description: setting.description },
             create: setting,
         });
         console.log(`  ✓ ${setting.key} = ${setting.value}`);

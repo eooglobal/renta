@@ -1,44 +1,53 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, RefreshCw, Shield, CreditCard, MessageSquare, Globe, Fingerprint, Loader2 } from 'lucide-react';
+import { Save, RefreshCw, Shield, CreditCard, MessageSquare, Globe, Fingerprint, Loader2, CheckCircle2, AlertTriangle, Eye, EyeOff, Zap } from 'lucide-react';
 
 const settingGroups = [
-    { id: 'PAYSTACK', label: 'Paystack Payments', icon: CreditCard },
-    { id: 'PUSHER', label: 'Real-time (Pusher)', icon: MessageSquare },
-    { id: 'SMILE_ID', label: 'Identity (Smile ID)', icon: Fingerprint },
-    { id: 'GOOGLE_MAPS', label: 'Maps & Location', icon: Globe },
-    { id: 'EMAIL', label: 'Email Configuration', icon: RefreshCw },
+    { id: 'PAYSTACK',        label: 'Paystack Payments',  icon: CreditCard,    color: '#00C3F7' },
+    { id: 'PAYMENT_GATEWAY', label: 'Payment Gateway',    icon: Zap,           color: '#FDA829' },
+    { id: 'PUSHER',          label: 'Real-time (Pusher)', icon: MessageSquare, color: '#6366f1' },
+    { id: 'SMILE_ID',        label: 'Identity (Smile ID)',icon: Fingerprint,   color: '#22c55e' },
+    { id: 'GOOGLE_MAPS',     label: 'Maps & Location',    icon: Globe,         color: '#3b82f6' },
+    { id: 'EMAIL',           label: 'Email Configuration',icon: RefreshCw,     color: '#f97316' },
 ];
 
 const defaultSettings = [
-    { key: 'PAYSTACK_SECRET_KEY', group: 'PAYSTACK', label: 'Secret Key', type: 'password', description: 'Your Paystack Secret Key' },
-    { key: 'NEXT_PUBLIC_PAYSTACK_KEY', group: 'PAYSTACK', label: 'Public Key', type: 'text', description: 'Your Paystack Public Key' },
-    
-    { key: 'PUSHER_APP_ID', group: 'PUSHER', label: 'App ID', type: 'text' },
-    { key: 'NEXT_PUBLIC_PUSHER_KEY', group: 'PUSHER', label: 'Key', type: 'text' },
-    { key: 'PUSHER_SECRET', group: 'PUSHER', label: 'Secret', type: 'password' },
-    { key: 'NEXT_PUBLIC_PUSHER_CLUSTER', group: 'PUSHER', label: 'Cluster', type: 'text' },
+    { key: 'PAYSTACK_SECRET_KEY',           group: 'PAYSTACK',        label: 'Secret Key',                        type: 'password', description: 'Your Paystack Secret Key. Keep this private.' },
+    { key: 'NEXT_PUBLIC_PAYSTACK_KEY',      group: 'PAYSTACK',        label: 'Public Key',                        type: 'text',     description: 'Your Paystack Public Key. Used on the frontend.' },
 
-    { key: 'SMILE_ID_PARTNER_ID', group: 'SMILE_ID', label: 'Partner ID', type: 'text' },
-    { key: 'SMILE_ID_API_KEY', group: 'SMILE_ID', label: 'API Key', type: 'password' },
-    { key: 'SMILE_ID_SID_SERVER', group: 'SMILE_ID', label: 'Environment (0=Sandbox, 1=Prod)', type: 'text' },
+    { key: 'ACTIVE_PAYMENT_GATEWAY',        group: 'PAYMENT_GATEWAY', label: 'Active Gateway',                    type: 'text',     description: 'Set to "paystack" or "nomba" to switch gateways instantly without redeploying.' },
+    { key: 'NOMBA_CLIENT_ID',               group: 'PAYMENT_GATEWAY', label: 'Nomba Client ID',                   type: 'text',     description: 'Your Nomba API Client ID.' },
+    { key: 'NOMBA_CLIENT_SECRET',           group: 'PAYMENT_GATEWAY', label: 'Nomba Client Secret',               type: 'password', description: 'Your Nomba API Client Secret. Keep this private.' },
+    { key: 'NOMBA_ACCOUNT_ID',              group: 'PAYMENT_GATEWAY', label: 'Nomba Account ID',                  type: 'text',     description: 'Your Nomba Account ID used for API authorization.' },
+    { key: 'NOMBA_WEBHOOK_SECRET',          group: 'PAYMENT_GATEWAY', label: 'Nomba Webhook Secret',              type: 'password', description: 'Used to verify Nomba webhook signatures.' },
 
-    { key: 'NEXT_PUBLIC_GOOGLE_MAPS_API_KEY', group: 'GOOGLE_MAPS', label: 'API Key', type: 'text' },
+    { key: 'PUSHER_APP_ID',                 group: 'PUSHER',          label: 'App ID',                            type: 'text' },
+    { key: 'NEXT_PUBLIC_PUSHER_KEY',        group: 'PUSHER',          label: 'Key',                               type: 'text' },
+    { key: 'PUSHER_SECRET',                 group: 'PUSHER',          label: 'Secret',                            type: 'password' },
+    { key: 'NEXT_PUBLIC_PUSHER_CLUSTER',    group: 'PUSHER',          label: 'Cluster',                           type: 'text' },
 
-    { key: 'EMAIL_SERVER_HOST', group: 'EMAIL', label: 'SMTP Host', type: 'text' },
-    { key: 'EMAIL_SERVER_PORT', group: 'EMAIL', label: 'SMTP Port', type: 'text' },
-    { key: 'EMAIL_SERVER_USER', group: 'EMAIL', label: 'SMTP User', type: 'text' },
-    { key: 'EMAIL_SERVER_PASSWORD', group: 'EMAIL', label: 'SMTP Password', type: 'password' },
-    { key: 'EMAIL_FROM', group: 'EMAIL', label: 'From Email', type: 'text' },
+    { key: 'SMILE_ID_PARTNER_ID',           group: 'SMILE_ID',        label: 'Partner ID',                        type: 'text' },
+    { key: 'SMILE_ID_API_KEY',              group: 'SMILE_ID',        label: 'API Key',                           type: 'password' },
+    { key: 'SMILE_ID_SID_SERVER',           group: 'SMILE_ID',        label: 'Environment',                       type: 'text',     description: '0 = Sandbox, 1 = Production' },
+
+    { key: 'NEXT_PUBLIC_GOOGLE_MAPS_API_KEY', group: 'GOOGLE_MAPS',   label: 'API Key',                           type: 'text' },
+
+    { key: 'EMAIL_SERVER_HOST',             group: 'EMAIL',           label: 'SMTP Host',                         type: 'text' },
+    { key: 'EMAIL_SERVER_PORT',             group: 'EMAIL',           label: 'SMTP Port',                         type: 'text' },
+    { key: 'EMAIL_SERVER_USER',             group: 'EMAIL',           label: 'SMTP User',                         type: 'text' },
+    { key: 'EMAIL_SERVER_PASSWORD',         group: 'EMAIL',           label: 'SMTP Password',                     type: 'password' },
+    { key: 'EMAIL_FROM',                    group: 'EMAIL',           label: 'From Email',                        type: 'text' },
 ];
 
 export default function AdminSettingsPage() {
-    const [settings, setSettings] = useState({});
-    const [health, setHealth] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(null); // Key being saved
+    const [settings, setSettings]       = useState({});
+    const [health, setHealth]           = useState(null);
+    const [loading, setLoading]         = useState(true);
+    const [saving, setSaving]           = useState(null);
+    const [saved, setSaved]             = useState(null);
     const [activeGroup, setActiveGroup] = useState('PAYSTACK');
+    const [revealed, setRevealed]       = useState({});
 
     const fetchSettings = async () => {
         try {
@@ -56,20 +65,20 @@ export default function AdminSettingsPage() {
         }
     };
 
-    useEffect(() => {
-        fetchSettings();
-    }, []);
+    useEffect(() => { fetchSettings(); }, []);
 
     const handleSave = async (key) => {
         setSaving(key);
+        setSaved(null);
         try {
             const res = await fetch('/api/admin/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key, value: settings[key] })
+                body: JSON.stringify({ key, value: settings[key] }),
             });
             if (res.ok) {
-                // Refresh health after save
+                setSaved(key);
+                setTimeout(() => setSaved(null), 2500);
                 const updated = await fetch('/api/admin/settings');
                 if (updated.ok) {
                     const data = await updated.json();
@@ -83,112 +92,285 @@ export default function AdminSettingsPage() {
         }
     };
 
-    if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin" /></div>;
+    const toggleReveal = (key) => setRevealed(prev => ({ ...prev, [key]: !prev[key] }));
+
+    const activeGroupData  = settingGroups.find(g => g.id === activeGroup);
+    const activeFields     = defaultSettings.filter(s => s.group === activeGroup);
+    const filledCount      = activeFields.filter(f => settings[f.key]).length;
+
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
+                <Loader2 size={32} style={{ animation: 'spin 0.8s linear infinite', color: 'var(--color-primary)' }} />
+            </div>
+        );
+    }
 
     return (
-        <div className="fade-in max-w-5xl mx-auto">
-            <header className="mb-8 flex justify-between items-end">
+        <div className="fade-in" style={{ maxWidth: 1100, margin: '0 auto' }}>
+
+            {/* ── Page Header ── */}
+            <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
                 <div>
-                    <h1 className="text-3xl font-bold flex items-center gap-3">
-                        <Shield className="text-primary" /> Platform Configuration
+                    <h1 style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 'var(--text-3xl)', fontWeight: 'var(--font-bold)', margin: 0 }}>
+                        <span style={{ background: 'var(--color-primary)', borderRadius: 12, padding: '8px 10px', display: 'flex' }}>
+                            <Shield size={22} color="#000" />
+                        </span>
+                        Platform Configuration
                     </h1>
-                    <p className="text-muted mt-2">Manage API keys and external service integrations without touching code.</p>
+                    <p style={{ color: 'var(--text-muted)', marginTop: 6, fontSize: 'var(--text-sm)' }}>
+                        Manage API keys and external service integrations without touching code.
+                    </p>
                 </div>
 
                 {health && (
-                    <div className={`px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 ${health.isHealthy ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        <div className={`w-2 h-2 rounded-full ${health.isHealthy ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '10px 18px', borderRadius: 999,
+                        fontSize: 'var(--text-xs)', fontWeight: 700,
+                        background: health.isHealthy ? 'var(--color-success-light)' : 'var(--color-error-light)',
+                        color: health.isHealthy ? '#16a34a' : '#dc2626',
+                        border: `1px solid ${health.isHealthy ? '#bbf7d0' : '#fecaca'}`,
+                    }}>
+                        <span style={{
+                            width: 8, height: 8, borderRadius: '50%',
+                            background: health.isHealthy ? 'var(--color-success)' : 'var(--color-error)',
+                            boxShadow: health.isHealthy ? '0 0 0 3px rgba(34,197,94,0.25)' : 'none',
+                            animation: health.isHealthy ? 'pulse 2s infinite' : 'none',
+                        }} />
                         {health.isHealthy ? 'Platform Fully Operational' : `${health.missingKeys.length} Critical Keys Missing`}
                     </div>
                 )}
-            </header>
+            </div>
 
-            {!health?.isHealthy && health?.missingKeys.length > 0 && (
-                <div className="mb-8 p-4 bg-red-50 border border-red-100 rounded-2xl">
-                    <h4 className="text-red-900 font-bold text-sm mb-2 flex items-center gap-2">
-                         Attention Required: Missing Credentials
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                        {health.missingKeys.map(key => (
-                            <span key={key} className="px-2 py-1 bg-white border border-red-200 rounded text-[10px] text-red-600 font-mono">
-                                {key}
-                            </span>
-                        ))}
+            {/* ── Missing Keys Alert ── */}
+            {!health?.isHealthy && health?.missingKeys?.length > 0 && (
+                <div style={{
+                    marginBottom: 28, padding: '16px 20px',
+                    background: 'var(--color-error-light)',
+                    border: '1px solid #fca5a5',
+                    borderRadius: 'var(--radius-xl)',
+                    display: 'flex', gap: 14, alignItems: 'flex-start',
+                }}>
+                    <AlertTriangle size={20} style={{ color: 'var(--color-error)', flexShrink: 0, marginTop: 2 }} />
+                    <div>
+                        <p style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: '#991b1b', marginBottom: 10 }}>
+                            Action Required — Missing Credentials
+                        </p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {health.missingKeys.map(key => (
+                                <span key={key} style={{
+                                    padding: '3px 10px', borderRadius: 6,
+                                    background: 'white', border: '1px solid #fca5a5',
+                                    fontSize: 11, color: '#b91c1c',
+                                    fontFamily: 'monospace', fontWeight: 600,
+                                }}>
+                                    {key}
+                                </span>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}
 
-            <div className="flex flex-col md:flex-row gap-8">
-                {/* Sidebar Navigation */}
-                <aside className="w-full md:w-64 flex flex-col gap-2">
+            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+
+                {/* ── Sidebar ── */}
+                <aside style={{ width: 240, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {settingGroups.map(group => {
-                        const Icon = group.icon;
+                        const Icon      = group.icon;
+                        const isActive  = activeGroup === group.id;
+                        const fields    = defaultSettings.filter(s => s.group === group.id);
+                        const filled    = fields.filter(f => settings[f.key]).length;
+                        const complete  = filled === fields.length;
+
                         return (
                             <button
                                 key={group.id}
                                 onClick={() => setActiveGroup(group.id)}
-                                className={`flex items-center gap-3 p-4 rounded-xl transition-all text-left ${
-                                    activeGroup === group.id 
-                                    ? 'bg-primary text-black font-bold shadow-lg shadow-primary/20' 
-                                    : 'bg-white hover:bg-gray-50'
-                                }`}
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: 12,
+                                    padding: '12px 16px', borderRadius: 'var(--radius-xl)',
+                                    border: 'none', cursor: 'pointer', textAlign: 'left',
+                                    width: '100%', transition: 'all var(--transition-fast)',
+                                    background: isActive ? 'var(--color-primary)' : 'var(--bg-card)',
+                                    boxShadow: isActive ? '0 4px 14px rgba(253,168,41,0.35)' : 'var(--shadow-sm)',
+                                    fontWeight: isActive ? 700 : 500,
+                                    color: isActive ? '#000' : 'var(--text-secondary)',
+                                }}
                             >
-                                <Icon size={20} />
-                                <span>{group.label}</span>
+                                <span style={{
+                                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    background: isActive ? 'rgba(0,0,0,0.12)' : `${group.color}18`,
+                                    color: isActive ? '#000' : group.color,
+                                }}>
+                                    <Icon size={17} />
+                                </span>
+                                <span style={{ flex: 1, fontSize: 'var(--text-sm)' }}>{group.label}</span>
+                                {complete
+                                    ? <CheckCircle2 size={15} style={{ color: isActive ? '#000' : 'var(--color-success)', flexShrink: 0 }} />
+                                    : (
+                                        <span style={{
+                                            fontSize: 10, fontWeight: 700, padding: '1px 7px',
+                                            borderRadius: 999, flexShrink: 0,
+                                            background: isActive ? 'rgba(0,0,0,0.15)' : 'var(--color-warning-light)',
+                                            color: isActive ? '#000' : '#d97706',
+                                        }}>
+                                            {filled}/{fields.length}
+                                        </span>
+                                    )
+                                }
                             </button>
                         );
                     })}
                 </aside>
 
-                {/* Settings Form */}
-                <main className="flex-1 bg-white rounded-2xl shadow-sm border p-8">
-                    <div className="mb-8">
-                        <h2 className="text-xl font-bold">{settingGroups.find(g => g.id === activeGroup).label}</h2>
-                        <p className="text-sm text-muted">Configure the credentials for this service.</p>
+                {/* ── Main Form Panel ── */}
+                <main style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-2xl)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
+
+                        {/* Panel Header */}
+                        <div style={{
+                            padding: '24px 32px',
+                            borderBottom: '1px solid var(--border-light)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                                <span style={{
+                                    width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    background: `${activeGroupData.color}15`,
+                                    color: activeGroupData.color,
+                                }}>
+                                    <activeGroupData.icon size={22} />
+                                </span>
+                                <div>
+                                    <h2 style={{ margin: 0, fontSize: 'var(--text-xl)', fontWeight: 700 }}>{activeGroupData.label}</h2>
+                                    <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: 2 }}>
+                                        {filledCount} of {activeFields.length} fields configured
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Progress bar */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                                <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>
+                                    {Math.round((filledCount / activeFields.length) * 100)}% complete
+                                </span>
+                                <div style={{ width: 120, height: 6, background: 'var(--border-light)', borderRadius: 999, overflow: 'hidden' }}>
+                                    <div style={{
+                                        height: '100%', borderRadius: 999,
+                                        width: `${(filledCount / activeFields.length) * 100}%`,
+                                        background: filledCount === activeFields.length ? 'var(--color-success)' : 'var(--color-primary)',
+                                        transition: 'width 0.4s ease',
+                                    }} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Fields */}
+                        <div style={{ padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+                            {activeFields.map((field, idx) => {
+                                const isPassword  = field.type === 'password';
+                                const isRevealed  = revealed[field.key];
+                                const hasValue    = !!settings[field.key];
+                                const isSavingKey = saving === field.key;
+                                const isSavedKey  = saved === field.key;
+
+                                return (
+                                    <div key={field.key}>
+                                        {idx > 0 && <div style={{ height: 1, background: 'var(--border-light)', marginBottom: 24 }} />}
+
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                            <label style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                                                {field.label}
+                                                {hasValue && (
+                                                    <span style={{ marginLeft: 6, color: 'var(--color-success)', fontSize: 11 }}>✓ Set</span>
+                                                )}
+                                            </label>
+                                            <code style={{
+                                                fontSize: 10, padding: '2px 8px', borderRadius: 6,
+                                                background: 'var(--bg-secondary)', color: 'var(--text-muted)',
+                                                fontFamily: 'monospace',
+                                            }}>
+                                                {field.key}
+                                            </code>
+                                        </div>
+
+                                        <div style={{ display: 'flex', gap: 10 }}>
+                                            <div style={{ flex: 1, position: 'relative' }}>
+                                                <input
+                                                    type={isPassword && !isRevealed ? 'password' : 'text'}
+                                                    value={settings[field.key] || ''}
+                                                    onChange={(e) => setSettings({ ...settings, [field.key]: e.target.value })}
+                                                    className="form-input"
+                                                    style={{ paddingRight: isPassword ? 44 : 16 }}
+                                                    placeholder={`Enter ${field.label.toLowerCase()}...`}
+                                                />
+                                                {isPassword && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleReveal(field.key)}
+                                                        style={{
+                                                            position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                                                            background: 'none', border: 'none', cursor: 'pointer',
+                                                            color: 'var(--text-muted)', display: 'flex', padding: 0,
+                                                        }}
+                                                    >
+                                                        {isRevealed ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            <button
+                                                onClick={() => handleSave(field.key)}
+                                                disabled={isSavingKey}
+                                                className="btn btn-primary"
+                                                style={{
+                                                    minWidth: 110, gap: 6,
+                                                    background: isSavedKey ? 'var(--color-success)' : undefined,
+                                                    transition: 'background 0.3s ease',
+                                                }}
+                                            >
+                                                {isSavingKey
+                                                    ? <><Loader2 size={15} style={{ animation: 'spin 0.7s linear infinite' }} /> Saving</>
+                                                    : isSavedKey
+                                                        ? <><CheckCircle2 size={15} /> Saved!</>
+                                                        : <><Save size={15} /> Update</>
+                                                }
+                                            </button>
+                                        </div>
+
+                                        {field.description && (
+                                            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
+                                                {field.description}
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
 
-                    <div className="flex flex-col gap-8">
-                        {defaultSettings
-                            .filter(s => s.group === activeGroup)
-                            .map(field => (
-                                <div key={field.key} className="flex flex-col gap-2">
-                                    <div className="flex justify-between items-center">
-                                        <label className="text-sm font-semibold text-gray-700">{field.label}</label>
-                                        <span className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-500 font-mono">{field.key}</span>
-                                    </div>
-                                    <div className="flex gap-3">
-                                        <input
-                                            type={field.type}
-                                            value={settings[field.key] || ''}
-                                            onChange={(e) => setSettings({ ...settings, [field.key]: e.target.value })}
-                                            className="flex-1 p-3 border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                                            placeholder={`Enter ${field.label.toLowerCase()}...`}
-                                        />
-                                        <button
-                                            onClick={() => handleSave(field.key)}
-                                            disabled={saving === field.key}
-                                            className="btn btn-primary px-6 flex items-center gap-2 min-w-[120px] justify-center"
-                                        >
-                                            {saving === field.key ? <Loader2 size={18} className="animate-spin" /> : <><Save size={18} /> Update</>}
-                                        </button>
-                                    </div>
-                                    {field.description && <p className="text-xs text-muted">{field.description}</p>}
-                                </div>
-                            ))
-                        }
+                    {/* ── Info Banner ── */}
+                    <div style={{
+                        marginTop: 20, padding: '16px 20px', borderRadius: 'var(--radius-xl)',
+                        background: 'var(--color-primary-light)',
+                        border: '1px solid rgba(253,168,41,0.3)',
+                        display: 'flex', gap: 12, alignItems: 'flex-start',
+                    }}>
+                        <Zap size={18} style={{ color: 'var(--color-primary-dark)', flexShrink: 0, marginTop: 1 }} />
+                        <div>
+                            <p style={{ margin: 0, fontWeight: 700, fontSize: 'var(--text-sm)', color: 'var(--color-primary-dark)' }}>
+                                Live Configuration
+                            </p>
+                            <p style={{ margin: '3px 0 0', fontSize: 11, color: '#8a5f00' }}>
+                                Changes take effect immediately — no redeploy needed. If a value is not set here, the platform falls back to environment variables.
+                            </p>
+                        </div>
                     </div>
                 </main>
-            </div>
-            
-            <div className="mt-8 bg-blue-50 border border-blue-100 p-6 rounded-2xl flex gap-4 items-start">
-                <RefreshCw className="text-blue-600 shrink-0 mt-1" />
-                <div>
-                    <h4 className="text-blue-900 font-bold m-0">Dynamic Configuration Active</h4>
-                    <p className="text-sm text-blue-800 m-0 mt-1">
-                        Changes to these settings take effect immediately. Sensitive values are masked in the UI but saved securely in the platform database. 
-                        If a value is not set here, the platform will fall back to the environment variables defined in the system.
-                    </p>
-                </div>
             </div>
         </div>
     );
