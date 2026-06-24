@@ -43,6 +43,7 @@ model User {
   referredById        Int?                 @map("referred_by_id")
   referredBy          User?                @relation("UserReferrals", fields: [referredById], references: [id])
   referredUsers       User[]               @relation("UserReferrals")
+  diditSessionId      String?              @unique @map("didit_session_id")
 
   @@map("users")
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import {
     User, Mail, Phone, Shield, Building2, Calendar,
     Save, Lock, Eye, EyeOff, CheckCircle, AlertTriangle, Loader2, Briefcase
@@ -10,6 +11,7 @@ import Link from 'next/link';
 
 export default function ProfilePage() {
     const { data: session } = useSession();
+    const searchParams = useSearchParams();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -29,6 +31,20 @@ export default function ProfilePage() {
         newPassword: '',
         confirmPassword: '',
     });
+
+    useEffect(() => {
+        // Show result message if returning from Didit verification redirect
+        const verificationResult = searchParams?.get('verification');
+        if (verificationResult === 'complete') {
+            setMessage({ type: 'success', text: 'Identity verified successfully!' });
+        } else if (verificationResult === 'failed') {
+            setMessage({ type: 'error', text: 'Identity verification failed. Please try again or use NIN.' });
+        } else if (verificationResult === 'pending') {
+            setMessage({ type: 'success', text: 'Verification submitted and under review. We\'ll notify you shortly.' });
+        } else if (verificationResult === 'error') {
+            setMessage({ type: 'error', text: 'Verification could not be completed. Please try again.' });
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -66,7 +82,6 @@ export default function ProfilePage() {
         setSaving(true);
         setMessage({ type: '', text: '' });
 
-        // Validate password if changing
         if (showPassSection && form.newPassword) {
             if (form.newPassword !== form.confirmPassword) {
                 setMessage({ type: 'error', text: 'New passwords do not match.' });
@@ -137,12 +152,14 @@ export default function ProfilePage() {
     };
 
     const ninStatusMap = {
-        PENDING: { label: 'Not Verified', className: 'badge-pending' },
-        VERIFIED: { label: 'Verified', className: 'badge-verified' },
-        REJECTED: { label: 'Rejected', className: 'badge-error' },
+        PENDING:  { label: 'Not Verified', className: 'badge-pending' },
+        VERIFIED: { label: 'Verified',     className: 'badge-verified' },
+        FAILED:   { label: 'Failed',       className: 'badge-error' },
     };
 
-    const memberSince = profile ? new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(new Date(profile.createdAt)) : '';
+    const memberSince = profile
+        ? new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(new Date(profile.createdAt))
+        : '';
 
     return (
         <div className="fade-in">
@@ -159,7 +176,7 @@ export default function ProfilePage() {
                         background: 'var(--color-primary)', color: 'var(--color-black)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontWeight: 'var(--font-extrabold)', fontSize: 'var(--text-2xl)',
-                        flexShrink: 0
+                        flexShrink: 0,
                     }}>
                         {profile?.firstName?.charAt(0)?.toUpperCase()}{profile?.lastName?.charAt(0)?.toUpperCase()}
                     </div>
@@ -190,7 +207,7 @@ export default function ProfilePage() {
                     </div>
                     <div className="flex items-center gap-2">
                         <User size={16} style={{ color: 'var(--text-muted)' }} />
-                        <span className="text-sm">NIN Verification:</span>
+                        <span className="text-sm">Identity Verification:</span>
                         <span className={`badge ${ninStatusMap[profile?.ninStatus]?.className || 'badge-pending'}`}>
                             {ninStatusMap[profile?.ninStatus]?.label || 'Pending'}
                         </span>
@@ -209,64 +226,38 @@ export default function ProfilePage() {
                     background: message.type === 'success' ? 'var(--color-success-light)' : 'var(--color-error-light)',
                     borderLeft: `4px solid ${message.type === 'success' ? 'var(--color-success)' : 'var(--color-error)'}`,
                 }}>
-                    {message.type === 'success' ? <CheckCircle size={18} style={{ color: 'var(--color-success)' }} /> : <AlertTriangle size={18} style={{ color: 'var(--color-error)' }} />}
+                    {message.type === 'success'
+                        ? <CheckCircle size={18} style={{ color: 'var(--color-success)' }} />
+                        : <AlertTriangle size={18} style={{ color: 'var(--color-error)' }} />
+                    }
                     <span className="text-sm font-medium">{message.text}</span>
                 </div>
             )}
 
-            {/* NIN Verification Widget */}
-            {(profile?.ninStatus === 'PENDING' || profile?.ninStatus === 'REJECTED') && (
+            {/* Identity Verification Widget (Tenants only, when not yet verified) */}
+            {profile?.role === 'TENANT' && (profile?.ninStatus === 'PENDING' || profile?.ninStatus === 'FAILED') && (
                 <div className="card mb-6" style={{ borderLeft: '4px solid var(--color-primary)', background: 'var(--bg-secondary)' }}>
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-2">
                             <Shield size={20} style={{ color: 'var(--color-primary)' }} />
                             <h3 style={{ fontSize: 'var(--text-lg)', margin: 0 }}>Identity Verification Required</h3>
                         </div>
-                        <p className="text-sm text-muted">To build trust within the Renta community, please verify your National Identity Number (NIN). This is required to access primary features.</p>
+                        <p className="text-sm text-muted">
+                            To build trust on Renta, please verify your identity. This is required to access rental features.
+                        </p>
 
-                        <form onSubmit={async (e) => {
-                            e.preventDefault();
-                            const formData = new FormData(e.target);
-                            const nin = formData.get('nin');
-                            if (!nin || nin.length !== 11) {
-                                setMessage({ type: 'error', text: 'NIN must be exactly 11 digits.' });
-                                return;
-                            }
+                        {/* Option 1: Didit (Primary, recommended) */}
+                        <DiditVerifyButton />
 
-                            const btn = e.target.querySelector('button');
-                            const originalText = btn.innerHTML;
-                            btn.innerHTML = 'Verifying...';
-                            btn.disabled = true;
-
-                            try {
-                                const res = await fetch('/api/verification/nin', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ nin })
-                                });
-                                const data = await res.json();
-                                if (res.ok) {
-                                    setProfile(prev => ({ ...prev, ninStatus: 'VERIFIED', ninNumber: '*'.repeat(7) + nin.slice(-4) }));
-                                    setMessage({ type: 'success', text: 'Identity successfully verified!' });
-                                } else {
-                                    setMessage({ type: 'error', text: data.error || 'Verification failed.' });
-                                    if (data.error.includes('failed')) {
-                                        setProfile(prev => ({ ...prev, ninStatus: 'REJECTED' }));
-                                    }
-                                }
-                            } catch (err) {
-                                setMessage({ type: 'error', text: 'Network error during verification.' });
-                            } finally {
-                                btn.innerHTML = originalText;
-                                btn.disabled = false;
-                            }
-                        }} className="flex items-end gap-3 mt-2" style={{ maxWidth: '400px' }}>
-                            <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-                                <label className="form-label" style={{ fontSize: '12px' }}>11-Digit NIN</label>
-                                <input type="number" name="nin" placeholder="e.g. 12345678901" className="form-input" required minLength="11" maxLength="11" />
-                            </div>
-                            <button type="submit" className="btn btn-primary">Verify NIN</button>
-                        </form>
+                        {/* Option 2: NIN (Fallback, collapsible) */}
+                        <NinFallback
+                            onSuccess={() => {
+                                setProfile(prev => ({ ...prev, ninStatus: 'VERIFIED' }));
+                                setMessage({ type: 'success', text: 'Identity successfully verified!' });
+                            }}
+                            onFail={() => setProfile(prev => ({ ...prev, ninStatus: 'FAILED' }))}
+                            setMessage={setMessage}
+                        />
                     </div>
                 </div>
             )}
@@ -279,8 +270,9 @@ export default function ProfilePage() {
                             <Briefcase size={20} style={{ color: 'var(--color-info)' }} />
                             <h3 style={{ fontSize: 'var(--text-lg)', margin: 0 }}>Tenant Screening Profile</h3>
                         </div>
-                        <p className="text-sm text-muted">A completed screening profile (employment & income details) is required before you can rent any property on Renta. It helps landlords review your applications faster.</p>
-
+                        <p className="text-sm text-muted">
+                            A completed screening profile (employment &amp; income details) is required before you can rent any property on Renta.
+                        </p>
                         <div className="mt-2 text-left">
                             <Link href="/tenant/screening" className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                                 <Briefcase size={16} /> Update Screening Profile
@@ -299,53 +291,22 @@ export default function ProfilePage() {
                     <div className="grid grid-2">
                         <div className="form-group">
                             <label className="form-label">First Name</label>
-                            <input
-                                type="text"
-                                name="firstName"
-                                value={form.firstName}
-                                onChange={handleChange}
-                                className="form-input"
-                                required
-                            />
+                            <input type="text" name="firstName" value={form.firstName} onChange={handleChange} className="form-input" required />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Last Name</label>
-                            <input
-                                type="text"
-                                name="lastName"
-                                value={form.lastName}
-                                onChange={handleChange}
-                                className="form-input"
-                                required
-                            />
+                            <input type="text" name="lastName" value={form.lastName} onChange={handleChange} className="form-input" required />
                         </div>
                     </div>
                     <div className="grid grid-2">
                         <div className="form-group">
-                            <label className="form-label flex items-center gap-1">
-                                <Mail size={14} /> Email Address
-                            </label>
-                            <input
-                                type="email"
-                                value={profile?.email || ''}
-                                disabled
-                                className="form-input"
-                                style={{ opacity: 0.6, cursor: 'not-allowed' }}
-                            />
+                            <label className="form-label flex items-center gap-1"><Mail size={14} /> Email Address</label>
+                            <input type="email" value={profile?.email || ''} disabled className="form-input" style={{ opacity: 0.6, cursor: 'not-allowed' }} />
                             <span className="form-help">Email cannot be changed.</span>
                         </div>
                         <div className="form-group">
-                            <label className="form-label flex items-center gap-1">
-                                <Phone size={14} /> Phone Number
-                            </label>
-                            <input
-                                type="tel"
-                                name="phone"
-                                value={form.phone}
-                                onChange={handleChange}
-                                className="form-input"
-                                placeholder="e.g., 08012345678"
-                            />
+                            <label className="form-label flex items-center gap-1"><Phone size={14} /> Phone Number</label>
+                            <input type="tel" name="phone" value={form.phone} onChange={handleChange} className="form-input" placeholder="e.g., 08012345678" />
                         </div>
                     </div>
                 </div>
@@ -359,36 +320,15 @@ export default function ProfilePage() {
                     <div className="grid grid-3">
                         <div className="form-group">
                             <label className="form-label">Bank Name</label>
-                            <input
-                                type="text"
-                                name="bankName"
-                                value={form.bankName}
-                                onChange={handleChange}
-                                className="form-input"
-                                placeholder="e.g., GTBank"
-                            />
+                            <input type="text" name="bankName" value={form.bankName} onChange={handleChange} className="form-input" placeholder="e.g., GTBank" />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Account Number</label>
-                            <input
-                                type="text"
-                                name="bankAccount"
-                                value={form.bankAccount}
-                                onChange={handleChange}
-                                className="form-input"
-                                placeholder="0123456789"
-                            />
+                            <input type="text" name="bankAccount" value={form.bankAccount} onChange={handleChange} className="form-input" placeholder="0123456789" />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Sort / Bank Code</label>
-                            <input
-                                type="text"
-                                name="bankCode"
-                                value={form.bankCode}
-                                onChange={handleChange}
-                                className="form-input"
-                                placeholder="e.g., 058"
-                            />
+                            <input type="text" name="bankCode" value={form.bankCode} onChange={handleChange} className="form-input" placeholder="e.g., 058" />
                         </div>
                     </div>
                 </div>
@@ -399,11 +339,7 @@ export default function ProfilePage() {
                         <h3 className="flex items-center gap-2" style={{ fontSize: 'var(--text-lg)' }}>
                             <Lock size={18} style={{ color: 'var(--color-primary)' }} /> Security
                         </h3>
-                        <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => setShowPassSection(!showPassSection)}
-                        >
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowPassSection(!showPassSection)}>
                             {showPassSection ? 'Cancel' : 'Change Password'}
                         </button>
                     </div>
@@ -465,24 +401,131 @@ export default function ProfilePage() {
                     )}
 
                     {!showPassSection && (
-                        <p className="text-sm text-muted">Your password was last changed when you created your account. Click "Change Password" to update it.</p>
+                        <p className="text-sm text-muted">Click "Change Password" to update your password.</p>
                     )}
                 </div>
 
                 {/* Save Button */}
-                <button
-                    type="submit"
-                    className="btn btn-primary btn-lg"
-                    disabled={saving}
-                    style={{ minWidth: '200px' }}
-                >
-                    {saving ? (
-                        <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Saving...</>
-                    ) : (
-                        <><Save size={18} /> Save Changes</>
-                    )}
+                <button type="submit" className="btn btn-primary btn-lg" disabled={saving} style={{ minWidth: '200px' }}>
+                    {saving
+                        ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Saving...</>
+                        : <><Save size={18} /> Save Changes</>
+                    }
                 </button>
             </form>
+        </div>
+    );
+}
+
+// ── Didit Verification Button ─────────────────────────────────
+function DiditVerifyButton() {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleVerify = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const res = await fetch('/api/verification/didit/session', { method: 'POST' });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to start verification');
+            window.location.href = data.verification_url;
+        } catch (err) {
+            setError(err.message);
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div style={{ padding: '16px', borderRadius: '12px', background: 'white', border: '2px solid var(--color-primary)' }}>
+            <div className="flex items-center gap-2 mb-2">
+                <Shield size={16} style={{ color: 'var(--color-primary)' }} />
+                <span style={{ fontWeight: 700, fontSize: 'var(--text-sm)' }}>Verify with Didit</span>
+                <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 999, background: 'var(--color-primary)', fontWeight: 700 }}>
+                    RECOMMENDED
+                </span>
+            </div>
+            <p className="text-sm text-muted mb-3">
+                Quick identity check using your government-issued ID. Powered by Didit — no manual data entry required.
+            </p>
+            {error && <p style={{ fontSize: 12, color: 'var(--color-error)', marginBottom: 8 }}>{error}</p>}
+            <button onClick={handleVerify} disabled={loading} className="btn btn-primary" style={{ minWidth: 160 }}>
+                {loading
+                    ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Starting...</>
+                    : <><Shield size={16} /> Start Verification</>
+                }
+            </button>
+        </div>
+    );
+}
+
+// ── NIN Fallback (collapsible) ────────────────────────────────
+function NinFallback({ onSuccess, onFail, setMessage }) {
+    const [open, setOpen] = useState(false);
+    const [verifying, setVerifying] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const nin = e.target.elements.nin.value;
+        if (!nin || nin.length !== 11) {
+            setMessage({ type: 'error', text: 'NIN must be exactly 11 digits.' });
+            return;
+        }
+        setVerifying(true);
+        try {
+            const res = await fetch('/api/verification/nin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nin }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                onSuccess();
+            } else {
+                setMessage({ type: 'error', text: data.error || 'Verification failed.' });
+                if (data.error?.toLowerCase().includes('failed')) onFail();
+            }
+        } catch {
+            setMessage({ type: 'error', text: 'Network error during verification.' });
+        } finally {
+            setVerifying(false);
+        }
+    };
+
+    return (
+        <div style={{ marginTop: 4 }}>
+            <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 'var(--text-sm)', color: 'var(--text-muted)', textDecoration: 'underline', padding: 0 }}
+            >
+                {open ? '▲ Hide NIN option' : '▼ Use NIN number instead'}
+            </button>
+
+            {open && (
+                <div style={{ marginTop: 12, padding: '14px', borderRadius: '10px', background: '#f8f8f8', border: '1px solid var(--border-color)' }}>
+                    <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>
+                        Enter your 11-digit National Identity Number as a fallback option.
+                    </p>
+                    <form onSubmit={handleSubmit} className="flex items-end gap-3" style={{ maxWidth: '380px' }}>
+                        <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                            <label className="form-label" style={{ fontSize: 11 }}>11-Digit NIN</label>
+                            <input
+                                type="text"
+                                name="nin"
+                                placeholder="e.g. 12345678901"
+                                className="form-input"
+                                pattern="\d{11}"
+                                maxLength={11}
+                                required
+                            />
+                        </div>
+                        <button type="submit" className="btn btn-outline" disabled={verifying}>
+                            {verifying ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : 'Verify'}
+                        </button>
+                    </form>
+                </div>
+            )}
         </div>
     );
 }

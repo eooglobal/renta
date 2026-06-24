@@ -7,7 +7,7 @@ const settingGroups = [
     { id: 'PAYSTACK',        label: 'Paystack Payments',  icon: CreditCard,    color: '#00C3F7' },
     { id: 'PAYMENT_GATEWAY', label: 'Payment Gateway',    icon: Zap,           color: '#FDA829' },
     { id: 'PUSHER',          label: 'Real-time (Pusher)', icon: MessageSquare, color: '#6366f1' },
-    { id: 'SMILE_ID',        label: 'Identity (Smile ID)',icon: Fingerprint,   color: '#22c55e' },
+    { id: 'DIDIT',           label: 'Identity (Didit)',   icon: Fingerprint,   color: '#8b5cf6' },
     { id: 'GOOGLE_MAPS',     label: 'Maps & Location',    icon: Globe,         color: '#3b82f6' },
     { id: 'EMAIL',           label: 'Email Configuration',icon: RefreshCw,     color: '#f97316' },
 ];
@@ -27,9 +27,9 @@ const defaultSettings = [
     { key: 'PUSHER_SECRET',                 group: 'PUSHER',          label: 'Secret',                            type: 'password' },
     { key: 'NEXT_PUBLIC_PUSHER_CLUSTER',    group: 'PUSHER',          label: 'Cluster',                           type: 'text' },
 
-    { key: 'SMILE_ID_PARTNER_ID',           group: 'SMILE_ID',        label: 'Partner ID',                        type: 'text' },
-    { key: 'SMILE_ID_API_KEY',              group: 'SMILE_ID',        label: 'API Key',                           type: 'password' },
-    { key: 'SMILE_ID_SID_SERVER',           group: 'SMILE_ID',        label: 'Environment',                       type: 'text',     description: '0 = Sandbox, 1 = Production' },
+    { key: 'DIDIT_API_KEY',                 group: 'DIDIT',           label: 'API Key',                           type: 'password', description: 'From Didit Console > API & Webhooks' },
+    { key: 'DIDIT_WORKFLOW_ID',             group: 'DIDIT',           label: 'Workflow ID',                       type: 'text',     description: 'From Didit Console > Workflows. Controls which checks run (ID, liveness, etc.)' },
+    { key: 'DIDIT_WEBHOOK_SECRET',          group: 'DIDIT',           label: 'Webhook Secret',                    type: 'password', description: 'From Didit Console > API & Webhooks. Used to verify webhook signatures.' },
 
     { key: 'NEXT_PUBLIC_GOOGLE_MAPS_API_KEY', group: 'GOOGLE_MAPS',   label: 'API Key',                           type: 'text' },
 

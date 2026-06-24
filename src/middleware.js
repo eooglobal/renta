@@ -35,10 +35,12 @@ export default NextAuth(authConfig).auth((req) => {
         '/api/properties',        // Property listings
         '/api/locations/cities',  // Fetching cities
         '/api/locations/areas',   // Fetching areas
-        '/api/webhooks/paystack', // Paystack payment webhooks
-        '/api/webhooks/nomba',    // Nomba payment webhooks
-        '/api/settings/public',   // Public platform settings (Pusher keys, Maps key)
-        '/api/health',            // Health check
+        '/api/webhooks/paystack',              // Paystack payment webhooks
+        '/api/webhooks/nomba',                 // Nomba payment webhooks
+        '/api/webhooks/didit',                 // Didit identity verification webhooks
+        '/api/settings/public',                // Public platform settings (Pusher keys, Maps key)
+        '/api/health',                         // Health check
+        '/api/verification/didit/callback',    // Didit redirect callback (public — no session yet)
     ];
     // Allow public API routes exactly, or any NextAuth routes which handle their own sessions
     const isPublicApiRoute = publicApiRoutes.includes(pathname) || pathname.startsWith('/api/auth');

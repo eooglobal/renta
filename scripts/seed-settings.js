@@ -24,6 +24,11 @@ async function seedSettings() {
         { key: 'NOMBA_CLIENT_SECRET', value: '', type: 'password', label: 'Nomba Client Secret', group: 'PAYMENT_GATEWAY', description: 'Your Nomba API Client Secret. Keep private.' },
         { key: 'NOMBA_ACCOUNT_ID', value: '', type: 'text', label: 'Nomba Account ID', group: 'PAYMENT_GATEWAY', description: 'Your Nomba Account ID for API authorization' },
         { key: 'NOMBA_WEBHOOK_SECRET', value: '', type: 'password', label: 'Nomba Webhook Secret', group: 'PAYMENT_GATEWAY', description: 'Used to verify Nomba webhook signatures' },
+
+        // Identity Verification (Didit)
+        { key: 'DIDIT_API_KEY', value: '', type: 'password', label: 'Didit API Key', group: 'DIDIT', description: 'From Didit Console > API & Webhooks' },
+        { key: 'DIDIT_WORKFLOW_ID', value: '', type: 'text', label: 'Didit Workflow ID', group: 'DIDIT', description: 'From Didit Console > Workflows' },
+        { key: 'DIDIT_WEBHOOK_SECRET', value: '', type: 'password', label: 'Didit Webhook Secret', group: 'DIDIT', description: 'From Didit Console > API & Webhooks' },
     ];
 
     console.log('Seeding platform settings...');
