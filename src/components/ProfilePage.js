@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -10,6 +10,21 @@ import {
 import Link from 'next/link';
 
 export default function ProfilePage() {
+    return (
+        <Suspense fallback={
+            <div className="fade-in">
+                <div className="card text-center" style={{ padding: 'var(--space-12)' }}>
+                    <Loader2 size={32} style={{ color: 'var(--color-primary)', margin: '0 auto', animation: 'spin 1s linear infinite' }} />
+                    <p className="text-muted mt-4">Loading profile...</p>
+                </div>
+            </div>
+        }>
+            <ProfilePageInner />
+        </Suspense>
+    );
+}
+
+function ProfilePageInner() {
     const { data: session } = useSession();
     const searchParams = useSearchParams();
     const [profile, setProfile] = useState(null);
