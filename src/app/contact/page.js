@@ -38,8 +38,8 @@ export default function ContactPage() {
                         <p style={{ color: '#4b5563', marginBottom: '1.5rem', lineHeight: '1.6' }}>
                             For general inquiries and technical support, drop us an email. We typically respond within 24 hours.
                         </p>
-                        <a href="mailto:support@renta-app.com" style={{ color: '#4f46e5', fontWeight: '600', textDecoration: 'none', fontSize: '1.125rem' }}>
-                            support@renta-app.com
+                        <a href="mailto:hello@userenta.com" style={{ color: '#4f46e5', fontWeight: '600', textDecoration: 'none', fontSize: '1.125rem' }}>
+                            hello@userenta.com
                         </a>
                     </div>
 
@@ -53,7 +53,7 @@ export default function ContactPage() {
                             Need urgent help with an ongoing inspection or escrow payment? Reach out to our direct support line.
                         </p>
                         <a href="tel:+2348000000000" style={{ color: '#059669', fontWeight: '600', textDecoration: 'none', fontSize: '1.125rem' }}>
-                            +234 800 000 0000
+                            +234 814 997 9692
                         </a>
                     </div>
 
@@ -67,7 +67,7 @@ export default function ContactPage() {
                             Drop by our office to discuss large-scale property management or partnership opportunities.
                         </p>
                         <address style={{ fontStyle: 'normal', color: '#e11d48', fontWeight: '600', fontSize: '1.125rem' }}>
-                            Tanke, Ilorin<br />Kwara State, Nigeria
+                            Ganmo, Ilorin<br />Kwara State, Nigeria
                         </address>
                     </div>
 

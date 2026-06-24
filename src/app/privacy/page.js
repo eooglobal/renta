@@ -70,7 +70,7 @@ export default function PrivacyPage() {
           <section style={{ backgroundColor: '#f9fafb', padding: '32px', borderRadius: '16px', marginTop: '32px' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '8px' }}>Privacy Concerns?</h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              If you have questions about our Privacy Policy, please contact our Data Protection Officer at <Link href="/contact" style={{ fontWeight: 'bold', textDecoration: 'underline' }}>privacy@renta-app.com</Link>.
+              If you have questions about our Privacy Policy, please contact our Data Protection Officer at <Link href="/contact" style={{ fontWeight: 'bold', textDecoration: 'underline' }}>privacy@userenta.com</Link>.
             </p>
           </section>
         </div>

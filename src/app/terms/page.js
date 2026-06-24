@@ -67,7 +67,7 @@ export default function TermsPage() {
           <section style={{ backgroundColor: '#f9fafb', padding: '32px', borderRadius: '16px', marginTop: '32px' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '8px' }}>Questions?</h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              If you have questions about our Terms, please contact us at <Link href="/contact" style={{ fontWeight: 'bold', textDecoration: 'underline' }}>support@renta-app.com</Link>.
+              If you have questions about our Terms, please contact us at <Link href="/contact" style={{ fontWeight: 'bold', textDecoration: 'underline' }}>hello@userenta.com</Link>.
             </p>
           </section>
         </div>
