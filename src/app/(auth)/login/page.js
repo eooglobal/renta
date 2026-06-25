@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Eye, EyeOff } from 'lucide-react';
 import styles from './login.module.css';
 
 export default function LoginPage() {
@@ -11,6 +12,7 @@ export default function LoginPage() {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -89,18 +91,36 @@ export default function LoginPage() {
 
                         <div className="form-group">
                             <label htmlFor="password" className="form-label">Password</label>
-                            <input
-                                id="password"
-                                type="password"
-                                name="password"
-                                className="form-input"
-                                placeholder="Enter your password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                required
-                                autoComplete="current-password"
-                                minLength={8}
-                            />
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    name="password"
+                                    className="form-input"
+                                    placeholder="Enter your password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                    autoComplete="current-password"
+                                    minLength={8}
+                                    style={{ paddingRight: '44px' }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={{
+                                        position: 'absolute', right: '12px', top: '50%',
+                                        transform: 'translateY(-50%)', background: 'none',
+                                        border: 'none', cursor: 'pointer', padding: '4px',
+                                        color: 'var(--text-muted)', display: 'flex',
+                                        alignItems: 'center',
+                                    }}
+                                    tabIndex={-1}
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                         </div>
 
                         <button

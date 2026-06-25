@@ -87,19 +87,7 @@ export default function TenantRentalsPage() {
         }
     };
 
-    const handleDownloadContract = async (rental) => {
-        const tenantName = rental.tenant
-            ? `${rental.tenant.firstName} ${rental.tenant.lastName}`
-            : 'Tenant';
-        const landlordName = rental.property?.landlord
-            ? `${rental.property.landlord.firstName} ${rental.property.landlord.lastName}`
-            : 'Landlord';
-        const signedAt = rental.agreement?.tenantSignedAt || rental.updatedAt;
-        const typedName = rental.agreement?.tenantSignature || tenantName;
-
-        const { default: jsPDF } = await import('jspdf');
-        generateDownloadPDF({ rental, tenantName, landlordName, typedName, signedAt, jsPDF });
-    };
+    // Downloads are handled server-side — no client-side bundle needed
 
     return (
         <div className="fade-in">
@@ -230,13 +218,14 @@ export default function TenantRentalsPage() {
                                                         >
                                                             <CheckCircle size={14} style={{ marginRight: 4 }} /> Signed
                                                         </button>
-                                                        <button
-                                                            onClick={() => handleDownloadContract(rental)}
+                                                        <a
+                                                            href={`/api/tenant/rentals/${rental.id}/contract`}
+                                                            download
                                                             className="btn btn-sm btn-outline"
                                                         >
                                                             <Download size={14} style={{ marginRight: 4 }} />
                                                             Contract
-                                                        </button>
+                                                        </a>
                                                     </>
                                                 ) : (
                                                     <button
@@ -248,27 +237,14 @@ export default function TenantRentalsPage() {
                                                 )}
 
                                                 {/* Download Receipt */}
-                                                <button
-                                                    onClick={async () => {
-                                                        const { generateRentalReceipt } = await import('@/lib/receiptGenerator');
-                                                        generateRentalReceipt({
-                                                            tenantName,
-                                                            landlordName,
-                                                            propertyTitle: rental.property?.title || '',
-                                                            propertyAddress: rental.property?.address || '',
-                                                            rentalId: rental.id,
-                                                            paymentRef: rental.paystackRef || 'N/A',
-                                                            amount: rental.rentAmount,
-                                                            serviceFee: rental.serviceFee,
-                                                            totalPaid: rental.totalPaid,
-                                                            date: rental.createdAt
-                                                        });
-                                                    }}
+                                                <a
+                                                    href={`/api/tenant/rentals/${rental.id}/receipt`}
+                                                    download
                                                     className="btn btn-sm btn-outline"
                                                 >
                                                     <Download size={14} style={{ marginRight: 4 }} />
                                                     Download Receipt
-                                                </button>
+                                                </a>
 
                                                 {/* Escrow actions */}
                                                 {rental.escrow?.status === 'HELD' && (

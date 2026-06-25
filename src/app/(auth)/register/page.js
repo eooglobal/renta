@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Eye, EyeOff } from 'lucide-react';
 import styles from '../login/login.module.css';
 
 const ROLES = [
@@ -36,6 +37,8 @@ function RegisterForm() {
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -206,34 +209,70 @@ function RegisterForm() {
 
                         <div className="form-group">
                             <label htmlFor="reg-password" className="form-label">Password</label>
-                            <input
-                                id="reg-password"
-                                type="password"
-                                name="password"
-                                className="form-input"
-                                placeholder="Min. 8 characters"
-                                value={formData.password}
-                                onChange={handleChange}
-                                required
-                                minLength={8}
-                                autoComplete="new-password"
-                            />
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    id="reg-password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    name="password"
+                                    className="form-input"
+                                    placeholder="Min. 8 characters"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                    minLength={8}
+                                    autoComplete="new-password"
+                                    style={{ paddingRight: '44px' }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={{
+                                        position: 'absolute', right: '12px', top: '50%',
+                                        transform: 'translateY(-50%)', background: 'none',
+                                        border: 'none', cursor: 'pointer', padding: '4px',
+                                        color: 'var(--text-muted)', display: 'flex',
+                                        alignItems: 'center',
+                                    }}
+                                    tabIndex={-1}
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="form-group">
                             <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
-                            <input
-                                id="confirmPassword"
-                                type="password"
-                                name="confirmPassword"
-                                className="form-input"
-                                placeholder="Re-enter your password"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                required
-                                minLength={8}
-                                autoComplete="new-password"
-                            />
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    id="confirmPassword"
+                                    type={showConfirm ? 'text' : 'password'}
+                                    name="confirmPassword"
+                                    className="form-input"
+                                    placeholder="Re-enter your password"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    required
+                                    minLength={8}
+                                    autoComplete="new-password"
+                                    style={{ paddingRight: '44px' }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirm(!showConfirm)}
+                                    style={{
+                                        position: 'absolute', right: '12px', top: '50%',
+                                        transform: 'translateY(-50%)', background: 'none',
+                                        border: 'none', cursor: 'pointer', padding: '4px',
+                                        color: 'var(--text-muted)', display: 'flex',
+                                        alignItems: 'center',
+                                    }}
+                                    tabIndex={-1}
+                                    aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                                >
+                                    {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                         </div>
 
                         <button
