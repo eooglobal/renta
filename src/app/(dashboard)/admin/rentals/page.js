@@ -81,7 +81,7 @@ export default function AdminRentalsPage() {
                                         <div className="flex flex-col">
                                             <strong>{rental.property.title}</strong>
                                             <span className="text-xs text-muted">
-                                                <MapPin size={10} /> {rental.property.area}, {rental.property.city}
+                                                <MapPin size={10} /> {rental.property.area?.name || rental.property.area}, {rental.property.city?.name || rental.property.city}
                                             </span>
                                         </div>
                                     </td>
