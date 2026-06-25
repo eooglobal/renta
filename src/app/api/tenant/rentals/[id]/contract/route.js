@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { NextResponse } from 'next/server';
 
 // GET /api/tenant/rentals/[id]/contract
 export async function GET(request, { params }) {
@@ -23,11 +23,11 @@ export async function GET(request, { params }) {
                         title: true,
                         address: true,
                         landlord: { select: { firstName: true, lastName: true } },
-                    }
+                    },
                 },
                 tenant: { select: { firstName: true, lastName: true } },
                 agreement: true,
-            }
+            },
         });
 
         if (!rental) {
@@ -38,15 +38,8 @@ export async function GET(request, { params }) {
             return NextResponse.json({ error: 'Agreement has not been signed yet' }, { status: 400 });
         }
 
-        const { default: jsPDF } = await import('jspdf');
-        const { default: autotable } = await import('jspdf-autotable');
+        const PDFDocument = (await import('pdfkit')).default;
 
-        const doc = new jsPDF();
-        const primaryColor = '#FDA829';
-        const black = '#000000';
-        const pageWidth = 210;
-        const margin = 20;
-        const contentWidth = pageWidth - margin * 2;
         const tenantName = `${rental.tenant.firstName} ${rental.tenant.lastName}`;
         const landlordName = `${rental.property.landlord.firstName} ${rental.property.landlord.lastName}`;
         const typedName = rental.agreement?.tenantSignature || tenantName;
@@ -56,171 +49,136 @@ export async function GET(request, { params }) {
             if (!d) return 'N/A';
             return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
         };
-        const fmtCurrency = (v) => '₦' + Number(v).toLocaleString('en-NG');
+        const fmtAmount = (v) => 'NGN ' + Number(v).toLocaleString('en-NG', { minimumFractionDigits: 2 });
 
-        // Header
-        doc.setFillColor(0, 0, 0);
-        doc.rect(0, 0, pageWidth, 42, 'F');
-        doc.setTextColor(primaryColor);
-        doc.setFontSize(26);
-        doc.setFont('helvetica', 'bold');
-        doc.text('RENTA', margin, 20);
-        doc.setTextColor('#FFFFFF');
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.text('VERIFIED APARTMENT RENTALS', margin, 28);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('RESIDENTIAL TENANCY AGREEMENT', margin, 37);
+        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        const chunks = [];
+        doc.on('data', (chunk) => chunks.push(chunk));
 
-        let y = 56;
-        doc.setTextColor(black);
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Rental Agreement #${rental.id}`, margin, y);
-        y += 7;
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        doc.setTextColor('#7a7a7a');
-        doc.text(`Property: ${rental.property?.title || 'N/A'}`, margin, y);
-        y += 6;
-        doc.text(`Address: ${rental.property?.address || 'N/A'}`, margin, y);
-        y += 12;
+        await new Promise((resolve) => {
+            doc.on('end', resolve);
 
-        doc.setDrawColor(220, 220, 220);
-        doc.line(margin, y, pageWidth - margin, y);
-        y += 8;
+            const pageW = doc.page.width;
+            const margin = 50;
+            const contentW = pageW - margin * 2;
 
-        // Parties
-        doc.setTextColor(black);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('1. PARTIES', margin, y);
-        y += 7;
-        doc.setFontSize(9);
-        for (const [label, val] of [
-            ['Tenant:', tenantName],
-            ['Landlord:', landlordName],
-            ['Property Address:', rental.property?.address || 'N/A'],
-        ]) {
-            doc.setFont('helvetica', 'bold');
-            doc.text(label, margin, y);
-            doc.setFont('helvetica', 'normal');
-            doc.text(val, margin + 35, y);
-            y += 6;
-        }
-        y += 4;
+            // ── Header ──
+            doc.rect(0, 0, pageW, 80).fill('#000000');
+            doc.fillColor('#FDA829').fontSize(26).font('Helvetica-Bold').text('RENTA', margin, 18);
+            doc.fillColor('#AAAAAA').fontSize(9).font('Helvetica').text('VERIFIED APARTMENT RENTALS', margin, 46);
+            doc.fillColor('#FFFFFF').fontSize(12).font('Helvetica-Bold').text('RESIDENTIAL TENANCY AGREEMENT', margin, 62);
 
-        // Rental Period
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
-        doc.text('2. RENTAL PERIOD', margin, y);
-        y += 7;
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        doc.text(`From ${fmtDate(rental.startDate)} to ${fmtDate(rental.endDate)}`, margin, y);
-        y += 10;
+            // ── Agreement ID ──
+            let y = 105;
+            doc.fillColor('#000000').fontSize(13).font('Helvetica-Bold').text(`Rental Agreement #${rental.id}`, margin, y);
+            y += 18;
+            doc.fillColor('#777777').fontSize(9).font('Helvetica').text(`Property: ${rental.property?.title || 'N/A'}`, margin, y);
+            y += 13;
+            doc.text(`Address: ${rental.property?.address || 'N/A'}`, margin, y);
+            y += 18;
 
-        // Rent & Fees
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
-        doc.text('3. RENT AND FEES', margin, y);
-        y += 7;
-        doc.setFontSize(9);
-        for (const [label, val] of [
-            ['Rent Amount:', fmtCurrency(rental.rentAmount)],
-            ['Platform Service Fee:', fmtCurrency(rental.serviceFee)],
-            ['Total Amount Paid:', fmtCurrency(rental.totalPaid)],
-        ]) {
-            doc.setFont('helvetica', 'bold');
-            doc.text(label, margin, y);
-            doc.setFont('helvetica', 'normal');
-            doc.text(val, margin + 50, y);
-            y += 6;
-        }
-        y += 4;
+            // ── Divider ──
+            doc.moveTo(margin, y).lineTo(pageW - margin, y).strokeColor('#DDDDDD').lineWidth(1).stroke();
+            y += 16;
 
-        // Clauses
-        const clauses = [
-            ['4. ESCROW TERMS', 'All rental funds are held securely in escrow by Renta. Funds are released to the Landlord only after the Tenant confirms access. In disputes, funds remain held until resolved.'],
-            ['5. TENANT OBLIGATIONS', 'Maintain property condition, no subletting without consent, no unlawful use, report damages via Renta.'],
-            ['6. LANDLORD OBLIGATIONS', 'Ensure habitable condition, grant peaceful enjoyment, attend to maintenance requests via Renta.'],
-            ['7. TERMINATION', 'Either party may terminate with 30 days written notice via Renta. Early termination may result in penalties.'],
-            ['8. DISPUTE RESOLUTION', 'Disputes submitted via Renta platform first. If unresolved in 14 days, may proceed to mediation or court.'],
-            ['9. ELECTRONIC SIGNATURE', 'Electronic signature is legally binding per Nigerian law.'],
-            ['10. GOVERNING LAW', 'Governed by the laws of the Federal Republic of Nigeria.'],
-        ];
+            // ── Section helper ──
+            const section = (title, body) => {
+                if (y > 700) { doc.addPage(); y = 50; }
+                doc.fillColor('#000000').fontSize(10).font('Helvetica-Bold').text(title, margin, y);
+                y += 14;
+                if (Array.isArray(body)) {
+                    // Key-value pairs
+                    for (const [label, value] of body) {
+                        doc.font('Helvetica-Bold').fontSize(9).fillColor('#555555').text(label, margin, y, { continued: true, width: 130 });
+                        doc.font('Helvetica').fillColor('#000000').text(value, { width: contentW - 130 });
+                        y += 14;
+                    }
+                } else {
+                    doc.font('Helvetica').fontSize(9).fillColor('#444444');
+                    const lines = doc.heightOfString(body, { width: contentW });
+                    doc.text(body, margin, y, { width: contentW });
+                    y += lines + 8;
+                }
+                y += 8;
+            };
 
-        for (const [heading, body] of clauses) {
-            if (y > 250) { doc.addPage(); y = 20; }
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(10);
-            doc.setTextColor(black);
-            doc.text(heading, margin, y);
-            y += 6;
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.setTextColor('#4a4a4a');
-            const lines = doc.splitTextToSize(body, contentWidth);
-            doc.text(lines, margin, y);
-            y += lines.length * 5 + 6;
-        }
+            section('1. PARTIES', [
+                ['Tenant:', tenantName],
+                ['Landlord:', landlordName],
+                ['Property Address:', rental.property?.address || 'N/A'],
+            ]);
 
-        // Signature block
-        if (y > 230) { doc.addPage(); y = 20; }
-        y += 6;
-        doc.setDrawColor(220, 220, 220);
-        doc.line(margin, y, pageWidth - margin, y);
-        y += 10;
+            section('2. RENTAL PERIOD', [
+                ['Start Date:', fmtDate(rental.startDate)],
+                ['End Date:', fmtDate(rental.endDate)],
+            ]);
 
-        doc.setTextColor(black);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.text('TENANT SIGNATURE', margin, y);
-        y += 8;
+            section('3. RENT AND FEES', [
+                ['Rent Amount:', fmtAmount(rental.rentAmount)],
+                ['Platform Service Fee:', fmtAmount(rental.serviceFee)],
+                ['Total Amount Paid:', fmtAmount(rental.totalPaid)],
+            ]);
 
-        doc.setFillColor(250, 250, 250);
-        doc.setDrawColor(200, 200, 200);
-        doc.roundedRect(margin, y, contentWidth, 18, 3, 3, 'FD');
-        doc.setFont('helvetica', 'italic');
-        doc.setFontSize(14);
-        doc.setTextColor('#2a2a2a');
-        doc.text(typedName, margin + 6, y + 12);
-        y += 24;
+            section('4. ESCROW TERMS', 'All rental funds are held securely in escrow by Renta. Funds are released to the Landlord only after the Tenant confirms access to the property. In the event of a dispute, funds remain held until the matter is resolved by Renta administration.');
 
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        doc.setTextColor('#7a7a7a');
-        doc.text(`Signed electronically on: ${fmtDate(signedAt)}`, margin, y);
-        y += 6;
-        doc.text(`Tenant Name: ${typedName}`, margin, y);
-        y += 6;
-        doc.text(`Rental Reference: #${rental.id}`, margin, y);
+            section('5. TENANT OBLIGATIONS', 'Maintain the property in good condition. No subletting without written consent. No unlawful use of the premises. Report damages promptly via the Renta platform.');
 
-        // Page numbers
-        const pageCount = doc.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.setTextColor(180, 180, 180);
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'italic');
-            doc.text('This is an electronically generated document facilitated by Renta.', margin, 287, { maxWidth: contentWidth });
-            doc.text(`Page ${i} of ${pageCount}`, pageWidth - margin, 287, { align: 'right' });
-        }
+            section('6. LANDLORD OBLIGATIONS', 'Ensure the property is in habitable condition at the commencement of the tenancy. Grant the Tenant peaceful enjoyment of the property. Attend to valid maintenance requests submitted via Renta.');
 
-        const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+            section('7. TERMINATION', 'Either party may terminate this agreement with 30 days written notice via the Renta platform. Early termination may result in penalties as determined by Renta policy.');
+
+            section('8. DISPUTE RESOLUTION', 'All disputes must first be submitted via the Renta platform. If unresolved within 14 days, parties may proceed to mediation or appropriate court action.');
+
+            section('9. ELECTRONIC SIGNATURE', 'This agreement is electronically signed and is legally binding under the laws of the Federal Republic of Nigeria, including the Cybercrimes (Prohibition, Prevention, Etc.) Act and the Evidence Act.');
+
+            section('10. GOVERNING LAW', 'This Agreement shall be governed by and construed in accordance with the laws of the Federal Republic of Nigeria.');
+
+            // ── Signature block ──
+            if (y > 650) { doc.addPage(); y = 50; }
+            y += 8;
+            doc.moveTo(margin, y).lineTo(pageW - margin, y).strokeColor('#DDDDDD').lineWidth(1).stroke();
+            y += 20;
+
+            doc.fillColor('#000000').fontSize(11).font('Helvetica-Bold').text('TENANT SIGNATURE', margin, y);
+            y += 16;
+
+            // Signature box
+            doc.rect(margin, y, contentW, 40).fillAndStroke('#F9F9F9', '#CCCCCC');
+            doc.fillColor('#2a2a2a').fontSize(16).font('Helvetica-Oblique').text(typedName, margin + 12, y + 12);
+            y += 52;
+
+            doc.fillColor('#888888').fontSize(8).font('Helvetica');
+            doc.text(`Signed electronically on: ${fmtDate(signedAt)}`, margin, y);
+            y += 12;
+            doc.text(`Tenant Full Name: ${typedName}`, margin, y);
+            y += 12;
+            doc.text(`Rental Reference: #${rental.id}`, margin, y);
+
+            // ── Page numbers ──
+            const pageCount = doc.bufferedPageRange().count;
+            for (let i = 0; i < pageCount; i++) {
+                doc.switchToPage(i);
+                doc.fillColor('#BBBBBB').fontSize(8).font('Helvetica-Oblique');
+                doc.text('This is an electronically generated document facilitated by Renta.', margin, doc.page.height - 30, { width: contentW - 60 });
+                doc.text(`Page ${i + 1} of ${pageCount}`, margin, doc.page.height - 30, { align: 'right', width: contentW });
+            }
+
+            doc.end();
+        });
+
+        const pdfBuffer = Buffer.concat(chunks);
 
         return new Response(pdfBuffer, {
             status: 200,
             headers: {
                 'Content-Type': 'application/pdf',
                 'Content-Disposition': `attachment; filename="Renta_Agreement_${rental.id}.pdf"`,
-                'Content-Length': pdfBuffer.length,
+                'Content-Length': String(pdfBuffer.length),
             },
         });
 
     } catch (error) {
         console.error('[Contract API] Error:', error);
-        return NextResponse.json({ error: 'Failed to generate contract' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to generate contract', detail: error.message }, { status: 500 });
     }
 }

@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import styles from '../login/login.module.css';
+import { useToast } from '@/components/Toast';
+import { friendlyError } from '@/lib/errors';
 
 const ROLES = [
     { value: 'TENANT', label: 'Tenant', emoji: '🏠', desc: 'Find apartments' },
@@ -23,6 +25,7 @@ export default function RegisterPage() {
 
 function RegisterForm() {
     const router = useRouter();
+    const toast = useToast();
     const searchParams = useSearchParams();
     const defaultRole = searchParams.get('role')?.toUpperCase() || 'TENANT';
 
@@ -35,23 +38,20 @@ function RegisterForm() {
         confirmPassword: '',
         role: ROLES.find(r => r.value === defaultRole) ? defaultRole : 'TENANT',
     });
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-        setError('');
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setError('');
 
         if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
+            toast.error("Passwords Don't Match", "Your password and confirmation password are different. Please re-enter them.");
             setLoading(false);
             return;
         }
@@ -77,7 +77,8 @@ function RegisterForm() {
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.error || 'Registration failed');
+                const friendly = friendlyError(data.error || 'Registration failed');
+                toast.error(friendly.title, friendly.message);
                 return;
             }
 
@@ -102,8 +103,9 @@ function RegisterForm() {
                 };
                 router.push(roleRoutes[formData.role] || '/tenant');
             }
-        } catch {
-            setError('Something went wrong. Please try again.');
+        } catch (err) {
+            const friendly = friendlyError(err);
+            toast.error(friendly.title, friendly.message);
         } finally {
             setLoading(false);
         }
@@ -121,11 +123,6 @@ function RegisterForm() {
                     </div>
 
                     <form onSubmit={handleSubmit} className={styles.authForm}>
-                        {error && (
-                            <div className={styles.errorAlert}>
-                                {error}
-                            </div>
-                        )}
 
                         {/* Role Selection */}
                         <div className="form-group">

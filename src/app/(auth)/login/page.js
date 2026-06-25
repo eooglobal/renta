@@ -6,23 +6,23 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import styles from './login.module.css';
+import { useToast } from '@/components/Toast';
+import { friendlyError } from '@/lib/errors';
 
 export default function LoginPage() {
     const router = useRouter();
+    const toast = useToast();
     const [formData, setFormData] = useState({ email: '', password: '' });
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-        setError('');
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setError('');
 
         try {
             const result = await signIn('credentials', {
@@ -32,7 +32,8 @@ export default function LoginPage() {
             });
 
             if (result?.error) {
-                setError(result.error);
+                const friendly = friendlyError(result.error);
+                toast.error(friendly.title, friendly.message);
             } else {
                 // Fetch session to get role for redirect
                 const res = await fetch('/api/auth/session');
@@ -49,8 +50,9 @@ export default function LoginPage() {
                 const redirectPath = roleRoutes[session?.user?.role] || '/tenant';
                 router.push(redirectPath);
             }
-        } catch {
-            setError('Something went wrong. Please try again.');
+        } catch (err) {
+            const friendly = friendlyError(err);
+            toast.error(friendly.title, friendly.message);
         } finally {
             setLoading(false);
         }
@@ -68,11 +70,6 @@ export default function LoginPage() {
                     </div>
 
                     <form onSubmit={handleSubmit} className={styles.authForm}>
-                        {error && (
-                            <div className={styles.errorAlert}>
-                                {error}
-                            </div>
-                        )}
 
                         <div className="form-group">
                             <label htmlFor="email" className="form-label">Email Address</label>

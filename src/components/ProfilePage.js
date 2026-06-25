@@ -8,6 +8,8 @@ import {
     Save, Lock, Eye, EyeOff, CheckCircle, AlertTriangle, Loader2, Briefcase
 } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/components/Toast';
+import { friendlyError } from '@/lib/errors';
 
 export default function ProfilePage() {
     return (
@@ -27,10 +29,10 @@ export default function ProfilePage() {
 function ProfilePageInner() {
     const { data: session } = useSession();
     const searchParams = useSearchParams();
+    const toast = useToast();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState({ type: '', text: '' });
     const [showPassSection, setShowPassSection] = useState(false);
     const [showCurrentPass, setShowCurrentPass] = useState(false);
     const [showNewPass, setShowNewPass] = useState(false);
@@ -60,15 +62,15 @@ function ProfilePageInner() {
         // Show result message if returning from Didit verification redirect
         const verificationResult = searchParams?.get('verification');
         if (verificationResult === 'complete') {
-            setMessage({ type: 'success', text: 'Identity verified successfully!' });
+            toast.success('Identity Verified', 'Identity verified successfully!');
         } else if (verificationResult === 'failed') {
-            setMessage({ type: 'error', text: 'Identity verification failed. Please try again or use NIN.' });
+            toast.error('Verification Failed', 'Identity verification failed. Please try again or use NIN.');
         } else if (verificationResult === 'pending') {
-            setMessage({ type: 'success', text: 'Verification submitted and under review. We\'ll notify you shortly.' });
+            toast.success('Verification Pending', 'Verification submitted and under review. We\'ll notify you shortly.');
         } else if (verificationResult === 'error') {
-            setMessage({ type: 'error', text: 'Verification could not be completed. Please try again.' });
+            toast.error('Verification Error', 'Verification could not be completed. Please try again.');
         }
-    }, [searchParams]);
+    }, [searchParams, toast]);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -160,33 +162,30 @@ function ProfilePageInner() {
             bankCode: code,
             bankName: bank?.name || '',
         }));
-        setMessage({ type: '', text: '' });
     };
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
-        setMessage({ type: '', text: '' });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
-        setMessage({ type: '', text: '' });
 
         if ((form.bankAccount || form.bankCode) && !nameConfirmed) {
-            setMessage({ type: 'error', text: 'Please resolve and confirm your bank account name.' });
+            toast.error('Confirm Account Name', 'Please resolve and confirm your bank account name.');
             setSaving(false);
             return;
         }
 
         if (showPassSection && form.newPassword) {
             if (form.newPassword !== form.confirmPassword) {
-                setMessage({ type: 'error', text: 'New passwords do not match.' });
+                toast.error("Passwords Don't Match", 'New passwords do not match.');
                 setSaving(false);
                 return;
             }
             if (form.newPassword.length < 8) {
-                setMessage({ type: 'error', text: 'New password must be at least 8 characters.' });
+                toast.error('Password Too Short', 'New password must be at least 8 characters.');
                 setSaving(false);
                 return;
             }
@@ -216,14 +215,16 @@ function ProfilePageInner() {
             const data = await res.json();
 
             if (!res.ok) {
-                setMessage({ type: 'error', text: data.error || 'Update failed' });
+                const friendly = friendlyError(data.error || 'Update failed');
+                toast.error(friendly.title, friendly.message);
             } else {
-                setMessage({ type: 'success', text: 'Profile updated successfully!' });
+                toast.success('Profile Saved', 'Profile updated successfully!');
                 setForm(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
                 setShowPassSection(false);
             }
-        } catch {
-            setMessage({ type: 'error', text: 'Something went wrong.' });
+        } catch (err) {
+            const friendly = friendlyError(err);
+            toast.error(friendly.title, friendly.message);
         } finally {
             setSaving(false);
         }
@@ -318,20 +319,6 @@ function ProfilePageInner() {
                 </div>
             </div>
 
-            {/* Status Message */}
-            {message.text && (
-                <div className="card mb-6 flex items-center gap-3" style={{
-                    background: message.type === 'success' ? 'var(--color-success-light)' : 'var(--color-error-light)',
-                    borderLeft: `4px solid ${message.type === 'success' ? 'var(--color-success)' : 'var(--color-error)'}`,
-                }}>
-                    {message.type === 'success'
-                        ? <CheckCircle size={18} style={{ color: 'var(--color-success)' }} />
-                        : <AlertTriangle size={18} style={{ color: 'var(--color-error)' }} />
-                    }
-                    <span className="text-sm font-medium">{message.text}</span>
-                </div>
-            )}
-
             {/* Identity Verification Widget (Tenants only, when not yet verified) */}
             {profile?.role === 'TENANT' && (profile?.ninStatus === 'PENDING' || profile?.ninStatus === 'FAILED') && (
                 <div className="card mb-6" style={{ borderLeft: '4px solid var(--color-primary)', background: 'var(--bg-secondary)' }}>
@@ -351,10 +338,9 @@ function ProfilePageInner() {
                         <NinFallback
                             onSuccess={() => {
                                 setProfile(prev => ({ ...prev, ninStatus: 'VERIFIED' }));
-                                setMessage({ type: 'success', text: 'Identity successfully verified!' });
+                                toast.success('Identity Verified', 'Identity successfully verified!');
                             }}
                             onFail={() => setProfile(prev => ({ ...prev, ninStatus: 'FAILED' }))}
-                            setMessage={setMessage}
                         />
                     </div>
                 </div>
@@ -601,18 +587,18 @@ function ProfilePageInner() {
 // ── Didit Verification Button ─────────────────────────────────
 function DiditVerifyButton() {
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const toast = useToast();
 
     const handleVerify = async () => {
         setLoading(true);
-        setError('');
         try {
             const res = await fetch('/api/verification/didit/session', { method: 'POST' });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to start verification');
             window.location.href = data.verification_url;
         } catch (err) {
-            setError(err.message);
+            const friendly = friendlyError(err);
+            toast.error(friendly.title, friendly.message);
             setLoading(false);
         }
     };
@@ -629,7 +615,6 @@ function DiditVerifyButton() {
             <p className="text-sm text-muted mb-3">
                 Quick identity check using your government-issued ID. Powered by Didit — no manual data entry required.
             </p>
-            {error && <p style={{ fontSize: 12, color: 'var(--color-error)', marginBottom: 8 }}>{error}</p>}
             <button onClick={handleVerify} disabled={loading} className="btn btn-primary" style={{ minWidth: 160 }}>
                 {loading
                     ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Starting...</>
@@ -641,15 +626,16 @@ function DiditVerifyButton() {
 }
 
 // ── NIN Fallback (collapsible) ────────────────────────────────
-function NinFallback({ onSuccess, onFail, setMessage }) {
+function NinFallback({ onSuccess, onFail }) {
     const [open, setOpen] = useState(false);
     const [verifying, setVerifying] = useState(false);
+    const toast = useToast();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         const nin = e.target.elements.nin.value;
         if (!nin || nin.length !== 11) {
-            setMessage({ type: 'error', text: 'NIN must be exactly 11 digits.' });
+            toast.error('Invalid NIN', 'NIN must be exactly 11 digits.');
             return;
         }
         setVerifying(true);
@@ -663,11 +649,13 @@ function NinFallback({ onSuccess, onFail, setMessage }) {
             if (res.ok) {
                 onSuccess();
             } else {
-                setMessage({ type: 'error', text: data.error || 'Verification failed.' });
+                const friendly = friendlyError(data.error || 'Verification failed.');
+                toast.error(friendly.title, friendly.message);
                 if (data.error?.toLowerCase().includes('failed')) onFail();
             }
-        } catch {
-            setMessage({ type: 'error', text: 'Network error during verification.' });
+        } catch (err) {
+            const friendly = friendlyError(err);
+            toast.error(friendly.title, friendly.message);
         } finally {
             setVerifying(false);
         }

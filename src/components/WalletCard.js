@@ -7,8 +7,11 @@ import {
     Loader2, ShieldAlert, User
 } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/components/Toast';
+import { friendlyError } from '@/lib/errors';
 
 export default function WalletCard({ userRole }) {
+    const toast = useToast();
     const [wallet, setWallet]           = useState(null);
     const [profile, setProfile]         = useState(null);
     const [loading, setLoading]         = useState(true);
@@ -44,7 +47,9 @@ export default function WalletCard({ userRole }) {
             setWallet(walletData);
             setProfile(profileData);
         } catch (err) {
-            setError(err.message);
+            const friendly = friendlyError(err);
+            setError(friendly.message);
+            toast.error(friendly.title, friendly.message);
         } finally {
             setLoading(false);
         }
@@ -107,13 +112,13 @@ export default function WalletCard({ userRole }) {
     const handleWithdrawReq = async (e) => {
         e.preventDefault();
         if (!nameConfirmed) {
-            alert('Please confirm the account name before submitting.');
+            toast.error('Name Confirmation Required', 'Please confirm the account name before submitting.');
             return;
         }
         try {
             const amountNum = Number(withdrawForm.amount);
             if (amountNum > Number(wallet.balance)) {
-                alert('Insufficient funds for this withdrawal.');
+                toast.error('Insufficient Balance', 'Your wallet balance is too low for this withdrawal.');
                 return;
             }
 
@@ -132,14 +137,15 @@ export default function WalletCard({ userRole }) {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
 
-            alert(data.message);
+            toast.success('Withdrawal Requested', data.message || 'Your withdrawal request has been submitted successfully.');
             setIsWithdrawing(false);
             setWithdrawForm({ amount: '', bankCode: '', bankName: '', bankAccount: '', accountName: '' });
             setResolvedName('');
             setNameConfirmed(false);
             fetchWallet();
         } catch (err) {
-            alert(err.message);
+            const friendly = friendlyError(err);
+            toast.error(friendly.title, friendly.message);
         }
     };
 

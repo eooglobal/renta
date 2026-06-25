@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react';
 import { X, Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import styles from './InspectionModal.module.css';
+import { useToast } from '@/components/Toast';
+import { friendlyError } from '@/lib/errors';
 
 export default function InspectionModal({ propertyId, propertyTitle, onClose }) {
+    const toast = useToast();
     const [slots, setSlots] = useState([]);
     const [loading, setLoading] = useState(true);
     const [booking, setBooking] = useState(false);
@@ -31,21 +34,22 @@ export default function InspectionModal({ propertyId, propertyTitle, onClose }) 
                     setSelectedDate(uniqueDates[0]);
                 }
             } catch (err) {
-                setError(err.message);
+                const friendly = friendlyError(err);
+                setError(friendly.message);
+                toast.error(friendly.title, friendly.message);
             } finally {
                 setLoading(false);
             }
         };
 
         if (propertyId) fetchSlots();
-    }, [propertyId]);
+    }, [propertyId, toast]);
 
     const handleBook = async () => {
         if (!selectedSlotId) return;
 
         try {
             setBooking(true);
-            setError('');
             const res = await fetch('/api/inspections', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -54,9 +58,11 @@ export default function InspectionModal({ propertyId, propertyTitle, onClose }) 
             const data = await res.json();
 
             if (!res.ok) throw new Error(data.error);
+            toast.success('Inspection Scheduled', 'Your inspection has been successfully booked!');
             setSuccess(true);
         } catch (err) {
-            setError(err.message);
+            const friendly = friendlyError(err);
+            toast.error(friendly.title, friendly.message);
         } finally {
             setBooking(false);
         }

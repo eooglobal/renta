@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Save, Trash2, Loader2 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
+import { friendlyError } from '@/lib/errors';
 
 const PROPERTY_TYPES = [
     { value: 'SELF_CON', label: 'Self Contained' },
@@ -23,12 +25,12 @@ const AMENITIES_OPTIONS = [
 export default function EditPropertyPage() {
     const router = useRouter();
     const params = useParams();
+    const toast = useToast();
     const propertyId = params.id;
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
-    const [message, setMessage] = useState({ type: '', text: '' });
     const [property, setProperty] = useState(null);
 
     const [form, setForm] = useState({
@@ -68,7 +70,8 @@ export default function EditPropertyPage() {
                 const data = await res.json();
 
                 if (!res.ok) {
-                    setMessage({ type: 'error', text: data.error || 'Failed to load property' });
+                    const friendly = friendlyError(data.error || 'Failed to load property');
+                    toast.error(friendly.title, friendly.message);
                     setLoading(false);
                     return;
                 }
@@ -88,19 +91,19 @@ export default function EditPropertyPage() {
                     amenities: p.amenities || [],
                     studentFriendly: p.studentFriendly || false,
                 });
-            } catch {
-                setMessage({ type: 'error', text: 'Something went wrong loading the property.' });
+            } catch (err) {
+                const friendly = friendlyError(err);
+                toast.error(friendly.title, friendly.message);
             } finally {
                 setLoading(false);
             }
         };
         fetchProperty();
-    }, [propertyId]);
+    }, [propertyId, toast]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
-        setMessage({ type: '', text: '' });
     };
 
     const toggleAmenity = (amenity) => {
@@ -115,7 +118,6 @@ export default function EditPropertyPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
-        setMessage({ type: '', text: '' });
 
         try {
             const isOtherArea = form.areaId === 'other';
@@ -134,12 +136,14 @@ export default function EditPropertyPage() {
             const data = await res.json();
 
             if (!res.ok) {
-                setMessage({ type: 'error', text: data.error || 'Update failed' });
+                const friendly = friendlyError(data.error || 'Update failed');
+                toast.error(friendly.title, friendly.message);
             } else {
-                setMessage({ type: 'success', text: 'Property updated successfully!' });
+                toast.success('Property Updated', 'Property updated successfully!');
             }
-        } catch {
-            setMessage({ type: 'error', text: 'Something went wrong.' });
+        } catch (err) {
+            const friendly = friendlyError(err);
+            toast.error(friendly.title, friendly.message);
         } finally {
             setSaving(false);
         }
@@ -154,12 +158,15 @@ export default function EditPropertyPage() {
             const data = await res.json();
 
             if (!res.ok) {
-                alert(data.error || 'Delete failed');
+                const friendly = friendlyError(data.error || 'Delete failed');
+                toast.error(friendly.title, friendly.message);
             } else {
+                toast.success('Property Deleted', 'The property has been successfully deleted.');
                 router.push('/landlord/properties');
             }
-        } catch {
-            alert('Something went wrong.');
+        } catch (err) {
+            const friendly = friendlyError(err);
+            toast.error(friendly.title, friendly.message);
         } finally {
             setDeleting(false);
         }
@@ -216,19 +223,8 @@ export default function EditPropertyPage() {
                                         padding: '1px 5px',
                                     }}>Cover</span>
                                 )}
-                            </div>
                         ))}
                     </div>
-                </div>
-            )}
-
-            {/* Status Message */}
-            {message.text && (
-                <div className="card mb-4 flex items-center gap-3" style={{
-                    background: message.type === 'success' ? 'var(--color-success-light)' : 'var(--color-error-light)',
-                    borderLeft: `4px solid ${message.type === 'success' ? 'var(--color-success)' : 'var(--color-error)'}`,
-                }}>
-                    <span className="text-sm font-medium">{message.text}</span>
                 </div>
             )}
 

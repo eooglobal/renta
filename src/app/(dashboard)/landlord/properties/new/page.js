@@ -6,6 +6,8 @@ import { Camera, X, ArrowLeft, ArrowRight } from 'lucide-react';
 import styles from './new-property.module.css';
 import dashStyles from '../../../tenant/dashboard.module.css';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
+import { useToast } from '@/components/Toast';
+import { friendlyError } from '@/lib/errors';
 
 const PROPERTY_TYPES = [
     { value: 'SELF_CON', label: 'Self Contained' },
@@ -25,10 +27,9 @@ const AMENITIES_OPTIONS = [
 
 export default function NewPropertyPage() {
     const router = useRouter();
+    const toast = useToast();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
     const [images, setImages] = useState([]);
     const [previews, setPreviews] = useState([]);
     const [location, setLocation] = useState(null);
@@ -70,7 +71,6 @@ export default function NewPropertyPage() {
             ...formData,
             [name]: type === 'checkbox' ? checked : value,
         });
-        setError('');
     };
 
     const toggleAmenity = (amenity) => {
@@ -85,7 +85,7 @@ export default function NewPropertyPage() {
     const handleImageSelect = (e) => {
         const files = Array.from(e.target.files);
         if (files.length + images.length > 10) {
-            setError('Maximum 10 images allowed');
+            toast.error('Image Limit Exceeded', 'Maximum 10 images allowed.');
             return;
         }
 
@@ -134,7 +134,6 @@ export default function NewPropertyPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setError('');
 
         try {
             // Step 1: Create property
@@ -158,9 +157,10 @@ export default function NewPropertyPage() {
 
             if (!res.ok) {
                 if (res.status === 401) {
-                    setError('Session expired or user not found. Please log out and log back in to refresh your account.');
+                    toast.error('Session Expired', 'Session expired or user not found. Please log out and log back in.');
                 } else {
-                    setError(data.error || 'Failed to create property');
+                    const friendly = friendlyError(data.error || 'Failed to create property');
+                    toast.error(friendly.title, friendly.message);
                 }
                 setLoading(false);
                 return;
@@ -178,10 +178,11 @@ export default function NewPropertyPage() {
                 });
             }
 
-            setSuccess('Property created! It will be reviewed by our verification team.');
+            toast.success('Property Created', 'Property created! It will be reviewed by our verification team.');
             setTimeout(() => router.push('/landlord/properties'), 2000);
-        } catch {
-            setError('Something went wrong. Please try again.');
+        } catch (err) {
+            const friendly = friendlyError(err);
+            toast.error(friendly.title, friendly.message);
         } finally {
             setLoading(false);
         }
@@ -216,8 +217,6 @@ export default function NewPropertyPage() {
             </div>
 
             <form onSubmit={handleSubmit}>
-                {error && <div className={styles.errorAlert}>{error}</div>}
-                {success && <div className={styles.successAlert}>{success}</div>}
 
                 {/* Step 1: Property Details */}
                 {step === 1 && (
@@ -363,7 +362,7 @@ export default function NewPropertyPage() {
                             <button type="button" className="btn btn-primary btn-lg" onClick={() => {
                                 const areaValid = formData.areaId && (formData.areaId !== 'other' || formData.otherAreaName.trim());
                                 if (!formData.title || !formData.type || !formData.cityId || !areaValid || !formData.address || !formData.rentPrice) {
-                                    setError('Please fill in all required fields (Type, City, Area, Address, Rent). If you selected "Other" area, please specify the name.');
+                                    toast.error('Missing Required Fields', 'Please fill in all required fields (Type, City, Area, Address, Rent). If you selected "Other" area, please specify the name.');
                                     return;
                                 }
                                 setStep(2);

@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, Loader2, Briefcase, DollarSign, Building, UserCheck } from 'lucide-react';
+import { useToast } from '@/components/Toast';
+import { friendlyError } from '@/lib/errors';
 
 export default function TenantScreeningPage() {
     const router = useRouter();
+    const toast = useToast();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [error, setError] = useState('');
 
     const [form, setForm] = useState({
         employmentStatus: 'EMPLOYED',
@@ -42,7 +44,6 @@ export default function TenantScreeningPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
-        setError('');
 
         try {
             const res = await fetch('/api/tenant/profile', {
@@ -59,11 +60,14 @@ export default function TenantScreeningPage() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
 
+            toast.success('Screening Saved', 'Your screening profile has been successfully saved!');
+
             // Redirect back to search or previous page
             const returnUrl = new URLSearchParams(window.location.search).get('returnUrl') || '/tenant/search';
             router.push(returnUrl);
         } catch (err) {
-            setError(err.message);
+            const friendly = friendlyError(err);
+            toast.error(friendly.title, friendly.message);
             setSaving(false);
         }
     };
@@ -87,12 +91,6 @@ export default function TenantScreeningPage() {
                     <p className="text-muted text-sm">Landlords on Renta use this information to review your rental requests.
                         Completing this profile improves your chances of securing an apartment.</p>
                 </div>
-
-                {error && (
-                    <div className="mb-6 p-4 rounded-md text-sm font-medium" style={{ background: 'var(--color-error-light)', color: 'var(--color-error)' }}>
-                        {error}
-                    </div>
-                )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="form-group">
