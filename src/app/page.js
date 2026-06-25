@@ -10,7 +10,7 @@ export const metadata = {
   openGraph: {
     title: 'Renta — Rent Verified Apartments at Real Prices',
     description: 'No agent inflation. No fake listings. Rent securely with escrow protection.',
-    url: 'https://renta-app.com',
+    url: 'https://userenta.com',
     siteName: 'Renta',
     locale: 'en_NG',
     type: 'website',

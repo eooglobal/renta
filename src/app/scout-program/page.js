@@ -11,7 +11,7 @@ export const metadata = {
     openGraph: {
         title: 'Renta Scout Program — Earn by Verifying Properties',
         description: 'Earn real income by helping verify rental listings in your neighborhood. No experience needed.',
-        url: 'https://renta-app.com/scout-program',
+        url: 'https://userenta.com/scout-program',
         siteName: 'Renta',
         type: 'website',
     },

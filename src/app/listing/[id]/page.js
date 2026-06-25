@@ -39,7 +39,7 @@ export async function generateMetadata({ params }) {
         openGraph: {
             title,
             description,
-            url: `https://renta-app.com/listing/${property.slug || property.id}`,
+            url: `https://userenta.com/listing/${property.slug || property.id}`,
             images: [{ url: primaryImage, width: 1200, height: 630, alt: property.title }],
             type: 'article',
         }

@@ -10,7 +10,7 @@ export const metadata = {
     openGraph: {
         title: 'Renta Affiliate Program — Earn by Referring Renters',
         description: 'Share your unique referral link and earn a commission on every successful rental you bring to Renta.',
-        url: 'https://renta-app.com/affiliate-program',
+        url: 'https://userenta.com/affiliate-program',
         siteName: 'Renta',
         type: 'website',
     },
@@ -107,7 +107,7 @@ export default function AffiliatePage() {
                     <div className={styles.linkCard}>
                         <div className={styles.linkCardInner}>
                             <Link2 size={20} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
-                            <span className={styles.linkPreview}>renta-app.com/register?ref=<strong>your-unique-code</strong></span>
+                            <span className={styles.linkPreview}>userenta.com/register?ref=<strong>your-unique-code</strong></span>
                         </div>
                         <div className={styles.linkCardBadge}>Your Link</div>
                     </div>
