@@ -187,6 +187,12 @@ export async function validateWebhookSignature(rawBody, headers) {
 
         const secret = await getSetting('NOMBA_WEBHOOK_SECRET');
 
+        // Chicken-and-egg fix: If the secret isn't configured yet, allow the request.
+        // Nomba sends a test ping when adding the URL and expects a 200 OK. It won't give us the secret until the URL is saved.
+        if (!secret) {
+            return true;
+        }
+
         const computed = crypto
             .createHmac('sha256', secret)
             .update(stringToSign)
