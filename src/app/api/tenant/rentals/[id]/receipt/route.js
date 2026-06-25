@@ -27,7 +27,7 @@ export async function GET(request, { params }) {
                     },
                 },
                 tenant: { select: { firstName: true, lastName: true } },
-                payment: { select: { paystackRef: true, nombaRef: true } },
+                payments: { select: { paystackRef: true, nombaRef: true }, take: 1, orderBy: { id: 'desc' } },
             },
         });
 
@@ -37,7 +37,7 @@ export async function GET(request, { params }) {
 
         const PDFDocument = (await import('pdfkit')).default;
 
-        const paymentRef = rental.payment?.paystackRef || rental.payment?.nombaRef || `RNT-${rental.id}`;
+        const paymentRef = rental.payments?.[0]?.paystackRef || rental.payments?.[0]?.nombaRef || `RNT-${rental.id}`;
         const tenantName = `${rental.tenant.firstName} ${rental.tenant.lastName}`;
         const landlordName = `${rental.property.landlord.firstName} ${rental.property.landlord.lastName}`;
         const fmtAmount = (v) => 'NGN ' + Number(v).toLocaleString('en-NG', { minimumFractionDigits: 2 });
