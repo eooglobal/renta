@@ -17,8 +17,8 @@ export default function LandingFooter() {
                     </div>
                     <div>
                         <h6>Earn with Renta</h6>
-                        <Link href="/scout">Become a Scout</Link>
-                        <Link href="/affiliate">Affiliate Program</Link>
+                        <Link href="/scout-program">Become a Scout</Link>
+                        <Link href="/affiliate-program">Affiliate Program</Link>
                     </div>
                     <div>
                         <h6>Company</h6>

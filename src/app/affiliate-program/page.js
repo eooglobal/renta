@@ -10,7 +10,7 @@ export const metadata = {
     openGraph: {
         title: 'Renta Affiliate Program — Earn by Referring Renters',
         description: 'Share your unique referral link and earn a commission on every successful rental you bring to Renta.',
-        url: 'https://renta-app.com/affiliate',
+        url: 'https://renta-app.com/affiliate-program',
         siteName: 'Renta',
         type: 'website',
     },
