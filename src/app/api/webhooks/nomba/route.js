@@ -9,7 +9,10 @@ export async function POST(request) {
 
         // Validate webhook signature
         if (!(await validateWebhookSignature(rawBody, request.headers))) {
-            return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+            console.warn('Nomba webhook signature validation failed. Payload:', rawBody);
+            // TEMPORARY BYPASS: allow the request to return 200 OK so Nomba dashboard accepts the URL.
+            // We will uncomment this once the URL is saved.
+            // return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
         }
 
         const { event, data } = JSON.parse(rawBody);
