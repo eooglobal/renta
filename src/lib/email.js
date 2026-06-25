@@ -1,89 +1,108 @@
+import nodemailer from 'nodemailer';
 import { getSetting } from './settings';
 
 /**
- * Send an email via Brevo API
+ * Creates a Nodemailer transporter from platform settings (SMTP credentials).
+ * Falls back to environment variables if not set in DB.
  */
-export async function sendEmail({ to, subject, html }) {
-  const appName = await getSetting('NEXT_PUBLIC_APP_NAME', 'Renta');
-  const apiKey = await getSetting('SMTP_PASS');
-  const fromAddress = await getSetting('EMAIL_FROM', 'noreply@userenta.com');
+async function createTransporter() {
+    const host     = await getSetting('EMAIL_SERVER_HOST');
+    const port     = await getSetting('EMAIL_SERVER_PORT') || '587';
+    const user     = await getSetting('EMAIL_SERVER_USER');
+    const pass     = await getSetting('EMAIL_SERVER_PASSWORD');
 
-  try {
-    if (!apiKey) {
-      console.error('[Brevo API] ERROR: API Key (SMTP_PASS) is missing from platform settings.');
-      return { success: false, error: 'API Key missing' };
+    if (!host || !user || !pass) {
+        throw new Error('SMTP credentials are not fully configured in Admin Settings.');
     }
 
-    console.log(`[Brevo API] Attempting to send to: ${to} from: ${fromAddress}`);
-
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'api-key': apiKey,
-      },
-      body: JSON.stringify({
-        sender: { email: fromAddress, name: appName },
-        replyTo: { email: fromAddress },
-        to: [{ email: to }],
-        subject: subject,
-        htmlContent: wrapInTemplate(appName, subject, html),
-      }),
+    return nodemailer.createTransport({
+        host,
+        port: Number(port),
+        secure: Number(port) === 465, // true for port 465 (SSL), false for 587 (TLS/STARTTLS)
+        auth: { user, pass },
+        tls: {
+            rejectUnauthorized: false, // allow self-signed certs (common on cPanel hosts)
+        },
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error('[Brevo API] API ERROR:', JSON.stringify(data, null, 2));
-      throw new Error(data.message || JSON.stringify(data));
-    }
-
-    console.log('[Brevo API] SUCCESS! Message ID:', data.messageId);
-    return { success: true, messageId: data.messageId };
-  } catch (error) {
-    console.error('[Brevo API] CRITICAL Error sending email:', error.message);
-    return { success: false, error: error.message };
-  }
 }
 
 /**
- * Email template wrapper
+ * Core send function — uses SMTP via Nodemailer
+ */
+export async function sendEmail({ to, subject, html }) {
+    const fromAddress = await getSetting('EMAIL_FROM') || 'noreply@userenta.com';
+    const appName     = await getSetting('NEXT_PUBLIC_APP_NAME') || 'Renta';
+
+    try {
+        const transporter = await createTransporter();
+
+        const info = await transporter.sendMail({
+            from: `"${appName}" <${fromAddress}>`,
+            to,
+            subject,
+            html: wrapInTemplate(appName, subject, html),
+        });
+
+        console.log(`[SMTP] Email sent to ${to} | MessageId: ${info.messageId}`);
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error(`[SMTP] CRITICAL: Failed to send email to ${to}:`, error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Premium branded email wrapper template
  */
 function wrapInTemplate(appName, title, content) {
-  return `
+    const year = new Date().getFullYear();
+    return `
     <!DOCTYPE html>
-    <html>
+    <html lang="en">
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${title}</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { margin:0; padding:0; background-color:#F4F4F0; font-family:'Inter',Arial,sans-serif; -webkit-font-smoothing:antialiased; }
+        a { color:#FDA829; }
+      </style>
     </head>
-    <body style="margin:0;padding:0;background-color:#EFEFEF;font-family:'DM Sans',Arial,sans-serif;">
-      <table role="presentation" style="width:100%;border-collapse:collapse;">
+    <body>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F4F0;padding:32px 0;">
         <tr>
-          <td style="padding:20px 0;">
-            <table role="presentation" style="width:100%;max-width:600px;margin:0 auto;background-color:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <td align="center">
+            <table role="presentation" width="100%" style="max-width:600px;" cellpadding="0" cellspacing="0">
+
               <!-- Header -->
               <tr>
-                <td style="background-color:#000000;padding:24px 32px;text-align:center;">
-                  <h1 style="margin:0;color:#FDA829;font-size:28px;font-weight:800;letter-spacing:-0.5px;">${appName}</h1>
+                <td style="background:#000000;border-radius:16px 16px 0 0;padding:28px 40px;text-align:center;">
+                  <h1 style="margin:0;color:#FDA829;font-size:30px;font-weight:800;letter-spacing:-0.5px;">${appName}</h1>
+                  <p style="margin:4px 0 0;color:#888;font-size:12px;letter-spacing:1px;text-transform:uppercase;">Verified Apartment Rentals</p>
                 </td>
               </tr>
-              <!-- Content -->
+
+              <!-- Body -->
               <tr>
-                <td style="padding:32px;">
+                <td style="background:#FFFFFF;padding:40px;color:#1a1a1a;font-size:15px;line-height:1.7;">
                   ${content}
                 </td>
               </tr>
+
               <!-- Footer -->
               <tr>
-                <td style="background-color:#E8E7E3;padding:20px 32px;text-align:center;">
-                  <p style="margin:0;font-size:13px;color:#7a7a7a;">
-                    © ${new Date().getFullYear()} ${appName}. Verified apartment rentals in Ilorin.
+                <td style="background:#1a1a1a;border-radius:0 0 16px 16px;padding:24px 40px;text-align:center;">
+                  <p style="margin:0 0 8px;font-size:13px;color:#aaa;">
+                    © ${year} ${appName} · Ilorin, Nigeria
+                  </p>
+                  <p style="margin:0;font-size:12px;color:#666;">
+                    You received this email because you have an account with us.<br>
+                    If you have questions, contact us at <a href="mailto:hello@userenta.com" style="color:#FDA829;">hello@userenta.com</a>
                   </p>
                 </td>
               </tr>
+
             </table>
           </td>
         </tr>
@@ -94,239 +113,372 @@ function wrapInTemplate(appName, title, content) {
 }
 
 // ==========================================
-// EMAIL TEMPLATES
+// ✉️  EMAIL TEMPLATES
 // ==========================================
 
-export async function sendWelcomeEmail(user) {
-  const appName = await getSetting('NEXT_PUBLIC_APP_NAME', 'Renta');
-  return sendEmail({
-    to: user.email,
-    subject: `Welcome to ${appName}!`,
-    html: `
-      <h2 style="color:#000;margin:0 0 16px;">Welcome, ${user.firstName}!</h2>
-      <p style="color:#4a4a4a;line-height:1.6;">
-        Your ${appName} account has been created successfully. You're now part of a trusted community for verified apartment rentals in Ilorin.
-      </p>
-      <p style="color:#4a4a4a;line-height:1.6;">
-        <strong>Your role:</strong> ${user.role}
-      </p>
-      <div style="text-align:center;margin:24px 0;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/login" 
-           style="display:inline-block;background-color:#FDA829;color:#000;font-weight:600;padding:12px 32px;border-radius:8px;text-decoration:none;">
-          Go to Dashboard
-        </a>
-      </div>
-    `,
-  });
-}
-
-export async function sendPaymentConfirmation({ tenant, property, rental }) {
-  return sendEmail({
-    to: tenant.email,
-    subject: `Payment Confirmed — ${property.title}`,
-    html: `
-      <h2 style="color:#000;margin:0 0 16px;">Payment Received!</h2>
-      <p style="color:#4a4a4a;line-height:1.6;">
-        Your payment for <strong>${property.title}</strong> has been received and is now held in escrow.
-      </p>
-      <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-        <tr><td style="padding:8px 0;color:#7a7a7a;">Rent</td><td style="padding:8px 0;text-align:right;font-weight:600;">₦${Number(rental.rentAmount).toLocaleString()}</td></tr>
-        <tr><td style="padding:8px 0;color:#7a7a7a;">Service Fee (10%)</td><td style="padding:8px 0;text-align:right;font-weight:600;">₦${Number(rental.serviceFee).toLocaleString()}</td></tr>
-        <tr style="border-top:2px solid #EFEFEF;"><td style="padding:8px 0;font-weight:700;">Total Paid</td><td style="padding:8px 0;text-align:right;font-weight:700;color:#FDA829;">₦${Number(rental.totalPaid).toLocaleString()}</td></tr>
-      </table>
-      <p style="color:#4a4a4a;line-height:1.6;">
-        Once you move in and confirm access, the funds will be released to the landlord.
-      </p>
-    `,
-  });
-}
-
-export async function sendEscrowReleaseEmail({ landlord, property, rental }) {
-  return sendEmail({
-    to: landlord.email,
-    subject: `Funds Released — ${property.title}`,
-    html: `
-      <h2 style="color:#000;margin:0 0 16px;">Payment Released!</h2>
-      <p style="color:#4a4a4a;line-height:1.6;">
-        The tenant has confirmed access to <strong>${property.title}</strong>. 
-        ₦${Number(rental.rentAmount).toLocaleString()} will be transferred to your bank account.
-      </p>
-    `,
-  });
-}
-
-export async function sendPropertyVerifiedEmail({ landlord, property }) {
-  const appName = await getSetting('NEXT_PUBLIC_APP_NAME', 'Renta');
-  return sendEmail({
-    to: landlord.email,
-    subject: `Property Verified — ${property.title}`,
-    html: `
-      <h2 style="color:#000;margin:0 0 16px;">Property Verified ✓</h2>
-      <p style="color:#4a4a4a;line-height:1.6;">
-        Great news! Your property <strong>${property.title}</strong> has been verified and is now live on ${appName}.
-      </p>
-      <div style="text-align:center;margin:24px 0;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/landlord/properties" 
-           style="display:inline-block;background-color:#FDA829;color:#000;font-weight:600;padding:12px 32px;border-radius:8px;text-decoration:none;">
-          View Property
-        </a>
-      </div>
-    `,
-  });
-}
-
 /**
- * NIN Verification Status Template
+ * 🎉 Welcome Email — sent on successful registration
  */
-export async function sendNinStatusEmail(user, status, reason = '') {
-  const isApproved = status === 'VERIFIED';
-  return sendEmail({
-    to: user.email,
-    subject: `Identity Verification ${isApproved ? 'Approved' : 'Action Required'}`,
-    html: `
-      <h2 style="color:#000;margin:0 0 16px;">Identity Verification</h2>
-      <p style="color:#4a4a4a;line-height:1.6;">
-        ${isApproved
-        ? `Congratulations ${user.firstName}! Your NIN verification was successful. You now have full access to the platform.`
-        : `Hello ${user.firstName}, unfortunately, your identity verification could not be completed at this time.`
-      }
-      </p>
-      ${!isApproved && reason ? `<p style="padding:12px;background:#fef2f2;border-left:4px solid #ef4444;color:#991b1b;"><strong>Reason:</strong> ${reason}</p>` : ''}
-      <div style="text-align:center;margin:24px 0;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/profile" 
-           style="display:inline-block;background-color:#000;color:#FDA829;font-weight:600;padding:12px 32px;border-radius:8px;text-decoration:none;">
-          ${isApproved ? 'Go to Profile' : 'Retry Verification'}
-        </a>
-      </div>
-    `,
-  });
+export async function sendWelcomeEmail(user) {
+    const appName = await getSetting('NEXT_PUBLIC_APP_NAME') || 'Renta';
+    const appUrl  = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
+
+    const roleDescriptions = {
+        TENANT:    { emoji: '🏠', label: 'Tenant',    desc: 'Browse verified listings, book inspections, and rent safely.' },
+        LANDLORD:  { emoji: '🔑', label: 'Landlord',  desc: 'List your property and receive verified, qualified tenants.' },
+        SCOUT:     { emoji: '🔍', label: 'Scout',     desc: 'Help verify properties and earn commissions for every successful listing.' },
+        AFFILIATE: { emoji: '📣', label: 'Affiliate', desc: 'Share your unique link and earn on every rental you refer.' },
+    };
+
+    const role = roleDescriptions[user.role] || { emoji: '👤', label: user.role, desc: 'Explore the platform and get started.' };
+
+    return sendEmail({
+        to: user.email,
+        subject: `🎉 Welcome to ${appName}, ${user.firstName}!`,
+        html: `
+            <!-- Greeting -->
+            <h2 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#000;">Hey ${user.firstName}! 👋</h2>
+            <p style="margin:0 0 24px;color:#555;font-size:15px;">We're so excited to have you join <strong>${appName}</strong> — Nigeria's most trusted, verified apartment rental platform.</p>
+
+            <!-- Role Banner -->
+            <div style="background:linear-gradient(135deg,#000 0%,#1a1a1a 100%);border-radius:12px;padding:24px 28px;margin-bottom:28px;border-left:4px solid #FDA829;">
+                <p style="margin:0 0 4px;font-size:22px;">${role.emoji}</p>
+                <p style="margin:0 0 4px;font-size:18px;font-weight:700;color:#FDA829;">Your Role: ${role.label}</p>
+                <p style="margin:0;font-size:13px;color:#bbb;">${role.desc}</p>
+            </div>
+
+            <!-- What Renta Guarantees -->
+            <p style="margin:0 0 16px;font-weight:700;font-size:15px;color:#000;">What makes ${appName} different? ✨</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                    <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;">
+                        <span style="font-size:18px;">✅</span>
+                        <strong style="margin-left:10px;color:#000;">Every property is physically verified</strong>
+                        <p style="margin:4px 0 0 34px;color:#666;font-size:13px;">No fake listings. No surprises. Our scouts inspect every home before it goes live.</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;">
+                        <span style="font-size:18px;">🔒</span>
+                        <strong style="margin-left:10px;color:#000;">Secure escrow payments</strong>
+                        <p style="margin:4px 0 0 34px;color:#666;font-size:13px;">Your money is held safely until you confirm you've moved in. Landlords only get paid after you're in.</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:10px 0;">
+                        <span style="font-size:18px;">🚫</span>
+                        <strong style="margin-left:10px;color:#000;">Zero hidden fees</strong>
+                        <p style="margin:4px 0 0 34px;color:#666;font-size:13px;">No agency fees. No development levies. Just rent + a flat 10% service fee. That's it.</p>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- CTA Button -->
+            <div style="text-align:center;margin:32px 0 24px;">
+                <a href="${appUrl}/dashboard"
+                   style="display:inline-block;background:#FDA829;color:#000;font-weight:700;font-size:15px;padding:14px 40px;border-radius:50px;text-decoration:none;letter-spacing:0.2px;">
+                    Go to My Dashboard →
+                </a>
+            </div>
+
+            <!-- Support -->
+            <p style="margin:0;text-align:center;font-size:13px;color:#999;">
+                Need help getting started? Reply to this email or chat with us at<br>
+                <a href="mailto:hello@userenta.com" style="color:#FDA829;font-weight:600;">hello@userenta.com</a>
+            </p>
+        `,
+    });
 }
 
 /**
- * Property Rejection Template
+ * 💳 Payment Confirmed — tenant paid, funds in escrow
+ */
+export async function sendPaymentConfirmation({ tenant, property, rental }) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
+    return sendEmail({
+        to: tenant.email,
+        subject: `💳 Payment Confirmed — ${property.title}`,
+        html: `
+            <h2 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#000;">Payment Received! 🎊</h2>
+            <p style="margin:0 0 24px;color:#555;">Your payment for <strong>${property.title}</strong> has been received and is now held securely in escrow.</p>
+
+            <div style="background:#f8f8f8;border-radius:12px;padding:24px;margin-bottom:24px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td style="padding:8px 0;color:#777;border-bottom:1px solid #eee;">Rent Amount</td>
+                        <td style="padding:8px 0;text-align:right;font-weight:600;border-bottom:1px solid #eee;">₦${Number(rental.rentAmount).toLocaleString()}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 0;color:#777;border-bottom:1px solid #eee;">Service Fee (10%)</td>
+                        <td style="padding:8px 0;text-align:right;font-weight:600;border-bottom:1px solid #eee;">₦${Number(rental.serviceFee).toLocaleString()}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:12px 0 0;font-weight:700;font-size:16px;">Total Paid</td>
+                        <td style="padding:12px 0 0;text-align:right;font-weight:800;font-size:16px;color:#FDA829;">₦${Number(rental.totalPaid).toLocaleString()}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="background:#fff7e6;border:1px solid #FDA829;border-radius:12px;padding:18px 22px;margin-bottom:24px;">
+                <p style="margin:0;font-size:14px;color:#7a4a00;">🔒 <strong>Your funds are safe.</strong> The money will only be released to the landlord after you move in and confirm access. If anything goes wrong, contact us and we'll help.</p>
+            </div>
+
+            <div style="text-align:center;">
+                <a href="${appUrl}/tenant/rentals" style="display:inline-block;background:#000;color:#FDA829;font-weight:700;padding:13px 36px;border-radius:50px;text-decoration:none;">
+                    View My Rental →
+                </a>
+            </div>
+        `,
+    });
+}
+
+/**
+ * 💰 Escrow Released — landlord funds sent
+ */
+export async function sendEscrowReleaseEmail({ landlord, property, rental }) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
+    return sendEmail({
+        to: landlord.email,
+        subject: `💰 Funds Released — ${property.title}`,
+        html: `
+            <h2 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#000;">Great news! 💸</h2>
+            <p style="margin:0 0 24px;color:#555;">Your tenant has confirmed access to <strong>${property.title}</strong>. Your payment has been released to your Renta wallet.</p>
+
+            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:20px 24px;margin-bottom:24px;text-align:center;">
+                <p style="margin:0 0 4px;font-size:13px;color:#166534;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Amount Released</p>
+                <p style="margin:0;font-size:36px;font-weight:800;color:#15803d;">₦${Number(rental.rentAmount).toLocaleString()}</p>
+            </div>
+
+            <div style="text-align:center;">
+                <a href="${appUrl}/wallet" style="display:inline-block;background:#000;color:#FDA829;font-weight:700;padding:13px 36px;border-radius:50px;text-decoration:none;">
+                    View My Wallet →
+                </a>
+            </div>
+        `,
+    });
+}
+
+/**
+ * ✅ Property Verified
+ */
+export async function sendPropertyVerifiedEmail({ landlord, property }) {
+    const appName = await getSetting('NEXT_PUBLIC_APP_NAME') || 'Renta';
+    const appUrl  = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
+    return sendEmail({
+        to: landlord.email,
+        subject: `✅ Property Verified — ${property.title}`,
+        html: `
+            <h2 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#000;">Your listing is live! 🚀</h2>
+            <p style="margin:0 0 24px;color:#555;">Our team has verified <strong>${property.title}</strong>. It's now visible to thousands of tenants on ${appName}.</p>
+
+            <div style="background:#f0fdf4;border-left:4px solid #22c55e;border-radius:8px;padding:16px 20px;margin-bottom:28px;">
+                <p style="margin:0;color:#166534;font-weight:600;">✅ Verification complete — Your property is now publicly listed.</p>
+            </div>
+
+            <div style="text-align:center;">
+                <a href="${appUrl}/landlord/properties" style="display:inline-block;background:#FDA829;color:#000;font-weight:700;padding:13px 36px;border-radius:50px;text-decoration:none;">
+                    View My Listing →
+                </a>
+            </div>
+        `,
+    });
+}
+
+/**
+ * ❌ Property Rejected
  */
 export async function sendPropertyRejectedEmail(landlord, property, reason) {
-  return sendEmail({
-    to: landlord.email,
-    subject: `Update Required: ${property.title}`,
-    html: `
-      <h2 style="color:#000;margin:0 0 16px;">Listing Update Required</h2>
-      <p style="color:#4a4a4a;line-height:1.6;">
-        Your listing for <strong>${property.title}</strong> was reviewed by our team and requires some changes before it can go live.
-      </p>
-      <div style="padding:16px;background:#fff7ed;border-left:4px solid #f97316;margin:16px 0;">
-        <strong style="color:#9a3412;">Feedback from Reviewer:</strong><br/>
-        <p style="margin:8px 0 0;color:#c2410c;">${reason}</p>
-      </div>
-      <p style="color:#7a7a7a;font-size:14px;">Once updated, our team will re-verify the property within 24 hours.</p>
-    `,
-  });
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
+    return sendEmail({
+        to: landlord.email,
+        subject: `⚠️ Action Required — ${property.title}`,
+        html: `
+            <h2 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#000;">Listing Update Needed 📋</h2>
+            <p style="margin:0 0 24px;color:#555;">Our team reviewed <strong>${property.title}</strong> and it needs some changes before it can go live.</p>
+
+            <div style="background:#fff7ed;border-left:4px solid #f97316;border-radius:8px;padding:20px 24px;margin-bottom:28px;">
+                <p style="margin:0 0 6px;font-weight:700;color:#9a3412;">📌 Reviewer Feedback:</p>
+                <p style="margin:0;color:#c2410c;">${reason}</p>
+            </div>
+
+            <p style="color:#555;margin-bottom:28px;">Please update your listing and resubmit. Our team will re-verify within 24 hours.</p>
+
+            <div style="text-align:center;">
+                <a href="${appUrl}/landlord/properties" style="display:inline-block;background:#000;color:#FDA829;font-weight:700;padding:13px 36px;border-radius:50px;text-decoration:none;">
+                    Update My Listing →
+                </a>
+            </div>
+        `,
+    });
 }
 
 /**
- * Inspection Booking Template
+ * 🆔 NIN Verification Status
+ */
+export async function sendNinStatusEmail(user, status, reason = '') {
+    const appUrl      = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
+    const isApproved  = status === 'VERIFIED';
+    return sendEmail({
+        to: user.email,
+        subject: `${isApproved ? '✅' : '❌'} Identity Verification ${isApproved ? 'Approved' : 'Failed'}`,
+        html: `
+            <h2 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#000;">
+                ${isApproved ? '🎉 Verification Successful!' : '❌ Verification Failed'}
+            </h2>
+            <p style="margin:0 0 24px;color:#555;">
+                ${isApproved
+                    ? `Congratulations, <strong>${user.firstName}</strong>! Your identity has been verified. You now have full access to all Renta features.`
+                    : `Hello <strong>${user.firstName}</strong>, unfortunately your identity verification could not be completed at this time.`
+                }
+            </p>
+
+            ${!isApproved && reason ? `
+            <div style="background:#fef2f2;border-left:4px solid #ef4444;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
+                <p style="margin:0 0 4px;font-weight:700;color:#991b1b;">Reason:</p>
+                <p style="margin:0;color:#b91c1c;">${reason}</p>
+            </div>` : ''}
+
+            <div style="text-align:center;">
+                <a href="${appUrl}/profile" style="display:inline-block;background:${isApproved ? '#FDA829' : '#000'};color:${isApproved ? '#000' : '#FDA829'};font-weight:700;padding:13px 36px;border-radius:50px;text-decoration:none;">
+                    ${isApproved ? 'Go to My Profile →' : 'Retry Verification →'}
+                </a>
+            </div>
+        `,
+    });
+}
+
+/**
+ * 📅 Inspection Booked — notify tenant & landlord
  */
 export async function sendInspectionBookedEmail({ tenant, landlord, property, date, time }) {
-  // Send to Tenant
-  await sendEmail({
-    to: tenant.email,
-    subject: `Inspection Scheduled — ${property.title}`,
-    html: `
-      <h2 style="color:#000;margin:0 0 16px;">Inspection Confirmed!</h2>
-      <p style="color:#4a4a4a;line-height:1.6;">
-        You have successfully booked an inspection for <strong>${property.title}</strong>.
-      </p>
-      <div style="margin:20px 0;padding:16px;background:#f8fafc;border-radius:8px;">
-        <p style="margin:0;color:#64748b;"><strong>Date:</strong> ${date}</p>
-        <p style="margin:4px 0 0;color:#64748b;"><strong>Time:</strong> ${time}</p>
-        <p style="margin:4px 0 0;color:#64748b;"><strong>Address:</strong> ${property.address}</p>
-      </div>
-      <p style="font-size:13px;color:#ef4444;">Please ensure you are on time. If you need to cancel, do so via your dashboard.</p>
-    `,
-  });
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
 
-  // Notify Landlord
-  return sendEmail({
-    to: landlord.email,
-    subject: `New Inspection Booking — ${property.title}`,
-    html: `
-      <h2 style="color:#000;margin:0 0 16px;">New Booking Alert</h2>
-      <p style="color:#4a4a4a;line-height:1.6;">
-        A potential tenant has booked an inspection for your property.
-      </p>
-      <p><strong>Tenant:</strong> ${tenant.firstName} ${tenant.lastName}</p>
-      <p><strong>Schedule:</strong> ${date} at ${time}</p>
-    `,
-  });
+    await sendEmail({
+        to: tenant.email,
+        subject: `📅 Inspection Confirmed — ${property.title}`,
+        html: `
+            <h2 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#000;">Inspection Booked! 🗓️</h2>
+            <p style="margin:0 0 24px;color:#555;">You've successfully scheduled an inspection for <strong>${property.title}</strong>.</p>
+
+            <div style="background:#f8f8f8;border-radius:12px;padding:24px;margin-bottom:24px;">
+                <p style="margin:0 0 10px;"><span style="font-size:18px;">📍</span> <strong>${property.address}</strong></p>
+                <p style="margin:0 0 10px;"><span style="font-size:18px;">📆</span> <strong>${date}</strong></p>
+                <p style="margin:0;"><span style="font-size:18px;">🕐</span> <strong>${time}</strong></p>
+            </div>
+
+            <div style="background:#fff7e6;border:1px solid #FDA829;border-radius:8px;padding:14px 18px;margin-bottom:24px;">
+                <p style="margin:0;font-size:13px;color:#7a4a00;">⚠️ Please be on time. To cancel or reschedule, visit your dashboard before the appointment.</p>
+            </div>
+
+            <div style="text-align:center;">
+                <a href="${appUrl}/tenant/inspections" style="display:inline-block;background:#FDA829;color:#000;font-weight:700;padding:13px 36px;border-radius:50px;text-decoration:none;">
+                    View My Inspections →
+                </a>
+            </div>
+        `,
+    });
+
+    return sendEmail({
+        to: landlord.email,
+        subject: `🔔 New Inspection Booking — ${property.title}`,
+        html: `
+            <h2 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#000;">New Inspection Booking! 🔔</h2>
+            <p style="margin:0 0 24px;color:#555;">A potential tenant has booked an inspection for your property <strong>${property.title}</strong>.</p>
+
+            <div style="background:#f8f8f8;border-radius:12px;padding:24px;margin-bottom:24px;">
+                <p style="margin:0 0 10px;"><span style="font-size:18px;">👤</span> <strong>${tenant.firstName} ${tenant.lastName}</strong></p>
+                <p style="margin:0 0 10px;"><span style="font-size:18px;">📆</span> <strong>${date}</strong></p>
+                <p style="margin:0;"><span style="font-size:18px;">🕐</span> <strong>${time}</strong></p>
+            </div>
+
+            <div style="text-align:center;">
+                <a href="${appUrl}/landlord/properties" style="display:inline-block;background:#000;color:#FDA829;font-weight:700;padding:13px 36px;border-radius:50px;text-decoration:none;">
+                    View My Properties →
+                </a>
+            </div>
+        `,
+    });
 }
 
 /**
- * Maintenance Update Template
+ * 🔧 Maintenance Update
  */
 export async function sendMaintenanceUpdateEmail({ tenant, request, newStatus }) {
-  const statusColors = {
-    'IN_PROGRESS': '#3b82f6',
-    'RESOLVED': '#10b981',
-  };
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
+    const statusConfig = {
+        IN_PROGRESS: { color: '#3b82f6', bg: '#eff6ff', emoji: '🔧', label: 'In Progress' },
+        RESOLVED:    { color: '#22c55e', bg: '#f0fdf4', emoji: '✅', label: 'Resolved' },
+    };
+    const s = statusConfig[newStatus] || { color: '#000', bg: '#f8f8f8', emoji: '📋', label: newStatus };
 
-  return sendEmail({
-    to: tenant.email,
-    subject: `Maintenance Status Update: ${request.title}`,
-    html: `
-      <h2 style="color:#000;margin:0 0 16px;">Repair Update</h2>
-      <p style="color:#4a4a4a;line-height:1.6;">
-        The status of your maintenance request <strong>"${request.title}"</strong> has been updated.
-      </p>
-      <div style="display:inline-block;padding:4px 12px;background:${statusColors[newStatus] || '#000'};color:#fff;border-radius:20px;font-size:12px;font-weight:600;">
-        ${newStatus.replace('_', ' ')}
-      </div>
-    `,
-  });
+    return sendEmail({
+        to: tenant.email,
+        subject: `${s.emoji} Maintenance Update — ${request.title}`,
+        html: `
+            <h2 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#000;">Repair Update ${s.emoji}</h2>
+            <p style="margin:0 0 24px;color:#555;">The status of your maintenance request <strong>"${request.title}"</strong> has been updated.</p>
+
+            <div style="background:${s.bg};border-left:4px solid ${s.color};border-radius:8px;padding:16px 20px;margin-bottom:28px;">
+                <p style="margin:0;font-weight:700;color:${s.color};font-size:15px;">${s.emoji} New Status: ${s.label}</p>
+            </div>
+
+            <div style="text-align:center;">
+                <a href="${appUrl}/tenant/maintenance" style="display:inline-block;background:#FDA829;color:#000;font-weight:700;padding:13px 36px;border-radius:50px;text-decoration:none;">
+                    View Request →
+                </a>
+            </div>
+        `,
+    });
 }
 
 /**
- * Commission Earned Template
+ * 💰 Commission Earned — for scouts & affiliates
  */
 export async function sendCommissionEarnedEmail(user, amount, type) {
-  return sendEmail({
-    to: user.email,
-    subject: `You've Earned a Commission! 💰`,
-    html: `
-      <h2 style="color:#000;margin:0 0 16px;">Nice Work, ${user.firstName}!</h2>
-      <p style="color:#4a4a4a;line-height:1.6;">
-        You just earned a <strong>${type}</strong> commission of <strong>₦${Number(amount).toLocaleString()}</strong> from a successful rental.
-      </p>
-      <div style="text-align:center;margin:24px 0;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/wallet" 
-           style="display:inline-block;background-color:#000;color:#FDA829;font-weight:600;padding:12px 32px;border-radius:8px;text-decoration:none;">
-          View Your Wallet
-        </a>
-      </div>
-    `,
-  });
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
+    return sendEmail({
+        to: user.email,
+        subject: `💰 You've Earned ₦${Number(amount).toLocaleString()} Commission!`,
+        html: `
+            <h2 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#000;">Nice work, ${user.firstName}! 🎉</h2>
+            <p style="margin:0 0 24px;color:#555;">You just earned a <strong>${type}</strong> commission from a successful rental.</p>
+
+            <div style="background:linear-gradient(135deg,#000 0%,#1a1a1a 100%);border-radius:12px;padding:28px;margin-bottom:24px;text-align:center;">
+                <p style="margin:0 0 6px;font-size:13px;color:#aaa;text-transform:uppercase;letter-spacing:1px;">Commission Earned</p>
+                <p style="margin:0;font-size:42px;font-weight:800;color:#FDA829;">₦${Number(amount).toLocaleString()}</p>
+            </div>
+
+            <p style="color:#555;margin-bottom:28px;">The funds have been credited to your Renta wallet and are available for withdrawal.</p>
+
+            <div style="text-align:center;">
+                <a href="${appUrl}/wallet" style="display:inline-block;background:#FDA829;color:#000;font-weight:700;padding:13px 36px;border-radius:50px;text-decoration:none;">
+                    View My Wallet →
+                </a>
+            </div>
+        `,
+    });
 }
 
 /**
- * New Message Alert Template
+ * 💬 New Message Alert
  */
 export async function sendNewMessageEmail(receiver, senderName) {
-  const appName = await getSetting('NEXT_PUBLIC_APP_NAME', 'Renta');
-  return sendEmail({
-    to: receiver.email,
-    subject: `New Message from ${senderName}`,
-    html: `
-      <h2 style="color:#000;margin:0 0 16px;">You have a new message!</h2>
-      <p style="color:#4a4a4a;line-height:1.6;">
-        <strong>${senderName}</strong> has sent you a message regarding your rental on ${appName}.
-      </p>
-      <div style="text-align:center;margin:24px 0;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/messages" 
-           style="display:inline-block;background-color:#FDA829;color:#000;font-weight:600;padding:12px 32px;border-radius:8px;text-decoration:none;">
-          Reply Now
-        </a>
-      </div>
-    `,
-  });
+    const appName = await getSetting('NEXT_PUBLIC_APP_NAME') || 'Renta';
+    const appUrl  = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
+    return sendEmail({
+        to: receiver.email,
+        subject: `💬 New Message from ${senderName}`,
+        html: `
+            <h2 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#000;">You've got a message! 💬</h2>
+            <p style="margin:0 0 24px;color:#555;"><strong>${senderName}</strong> sent you a message about your rental on ${appName}. Don't keep them waiting!</p>
+
+            <div style="text-align:center;">
+                <a href="${appUrl}/messages" style="display:inline-block;background:#FDA829;color:#000;font-weight:700;padding:13px 36px;border-radius:50px;text-decoration:none;">
+                    Reply Now →
+                </a>
+            </div>
+        `,
+    });
 }
 
 export default sendEmail;
