@@ -223,6 +223,7 @@ export default function EditPropertyPage() {
                                         padding: '1px 5px',
                                     }}>Cover</span>
                                 )}
+                            </div>
                         ))}
                     </div>
                 </div>
