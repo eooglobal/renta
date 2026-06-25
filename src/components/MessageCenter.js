@@ -17,6 +17,8 @@ export default function MessageCenter() {
     const [loadingConvos, setLoadingConvos] = useState(true);
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [sending, setSending] = useState(false);
+    const [mobileView, setMobileView] = useState('list'); // 'list' | 'chat'
+    const [isMobile, setIsMobile] = useState(false);
     const searchParams = useSearchParams();
 
     const messagesEndRef = useRef(null);
@@ -25,6 +27,14 @@ export default function MessageCenter() {
     useEffect(() => {
         activeContactRef.current = activeContact;
     }, [activeContact]);
+
+    // Track mobile breakpoint
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     useEffect(() => {
         fetchConversations();
@@ -94,12 +104,14 @@ export default function MessageCenter() {
 
                     if (existingConv) {
                         setActiveContact(existingConv.contact);
+                        setMobileView('chat');
                     } else {
                         // Fetch user info for the new contact
                         const userRes = await fetch(`/api/users/${contactId}`);
                         if (userRes.ok) {
                             const userData = await userRes.json();
                             setActiveContact(userData);
+                            setMobileView('chat');
                         }
                     }
 
@@ -176,6 +188,12 @@ export default function MessageCenter() {
                     flex-direction: column;
                     background: var(--bg-secondary);
                 }
+                @media (min-width: 768px) {
+                    .msg-sidebar {
+                        width: 340px;
+                        border-right: 1px solid var(--border-color);
+                    }
+                }
                 .msg-thread {
                     flex: 1;
                     flex-direction: column;
@@ -185,18 +203,7 @@ export default function MessageCenter() {
                 .msg-back-btn {
                     display: block;
                 }
-                
                 @media (min-width: 768px) {
-                    .msg-sidebar {
-                        width: 340px;
-                        border-right: 1px solid var(--border-color);
-                    }
-                    .msg-sidebar.hide-on-mobile {
-                        display: flex !important;
-                    }
-                    .msg-thread.hide-on-mobile {
-                        display: flex !important;
-                    }
                     .msg-back-btn {
                         display: none !important;
                     }
@@ -240,8 +247,8 @@ export default function MessageCenter() {
 
                 {/* Left Sidebar: Conversation List */}
                 <div
-                    className={`msg-sidebar ${activeContact ? 'hidden md:flex hide-on-mobile' : 'flex'}`}
-                    style={{ display: activeContact ? 'none' : 'flex' }}
+                    className="msg-sidebar"
+                    style={{ display: isMobile && mobileView === 'chat' ? 'none' : 'flex' }}
                 >
                     <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card)', zIndex: 10, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                         <h3 style={{ fontSize: 'var(--text-lg)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
@@ -282,7 +289,7 @@ export default function MessageCenter() {
                             conversations.map((conv) => (
                                 <div
                                     key={conv.contact.id}
-                                    onClick={() => setActiveContact(conv.contact)}
+                                    onClick={() => { setActiveContact(conv.contact); setMobileView('chat'); }}
                                     className={`contact-item ${activeContact?.id === conv.contact.id ? 'active' : ''}`}
                                 >
                                     <div style={{
@@ -334,9 +341,9 @@ export default function MessageCenter() {
 
                 {/* Right Side: Active Chat Thread */}
                 <div
-                    className={`msg-thread ${!activeContact ? 'hidden md:flex hide-on-mobile' : 'flex'}`}
+                    className="msg-thread"
                     style={{
-                        display: activeContact ? 'flex' : 'none',
+                        display: isMobile && mobileView === 'list' ? 'none' : 'flex',
                         backgroundImage: !activeContact ? 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23f3f4f6\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' : 'none'
                     }}
                 >
@@ -350,7 +357,7 @@ export default function MessageCenter() {
                                 zIndex: 10, boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
                             }}>
                                 <button
-                                    onClick={() => setActiveContact(null)}
+                                    onClick={() => { setActiveContact(null); setMobileView('list'); }}
                                     className="msg-back-btn btn btn-ghost btn-sm p-1"
                                 >
                                     <ArrowLeft size={20} />
