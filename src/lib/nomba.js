@@ -198,3 +198,62 @@ export async function validateWebhookSignature(rawBody, headers) {
         return false;
     }
 }
+
+/**
+ * Fetch Nigerian bank list from Nomba
+ */
+export async function getBanks() {
+    const token = await getToken();
+    const accountId = await getSetting('NOMBA_ACCOUNT_ID');
+
+    const res = await fetch(`${NOMBA_BASE}/transfers/banks`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'X-Nomba-Account-Id': accountId,
+        },
+    });
+
+    const data = await res.json();
+    if (data.code !== '00' && data.responseCode !== '00') {
+        throw new Error(data.description || 'Failed to fetch Nomba bank list');
+    }
+
+    const results = data.data?.results || data.data || [];
+    return results.map(b => ({
+        name: b.name,
+        code: b.code,
+    }));
+}
+
+/**
+ * Resolve bank account details from Nomba
+ */
+export async function resolveAccount(accountNumber, bankCode) {
+    const token = await getToken();
+    const accountId = await getSetting('NOMBA_ACCOUNT_ID');
+
+    const res = await fetch(`${NOMBA_BASE}/transfers/bank/lookup`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            'X-Nomba-Account-Id': accountId,
+        },
+        body: JSON.stringify({
+            accountNumber,
+            bankCode,
+        }),
+    });
+
+    const data = await res.json();
+    if (data.code !== '00' && data.responseCode !== '00') {
+        throw new Error(data.description || 'Could not resolve account via Nomba');
+    }
+
+    return {
+        account_name: data.data.accountName,
+        account_number: data.data.accountNumber,
+    };
+}
+

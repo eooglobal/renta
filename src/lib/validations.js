@@ -5,12 +5,17 @@ const propertyTypeEnum = z.enum(['SELF_CON', 'SINGLE_ROOM', 'FLAT', 'TWO_BEDROOM
 
 export const propertyCreationSchema = z.object({
     title: z.string().min(5, 'Title must be at least 5 characters').max(100).transform(val => val.trim()),
-    description: z.string().min(20, 'Description must be at least 20 characters').transform(val => val.trim()),
+    description: z.string().min(20, 'Description must be at least 20 characters').transform(val => z.string().parse(val).trim()),
     rentPrice: z.union([z.string(), z.number()]).transform(val => parseFloat(val)).refine(val => val > 0, "Rent price must be greater than zero"),
     type: propertyTypeEnum,
     address: z.string().min(10, 'Address must be at least 10 characters'),
     cityId: z.union([z.string(), z.number()]).transform(val => parseInt(val, 10)),
-    areaId: z.union([z.string(), z.number()]).transform(val => parseInt(val, 10)),
+    areaId: z.union([z.string(), z.number()]).transform(val => {
+        if (val === 'other' || val === 'OTHER') return 'other';
+        return parseInt(val, 10);
+    }),
+    otherAreaName: z.string().optional().nullable(),
+    nearestBusStop: z.string().optional().nullable(),
     latitude: z.union([z.string(), z.number()]).transform(val => parseFloat(val)).optional().nullable(),
     longitude: z.union([z.string(), z.number()]).transform(val => parseFloat(val)).optional().nullable(),
     amenities: z.array(z.string()).optional().default([]),

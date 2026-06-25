@@ -196,8 +196,16 @@ export default function TenantPropertyDetails() {
                         <h3 className={styles.sectionTitle}>
                             <MapPin size={24} className="text-primary" /> Neighborhood
                         </h3>
+                        {property.nearestBusStop && (
+                            <p className="text-muted mb-2" style={{ fontSize: 'var(--text-sm)' }}>
+                                🚏 Nearest Bus Stop / Landmark: <strong>{property.nearestBusStop}</strong>
+                            </p>
+                        )}
                         <p className="text-muted mb-6">Explore the area around {property.area?.name}. Exact details provided upon booking.</p>
-                        <MapLocation address={`${property.area?.name}, ${property.city?.name}`} />
+                        <MapLocation
+                            address={`${property.area?.name}, ${property.city?.name}`}
+                            center={property.latitude && property.longitude ? { lat: Number(property.latitude), lng: Number(property.longitude) } : undefined}
+                        />
                     </div>
                 </div>
 

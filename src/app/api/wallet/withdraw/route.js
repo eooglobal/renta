@@ -14,7 +14,7 @@ export async function POST(request) {
         // ── KYC check — must be verified before withdrawal ──
         const user = await prisma.user.findUnique({
             where: { id: userId },
-            select: { ninStatus: true },
+            select: { ninStatus: true, firstName: true, lastName: true },
         });
 
         if (!user || user.ninStatus !== 'VERIFIED') {
@@ -27,7 +27,26 @@ export async function POST(request) {
         const body = await request.json();
         const { amount, bankName, bankAccount, bankCode, accountName } = body;
 
+        if (!accountName) {
+            return NextResponse.json({ error: 'Account name is required' }, { status: 400 });
+        }
+
+        // Validate account name against user's registered name
+        const accountWords = accountName.toLowerCase().split(/\s+/);
+        const userFirstName = user.firstName.toLowerCase();
+        const userLastName = user.lastName.toLowerCase();
+        const matchFirst = accountWords.some(word => word.includes(userFirstName) || userFirstName.includes(word));
+        const matchLast = accountWords.some(word => word.includes(userLastName) || userLastName.includes(word));
+
+        if (!matchFirst || !matchLast) {
+            return NextResponse.json(
+                { error: `The bank account name (${accountName}) does not match your registered name on Renta (${user.firstName} ${user.lastName}).` },
+                { status: 400 }
+            );
+        }
+
         const amountNum = Number(amount);
+
 
         if (!amountNum || amountNum <= 0) {
             return NextResponse.json({ error: 'Valid amount is required' }, { status: 400 });

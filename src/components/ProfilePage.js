@@ -35,6 +35,15 @@ function ProfilePageInner() {
     const [showCurrentPass, setShowCurrentPass] = useState(false);
     const [showNewPass, setShowNewPass] = useState(false);
 
+    // Bank lookup state
+    const [banks, setBanks] = useState([]);
+    const [banksLoading, setBanksLoading] = useState(false);
+    const [resolving, setResolving] = useState(false);
+    const [resolvedName, setResolvedName] = useState('');
+    const [nameConfirmed, setNameConfirmed] = useState(false);
+    const [resolveError, setResolveError] = useState('');
+    const [isFirstLoad, setIsFirstLoad] = useState(true);
+
     const [form, setForm] = useState({
         firstName: '',
         lastName: '',
@@ -77,6 +86,10 @@ function ProfilePageInner() {
                         bankAccount: data.bankAccount || '',
                         bankCode: data.bankCode || '',
                     }));
+                    if (data.bankAccount && data.bankCode) {
+                        setNameConfirmed(true);
+                        setResolvedName(data.firstName + ' ' + data.lastName);
+                    }
                 }
             } catch (err) {
                 console.error(err);
@@ -84,8 +97,71 @@ function ProfilePageInner() {
                 setLoading(false);
             }
         };
+
+        const loadBanks = async () => {
+            setBanksLoading(true);
+            try {
+                const res = await fetch('/api/banks');
+                if (res.ok) {
+                    setBanks(await res.json());
+                }
+            } catch (err) {
+                console.error('Failed to load banks', err);
+            } finally {
+                setBanksLoading(false);
+            }
+        };
+
         fetchProfile();
+        loadBanks();
     }, []);
+
+    // Auto-resolve bank details
+    useEffect(() => {
+        if (isFirstLoad) {
+            setIsFirstLoad(false);
+            return;
+        }
+        const { bankAccount, bankCode } = form;
+        if (bankAccount.length === 10 && bankCode) {
+            resolveAccountName(bankAccount, bankCode);
+        } else {
+            setResolvedName('');
+            setNameConfirmed(false);
+            setResolveError('');
+        }
+    }, [form.bankAccount, form.bankCode]);
+
+    const resolveAccountName = async (accountNumber, bankCode) => {
+        setResolving(true);
+        setResolvedName('');
+        setResolveError('');
+        setNameConfirmed(false);
+        try {
+            const res = await fetch(`/api/banks/resolve?account_number=${accountNumber}&bank_code=${bankCode}`);
+            const data = await res.json();
+            if (res.ok && data.account_name) {
+                setResolvedName(data.account_name);
+            } else {
+                setResolveError(data.error || 'Could not resolve account name');
+            }
+        } catch {
+            setResolveError('Network error during account resolution');
+        } finally {
+            setResolving(false);
+        }
+    };
+
+    const handleBankChange = (e) => {
+        const code = e.target.value;
+        const bank = banks.find(b => b.code === code);
+        setForm(prev => ({
+            ...prev,
+            bankCode: code,
+            bankName: bank?.name || '',
+        }));
+        setMessage({ type: '', text: '' });
+    };
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -96,6 +172,12 @@ function ProfilePageInner() {
         e.preventDefault();
         setSaving(true);
         setMessage({ type: '', text: '' });
+
+        if ((form.bankAccount || form.bankCode) && !nameConfirmed) {
+            setMessage({ type: 'error', text: 'Please resolve and confirm your bank account name.' });
+            setSaving(false);
+            return;
+        }
 
         if (showPassSection && form.newPassword) {
             if (form.newPassword !== form.confirmPassword) {
@@ -146,6 +228,7 @@ function ProfilePageInner() {
             setSaving(false);
         }
     };
+
 
     if (loading) {
         return (
@@ -334,19 +417,102 @@ function ProfilePageInner() {
                     <p className="text-sm text-muted mb-4">Add your bank account for receiving wallet withdrawals.</p>
                     <div className="grid grid-3">
                         <div className="form-group">
-                            <label className="form-label">Bank Name</label>
-                            <input type="text" name="bankName" value={form.bankName} onChange={handleChange} className="form-input" placeholder="e.g., GTBank" />
+                            <label className="form-label">Bank</label>
+                            <select
+                                name="bankCode"
+                                value={form.bankCode}
+                                onChange={handleBankChange}
+                                className="form-input"
+                                disabled={banksLoading}
+                            >
+                                <option value="">{banksLoading ? 'Loading banks...' : 'Select bank'}</option>
+                                {banks.map(b => (
+                                    <option key={b.code} value={b.code}>{b.name}</option>
+                                ))}
+                            </select>
                         </div>
                         <div className="form-group">
                             <label className="form-label">Account Number</label>
-                            <input type="text" name="bankAccount" value={form.bankAccount} onChange={handleChange} className="form-input" placeholder="0123456789" />
+                            <input
+                                type="text"
+                                name="bankAccount"
+                                value={form.bankAccount}
+                                onChange={e => {
+                                    const v = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                    setForm(prev => ({ ...prev, bankAccount: v }));
+                                }}
+                                className="form-input"
+                                placeholder="10-digit account number"
+                                maxLength={10}
+                            />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Sort / Bank Code</label>
-                            <input type="text" name="bankCode" value={form.bankCode} onChange={handleChange} className="form-input" placeholder="e.g., 058" />
+                            <label className="form-label">Bank Code</label>
+                            <input
+                                type="text"
+                                name="bankCode"
+                                value={form.bankCode}
+                                readOnly
+                                className="form-input"
+                                style={{ opacity: 0.7, cursor: 'not-allowed', background: 'var(--bg-secondary)' }}
+                                placeholder="Auto-filled"
+                            />
                         </div>
                     </div>
+
+                    {/* Account name resolution */}
+                    {resolving && (
+                        <div className="mt-3 flex items-center gap-2 text-sm text-muted">
+                            <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                            Verifying account...
+                        </div>
+                    )}
+
+                    {resolveError && (
+                        <div className="mt-3 p-3 rounded text-xs" style={{ background: 'var(--color-error-light)', color: 'var(--color-error)', borderRadius: 'var(--radius-md)' }}>
+                            {resolveError}
+                        </div>
+                    )}
+
+                    {resolvedName && !nameConfirmed && (
+                        <div className="mt-3 p-4 border rounded" style={{ background: 'var(--color-info-light)', borderColor: '#bfdbfe', borderRadius: 'var(--radius-md)' }}>
+                            <p className="text-sm font-bold" style={{ color: '#1d4ed8', marginBottom: '8px' }}>
+                                Account Name: {resolvedName}
+                            </p>
+                            <p className="text-xs mb-3" style={{ color: '#3b82f6', marginBottom: '10px' }}>
+                                Is this the correct account holder?
+                            </p>
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setNameConfirmed(true)}
+                                    className="btn btn-sm"
+                                    style={{ background: 'var(--color-success)', color: 'white' }}
+                                >
+                                    <CheckCircle size={13} style={{ marginRight: 4, display: 'inline-flex', verticalAlign: 'middle' }} /> Yes, confirm
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setResolvedName('');
+                                        setForm(prev => ({ ...prev, bankAccount: '', bankCode: '', bankName: '' }));
+                                    }}
+                                    className="btn btn-sm btn-outline"
+                                    style={{ borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
+                                >
+                                    No, change
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {nameConfirmed && resolvedName && (
+                        <div className="mt-3 p-3 rounded text-sm flex items-center gap-2" style={{ background: 'var(--color-success-light)', color: '#15803d', borderRadius: 'var(--radius-md)' }}>
+                            <CheckCircle size={14} /> Confirmed: {resolvedName}
+                        </div>
+                    )}
                 </div>
+
 
                 {/* Password Section */}
                 <div className="card mb-6">

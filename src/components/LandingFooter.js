@@ -13,8 +13,12 @@ export default function LandingFooter() {
                     <div>
                         <h6>Platform</h6>
                         <Link href="/register">Browse Listings</Link>
-                        <Link href="/register?role=landlord">List Property</Link>
-                        <Link href="/register?role=scout">Become a Scout</Link>
+                        <Link href="/register?role=LANDLORD">List Property</Link>
+                    </div>
+                    <div>
+                        <h6>Earn with Renta</h6>
+                        <Link href="/scout">Become a Scout</Link>
+                        <Link href="/affiliate">Affiliate Program</Link>
                     </div>
                     <div>
                         <h6>Company</h6>
@@ -31,3 +35,4 @@ export default function LandingFooter() {
         </footer>
     );
 }
+

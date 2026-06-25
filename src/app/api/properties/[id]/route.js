@@ -103,6 +103,7 @@ export async function PUT(request, { params }) {
         const body = await request.json();
         const {
             title, description, rentPrice, type, address, cityId, areaId,
+            otherAreaName, nearestBusStop,
             latitude, longitude, amenities, studentFriendly, status,
         } = body;
 
@@ -114,17 +115,36 @@ export async function PUT(request, { params }) {
         if (address !== undefined) updateData.address = address;
         if (cityId !== undefined || areaId !== undefined) {
             const finalCityId = cityId !== undefined ? parseInt(cityId) : property.cityId;
-            const finalAreaId = areaId !== undefined ? parseInt(areaId) : property.areaId;
+            let finalAreaId = areaId !== undefined ? (areaId === 'other' ? null : parseInt(areaId)) : property.areaId;
 
-            if (!isNaN(finalCityId) && !isNaN(finalAreaId)) {
-                // Validate area belongs to city
-                const area = await prisma.area.findUnique({
-                    where: { id: finalAreaId },
-                    select: { cityId: true }
+            // Handle "Other" area: find or create
+            if (areaId === 'other') {
+                if (!otherAreaName || !otherAreaName.trim()) {
+                    return NextResponse.json({ error: 'Please provide a name for the custom area' }, { status: 400 });
+                }
+                const trimmedName = otherAreaName.trim();
+                let existingArea = await prisma.area.findFirst({
+                    where: { name: { equals: trimmedName }, cityId: finalCityId }
                 });
+                if (!existingArea) {
+                    existingArea = await prisma.area.create({
+                        data: { name: trimmedName, cityId: finalCityId }
+                    });
+                }
+                finalAreaId = existingArea.id;
+            }
 
-                if (!area || area.cityId !== finalCityId) {
-                    return NextResponse.json({ error: 'Selected area does not belong to the selected city' }, { status: 400 });
+            if (!isNaN(finalCityId) && finalAreaId !== null && !isNaN(finalAreaId)) {
+                // Validate area belongs to city (skip for newly created areas)
+                if (areaId !== 'other') {
+                    const area = await prisma.area.findUnique({
+                        where: { id: finalAreaId },
+                        select: { cityId: true }
+                    });
+
+                    if (!area || area.cityId !== finalCityId) {
+                        return NextResponse.json({ error: 'Selected area does not belong to the selected city' }, { status: 400 });
+                    }
                 }
 
                 if (cityId !== undefined) updateData.cityId = finalCityId;
@@ -135,6 +155,7 @@ export async function PUT(request, { params }) {
         if (longitude !== undefined) updateData.longitude = longitude;
         if (amenities !== undefined) updateData.amenities = JSON.stringify(amenities);
         if (studentFriendly !== undefined) updateData.studentFriendly = studentFriendly;
+        if (nearestBusStop !== undefined) updateData.nearestBusStop = nearestBusStop || null;
 
         // Regenerate slug if identifying details change
         if (title || cityId || areaId) {

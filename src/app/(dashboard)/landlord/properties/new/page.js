@@ -42,6 +42,8 @@ export default function NewPropertyPage() {
         address: '',
         cityId: '',
         areaId: '',
+        otherAreaName: '',
+        nearestBusStop: '',
         amenities: [],
         studentFriendly: false,
     });
@@ -136,6 +138,7 @@ export default function NewPropertyPage() {
 
         try {
             // Step 1: Create property
+            const isOtherArea = formData.areaId === 'other';
             const res = await fetch('/api/properties', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -143,7 +146,9 @@ export default function NewPropertyPage() {
                     ...formData,
                     rentPrice: parseFloat(formData.rentPrice),
                     cityId: parseInt(formData.cityId),
-                    areaId: parseInt(formData.areaId),
+                    areaId: isOtherArea ? 'other' : parseInt(formData.areaId),
+                    otherAreaName: isOtherArea ? formData.otherAreaName : undefined,
+                    nearestBusStop: formData.nearestBusStop || undefined,
                     uploadLatitude: location?.latitude || null,
                     uploadLongitude: location?.longitude || null,
                 }),
@@ -252,7 +257,19 @@ export default function NewPropertyPage() {
                                     {formData.cityId && cities.find(c => c.id === parseInt(formData.cityId))?.areas.map(a => (
                                         <option key={a.id} value={a.id}>{a.name}</option>
                                     ))}
+                                    <option value="other">Other (specify below)</option>
                                 </select>
+                                {formData.areaId === 'other' && (
+                                    <input
+                                        id="otherAreaName"
+                                        name="otherAreaName"
+                                        className="form-input mt-2"
+                                        placeholder="Enter area / neighborhood name"
+                                        value={formData.otherAreaName}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                )}
                             </div>
                         </div>
 
@@ -280,6 +297,16 @@ export default function NewPropertyPage() {
                                     });
                                 }}
                             />
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="nearestBusStop" className="form-label">Nearest Bus Stop / Landmark <span className="text-muted text-xs">(Optional)</span></label>
+                            <input
+                                id="nearestBusStop" name="nearestBusStop" className="form-input"
+                                placeholder="e.g. Tanke Junction, Unity Junction"
+                                value={formData.nearestBusStop} onChange={handleChange}
+                            />
+                            <span className="form-help">Helps tenants find the property quickly.</span>
                         </div>
 
                         <div className="form-group">
@@ -334,8 +361,9 @@ export default function NewPropertyPage() {
 
                         <div className={styles.formActions}>
                             <button type="button" className="btn btn-primary btn-lg" onClick={() => {
-                                if (!formData.title || !formData.type || !formData.cityId || !formData.areaId || !formData.address || !formData.rentPrice) {
-                                    setError('Please fill in all required fields (Type, City, Area, Address, Rent)');
+                                const areaValid = formData.areaId && (formData.areaId !== 'other' || formData.otherAreaName.trim());
+                                if (!formData.title || !formData.type || !formData.cityId || !areaValid || !formData.address || !formData.rentPrice) {
+                                    setError('Please fill in all required fields (Type, City, Area, Address, Rent). If you selected "Other" area, please specify the name.');
                                     return;
                                 }
                                 setStep(2);
@@ -358,18 +386,31 @@ export default function NewPropertyPage() {
                             </div>
                         )}
 
-                        <div className={styles.imageUpload}>
-                            <input
-                                type="file" id="images" accept="image/*" multiple
-                                onChange={handleImageSelect}
-                                className={styles.fileInput}
-                            />
-                            <label htmlFor="images" className={styles.uploadArea}>
-                                <span className={styles.uploadIcon}><Camera size={32} /></span>
-                                <span>Click to select photos</span>
-                                <span className="text-xs text-muted">PNG, JPG up to 5MB each</span>
-                            </label>
+                        <div className={styles.imageUploadButtons}>
+                            <div>
+                                <input
+                                    type="file" id="gallery-upload" accept="image/*" multiple
+                                    onChange={handleImageSelect}
+                                    className={styles.fileInput}
+                                />
+                                <label htmlFor="gallery-upload" className={styles.uploadBtn}>
+                                    <Camera size={20} />
+                                    <span>Choose from Gallery</span>
+                                </label>
+                            </div>
+                            <div>
+                                <input
+                                    type="file" id="camera-upload" accept="image/*" capture="environment"
+                                    onChange={handleImageSelect}
+                                    className={styles.fileInput}
+                                />
+                                <label htmlFor="camera-upload" className={`${styles.uploadBtn} ${styles.uploadBtnCamera}`}>
+                                    <Camera size={20} />
+                                    <span>Take Photo (Camera)</span>
+                                </label>
+                            </div>
                         </div>
+                        <p className="text-xs text-muted mt-2 mb-4">PNG, JPG up to 5MB each · Max 10 photos</p>
 
                         {previews.length > 0 && (
                             <div className={styles.previewGrid}>

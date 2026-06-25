@@ -60,6 +60,45 @@ export async function PUT(request) {
 
         const userId = parseInt(session.user.id);
 
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }
+
+        // --- Bank Account Name Verification ---
+        if (bankAccount || bankCode) {
+            const finalAccount = bankAccount !== undefined ? bankAccount : user.bankAccount;
+            const finalCode = bankCode !== undefined ? bankCode : user.bankCode;
+
+            if (finalAccount && finalCode) {
+                try {
+                    const { resolveAccount } = await import('@/lib/paymentGateway');
+                    const resolved = await resolveAccount(finalAccount, finalCode);
+                    
+                    if (resolved && resolved.account_name) {
+                        const accountName = resolved.account_name.toLowerCase();
+                        const userFirstName = (firstName || user.firstName).toLowerCase();
+                        const userLastName = (lastName || user.lastName).toLowerCase();
+
+                        const accountWords = accountName.split(/\s+/);
+                        const matchFirst = accountWords.some(word => word.includes(userFirstName) || userFirstName.includes(word));
+                        const matchLast = accountWords.some(word => word.includes(userLastName) || userLastName.includes(word));
+
+                        if (!matchFirst || !matchLast) {
+                            return NextResponse.json(
+                                { error: `The bank account name (${resolved.account_name}) does not match your registered name on Renta (${firstName || user.firstName} ${lastName || user.lastName}).` },
+                                { status: 400 }
+                            );
+                        }
+                    } else {
+                        return NextResponse.json({ error: 'Could not verify bank account holder name' }, { status: 400 });
+                    }
+                } catch (err) {
+                    return NextResponse.json({ error: `Bank verification failed: ${err.message}` }, { status: 400 });
+                }
+            }
+        }
+
         // Build the update data object dynamically
         const updateData = {};
 
@@ -77,7 +116,6 @@ export async function PUT(request) {
             }
 
             // Verify current password
-            const user = await prisma.user.findUnique({ where: { id: userId } });
             const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
             if (!isValid) {
                 return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 });
@@ -89,6 +127,7 @@ export async function PUT(request) {
 
             updateData.passwordHash = await bcrypt.hash(newPassword, 12);
         }
+
 
         // Check phone uniqueness if updating
         if (phone) {

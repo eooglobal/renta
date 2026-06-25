@@ -182,6 +182,7 @@ export async function POST(request) {
 
         const {
             title, description, rentPrice, type, address, cityId, areaId,
+            otherAreaName, nearestBusStop,
             latitude, longitude, amenities, studentFriendly,
             uploadLatitude, uploadLongitude
         } = validationResult.data;
@@ -194,17 +195,54 @@ export async function POST(request) {
             );
         }
 
-        // Verify that the area belongs to the city
-        const areaExists = await prisma.area.findUnique({
-            where: { id: parseInt(areaId) },
-            include: { city: true }
-        });
+        // Verify or create the area
+        let areaIdToUse;
+        let areaExists = null;
 
-        if (!areaExists || areaExists.cityId !== parseInt(cityId)) {
-            return NextResponse.json(
-                { error: 'Invalid city or area selection' },
-                { status: 400 }
-            );
+        if (areaId === 'other') {
+            if (!otherAreaName || !otherAreaName.trim()) {
+                return NextResponse.json(
+                    { error: 'Area name is required for "Other" selection' },
+                    { status: 400 }
+                );
+            }
+            const trimmedName = otherAreaName.trim();
+            // Case-insensitive search for existing area in that city
+            const existingArea = await prisma.area.findFirst({
+                where: {
+                    cityId: parseInt(cityId),
+                    name: trimmedName
+                },
+                include: { city: true }
+            });
+
+            if (existingArea) {
+                areaIdToUse = existingArea.id;
+                areaExists = existingArea;
+            } else {
+                const newArea = await prisma.area.create({
+                    data: {
+                        name: trimmedName,
+                        cityId: parseInt(cityId),
+                    },
+                    include: { city: true }
+                });
+                areaIdToUse = newArea.id;
+                areaExists = newArea;
+            }
+        } else {
+            areaExists = await prisma.area.findUnique({
+                where: { id: parseInt(areaId) },
+                include: { city: true }
+            });
+
+            if (!areaExists || areaExists.cityId !== parseInt(cityId)) {
+                return NextResponse.json(
+                    { error: 'Invalid city or area selection' },
+                    { status: 400 }
+                );
+            }
+            areaIdToUse = parseInt(areaId);
         }
 
         // --- Geofencing Validation (Fraud Prevention) ---
@@ -214,8 +252,8 @@ export async function POST(request) {
         if (uploadLatitude && uploadLongitude && areaExists) {
             const { calculateHaversineDistance } = await import('@/lib/geoUtils');
             const targetCoords = {
-                lat: parseFloat(areaExists.latitude),
-                lon: parseFloat(areaExists.longitude)
+                lat: areaExists.latitude ? parseFloat(areaExists.latitude) : null,
+                lon: areaExists.longitude ? parseFloat(areaExists.longitude) : null
             };
 
             if (targetCoords.lat && targetCoords.lon) {
@@ -254,8 +292,9 @@ export async function POST(request) {
                 rentPrice,
                 type,
                 address,
+                nearestBusStop: nearestBusStop || null,
                 cityId: parseInt(cityId),
-                areaId: parseInt(areaId),
+                areaId: areaIdToUse,
                 latitude: latitude || null,
                 longitude: longitude || null,
                 amenities: JSON.stringify(amenities || []),

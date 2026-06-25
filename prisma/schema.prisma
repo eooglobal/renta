@@ -84,6 +84,7 @@ model Property {
   rentPrice          Decimal            @map("rent_price") @db.Decimal(12, 2)
   type               PropertyType
   address            String
+  nearestBusStop     String?            @map("nearest_bus_stop")
   state              String             @default("Kwara")
   latitude           Decimal?           @db.Decimal(10, 8)
   longitude          Decimal?           @db.Decimal(11, 8)

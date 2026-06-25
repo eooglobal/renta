@@ -75,3 +75,26 @@ export async function verifyPayment(reference) {
     // Default: paystack — returns its full data object as-is
     return paystack.verifyPayment(reference);
 }
+
+/**
+ * Fetch bank list from active gateway
+ */
+export async function getBanks() {
+    const gateway = await getActiveGateway();
+    if (gateway === 'nomba') {
+        return nomba.getBanks();
+    }
+    return paystack.getBanks();
+}
+
+/**
+ * Resolve bank account details from active gateway
+ */
+export async function resolveAccount(accountNumber, bankCode) {
+    const gateway = await getActiveGateway();
+    if (gateway === 'nomba') {
+        return nomba.resolveAccount(accountNumber, bankCode);
+    }
+    return paystack.resolveAccount(accountNumber, bankCode);
+}
+

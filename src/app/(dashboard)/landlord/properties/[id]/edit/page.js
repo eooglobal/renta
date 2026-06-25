@@ -39,6 +39,8 @@ export default function EditPropertyPage() {
         address: '',
         cityId: '',
         areaId: '',
+        otherAreaName: '',
+        nearestBusStop: '',
         amenities: [],
         studentFriendly: false,
     });
@@ -81,6 +83,8 @@ export default function EditPropertyPage() {
                     address: p.address || '',
                     cityId: p.cityId?.toString() || '',
                     areaId: p.areaId?.toString() || '',
+                    otherAreaName: '',
+                    nearestBusStop: p.nearestBusStop || '',
                     amenities: p.amenities || [],
                     studentFriendly: p.studentFriendly || false,
                 });
@@ -114,6 +118,7 @@ export default function EditPropertyPage() {
         setMessage({ type: '', text: '' });
 
         try {
+            const isOtherArea = form.areaId === 'other';
             const res = await fetch(`/api/properties/${propertyId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -121,7 +126,9 @@ export default function EditPropertyPage() {
                     ...form,
                     rentPrice: parseFloat(form.rentPrice),
                     cityId: parseInt(form.cityId),
-                    areaId: parseInt(form.areaId),
+                    areaId: isOtherArea ? 'other' : parseInt(form.areaId),
+                    otherAreaName: isOtherArea ? form.otherAreaName : undefined,
+                    nearestBusStop: form.nearestBusStop || undefined,
                 }),
             });
             const data = await res.json();
@@ -258,7 +265,18 @@ export default function EditPropertyPage() {
                                 {form.cityId && cities.find(c => c.id === parseInt(form.cityId))?.areas.map(a => (
                                     <option key={a.id} value={a.id}>{a.name}</option>
                                 ))}
+                                <option value="other">Other (specify below)</option>
                             </select>
+                            {form.areaId === 'other' && (
+                                <input
+                                    name="otherAreaName"
+                                    className="form-input mt-2"
+                                    placeholder="Enter area / neighborhood name"
+                                    value={form.otherAreaName}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            )}
                         </div>
                     </div>
 
@@ -274,6 +292,14 @@ export default function EditPropertyPage() {
                         <label className="form-label">Full Address</label>
                         <input type="text" name="address" className="form-input"
                             value={form.address} onChange={handleChange} required />
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label">Nearest Bus Stop / Landmark <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>(Optional)</span></label>
+                        <input type="text" name="nearestBusStop" className="form-input"
+                            placeholder="e.g. Tanke Junction, Unity Junction"
+                            value={form.nearestBusStop} onChange={handleChange} />
+                        <span className="form-help">Helps tenants locate the property quickly.</span>
                     </div>
 
                     <div className="form-group">

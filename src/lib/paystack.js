@@ -80,3 +80,49 @@ export async function validateWebhookSignature(rawBody, signature) {
         .digest('hex');
     return hash === signature;
 }
+
+/**
+ * Fetch Nigerian bank list from Paystack
+ */
+export async function getBanks() {
+    const secret = await getSetting('PAYSTACK_SECRET_KEY');
+    if (!secret) throw new Error('Paystack secret key is not configured');
+
+    const res = await fetch(`${PAYSTACK_BASE}/bank?country=nigeria&use_cursor=false&perPage=100`, {
+        headers: { Authorization: `Bearer ${secret}` },
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.status) {
+        throw new Error(data.message || 'Failed to fetch Paystack bank list');
+    }
+
+    return (data.data || []).map(b => ({
+        name: b.name,
+        code: b.code,
+    })).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Resolve bank account details from Paystack
+ */
+export async function resolveAccount(accountNumber, bankCode) {
+    const secret = await getSetting('PAYSTACK_SECRET_KEY');
+    if (!secret) throw new Error('Paystack secret key is not configured');
+
+    const url = `${PAYSTACK_BASE}/bank/resolve?account_number=${encodeURIComponent(accountNumber)}&bank_code=${encodeURIComponent(bankCode)}`;
+    const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${secret}` },
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.status) {
+        throw new Error(data.message || 'Could not resolve account via Paystack');
+    }
+
+    return {
+        account_name: data.data.account_name,
+        account_number: data.data.account_number,
+    };
+}
+

@@ -21,8 +21,19 @@ const customIcon = new L.Icon({
     shadowSize: [41, 41]
 });
 
-export default function MapLocation({ address, center = [8.4966, 4.5421], zoom = 14 }) {
-    // Note: Ilorin rough coordinates are [8.4966, 4.5421]
+// Default: Ilorin rough coordinates
+const DEFAULT_CENTER = [8.4966, 4.5421];
+
+export default function MapLocation({ address, center, zoom = 14 }) {
+    // Normalise center: accept [lat, lng] array or { lat, lng } object
+    let normalizedCenter = DEFAULT_CENTER;
+    if (center) {
+        if (Array.isArray(center)) {
+            normalizedCenter = center;
+        } else if (center.lat !== undefined && center.lng !== undefined) {
+            normalizedCenter = [center.lat, center.lng];
+        }
+    }
 
     useEffect(() => {
         // Any browser side initializations
@@ -30,7 +41,7 @@ export default function MapLocation({ address, center = [8.4966, 4.5421], zoom =
 
     return (
         <MapContainer
-            center={center}
+            center={normalizedCenter}
             zoom={zoom}
             scrollWheelZoom={false}
             style={{ height: '300px', width: '100%', borderRadius: 'var(--radius-lg)', zIndex: 1 }}
@@ -39,7 +50,7 @@ export default function MapLocation({ address, center = [8.4966, 4.5421], zoom =
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <Marker position={center} icon={customIcon}>
+            <Marker position={normalizedCenter} icon={customIcon}>
                 <Popup>{address}</Popup>
             </Marker>
         </MapContainer>
