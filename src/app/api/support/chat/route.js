@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const PDR_CONTENT = `
 # Renta Platform Knowledge Base (PDR Summary)
 Renta is a verified-only apartment marketplace in Nigeria (starting in Ilorin).
@@ -25,6 +24,7 @@ Renta is a verified-only apartment marketplace in Nigeria (starting in Ilorin).
 `;
 
 export async function POST(request) {
+    const GROQ_API_KEY = process.env.GROQ_API_KEY;
     if (!GROQ_API_KEY) {
         return NextResponse.json({ reply: "I'm sorry, my AI brain (API Key) isn't configured yet. Please contact admin." }, { status: 500 });
     }
