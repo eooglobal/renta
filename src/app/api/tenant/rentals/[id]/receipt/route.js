@@ -10,7 +10,8 @@ export async function GET(request, { params }) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const rentalId = parseInt(params.id);
+        const { id } = await params;
+        const rentalId = parseInt(id);
 
         const rental = await prisma.rental.findFirst({
             where: {
