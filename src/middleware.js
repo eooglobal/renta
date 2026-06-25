@@ -41,6 +41,8 @@ export default NextAuth(authConfig).auth((req) => {
         '/api/settings/public',                // Public platform settings (Pusher keys, Maps key)
         '/api/health',                         // Health check
         '/api/verification/didit/callback',    // Didit redirect callback (public — no session yet)
+        '/api/banks',                          // Nigerian bank list
+        '/api/banks/resolve',                  // Bank account name resolution
     ];
     // Allow public API routes exactly, or any NextAuth routes which handle their own sessions
     const isPublicApiRoute = publicApiRoutes.includes(pathname) || pathname.startsWith('/api/auth');

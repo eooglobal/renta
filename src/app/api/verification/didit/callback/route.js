@@ -4,9 +4,6 @@ import { getSetting } from '@/lib/settings';
 
 const DIDIT_BASE = 'https://verification.didit.me';
 
-/**
- * Maps a Didit session status to our ninStatus enum
- */
 function mapStatus(diditStatus) {
     switch (diditStatus) {
         case 'Approved':    return 'VERIFIED';
@@ -14,7 +11,7 @@ function mapStatus(diditStatus) {
         case 'In Review':
         case 'In Progress':
         case 'Not Started': return 'PENDING';
-        default:            return null; // Abandoned / unknown — don't update
+        default:            return null;
     }
 }
 
@@ -26,7 +23,10 @@ export async function GET(request) {
         const { searchParams } = new URL(request.url);
         const sessionId = searchParams.get('session_id');
 
+        console.log('[Didit Callback] Received session_id:', sessionId);
+
         if (!sessionId) {
+            console.warn('[Didit Callback] No session_id in query params');
             return NextResponse.redirect(`${appUrl}/tenant/profile?verification=error`);
         }
 
@@ -37,23 +37,41 @@ export async function GET(request) {
         });
 
         if (!user) {
-            console.warn('[Didit] Callback: No user found for session', sessionId);
+            console.warn('[Didit Callback] No user found for session:', sessionId);
             return NextResponse.redirect(`${appUrl}/tenant/profile?verification=error`);
         }
 
         // Fetch decision from Didit
-        const apiKey = await getSetting('DIDIT_API_KEY');
+        const apiKey = (await getSetting('DIDIT_API_KEY')) || process.env.DIDIT_API_KEY;
+
+        if (!apiKey) {
+            console.error('[Didit Callback] API key missing — cannot fetch decision');
+            return NextResponse.redirect(`${appUrl}/tenant/profile?verification=pending`);
+        }
+
         const decisionRes = await fetch(`${DIDIT_BASE}/v3/session/${sessionId}/decision/`, {
             headers: { 'x-api-key': apiKey },
         });
 
+        const decisionText = await decisionRes.text();
+        console.log(`[Didit Callback] Decision response (${decisionRes.status}):`, decisionText);
+
         if (!decisionRes.ok) {
-            console.error('[Didit] Failed to fetch decision for session', sessionId);
-            // Don't fail hard — the webhook will update status async
+            // Decision not yet available — session may still be in progress
+            console.warn('[Didit Callback] Decision not ready for session:', sessionId, '— redirecting to pending');
             return NextResponse.redirect(`${appUrl}/tenant/profile?verification=pending`);
         }
 
-        const decision = await decisionRes.json();
+        let decision;
+        try {
+            decision = JSON.parse(decisionText);
+        } catch {
+            console.error('[Didit Callback] Failed to parse decision JSON');
+            return NextResponse.redirect(`${appUrl}/tenant/profile?verification=pending`);
+        }
+
+        console.log('[Didit Callback] Decision status:', decision.status);
+
         const ninStatus = mapStatus(decision.status);
 
         if (ninStatus) {
@@ -69,7 +87,7 @@ export async function GET(request) {
 
         return NextResponse.redirect(`${appUrl}/tenant/profile?verification=${outcome}`);
     } catch (error) {
-        console.error('[Didit] Callback error:', error);
+        console.error('[Didit Callback] Unexpected error:', error);
         return NextResponse.redirect(`${appUrl}/tenant/profile?verification=error`);
     }
 }

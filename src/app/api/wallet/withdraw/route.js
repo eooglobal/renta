@@ -10,8 +10,22 @@ export async function POST(request) {
         }
 
         const userId = parseInt(session.user.id);
+
+        // ── KYC check — must be verified before withdrawal ──
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { ninStatus: true },
+        });
+
+        if (!user || user.ninStatus !== 'VERIFIED') {
+            return NextResponse.json(
+                { error: 'Identity verification required before requesting a withdrawal. Please complete KYC on your profile page.' },
+                { status: 403 }
+            );
+        }
+
         const body = await request.json();
-        const { amount, bankName, bankAccount, bankCode } = body;
+        const { amount, bankName, bankAccount, bankCode, accountName } = body;
 
         const amountNum = Number(amount);
 
@@ -53,7 +67,7 @@ export async function POST(request) {
                     status: 'PENDING',
                     bankName,
                     bankAccount,
-                    bankCode
+                    bankCode: bankCode || null,
                 }
             });
 
@@ -63,7 +77,7 @@ export async function POST(request) {
                     walletId: wallet.id,
                     amount: amountNum,
                     type: 'DEBIT',
-                    description: `Withdrawal request to ${bankName} (${bankAccount})`,
+                    description: `Withdrawal to ${bankName} (${bankAccount})${accountName ? ` — ${accountName}` : ''}`,
                     referenceId: String(withdrawalRequest.id),
                     referenceType: 'WITHDRAWAL'
                 }

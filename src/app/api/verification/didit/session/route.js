@@ -5,6 +5,17 @@ import { getSetting } from '@/lib/settings';
 
 const DIDIT_BASE = 'https://verification.didit.me';
 
+// GET /api/verification/didit/session — Check if Didit is configured
+export async function GET() {
+    const apiKey     = (await getSetting('DIDIT_API_KEY'))     || process.env.DIDIT_API_KEY;
+    const workflowId = (await getSetting('DIDIT_WORKFLOW_ID')) || process.env.DIDIT_WORKFLOW_ID;
+    return NextResponse.json({
+        configured: !!(apiKey && workflowId),
+        hasApiKey:     !!apiKey,
+        hasWorkflowId: !!workflowId,
+    });
+}
+
 // POST /api/verification/didit/session — Create a Didit verification session
 export async function POST(request) {
     try {
@@ -13,16 +24,23 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const apiKey      = await getSetting('DIDIT_API_KEY');
-        const workflowId  = await getSetting('DIDIT_WORKFLOW_ID');
-        const appUrl      = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
+        // Try DB settings first, then fall back to environment variables
+        const apiKey     = (await getSetting('DIDIT_API_KEY'))     || process.env.DIDIT_API_KEY;
+        const workflowId = (await getSetting('DIDIT_WORKFLOW_ID')) || process.env.DIDIT_WORKFLOW_ID;
+        const appUrl     = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
 
-        if (!apiKey || !workflowId) {
-            console.error('[Didit] Missing DIDIT_API_KEY or DIDIT_WORKFLOW_ID');
-            return NextResponse.json({ error: 'Verification service not configured' }, { status: 503 });
+        if (!apiKey) {
+            console.error('[Didit] DIDIT_API_KEY is missing from both platform settings and environment variables');
+            return NextResponse.json({ error: 'Verification service not configured: missing API key' }, { status: 503 });
+        }
+        if (!workflowId) {
+            console.error('[Didit] DIDIT_WORKFLOW_ID is missing from both platform settings and environment variables');
+            return NextResponse.json({ error: 'Verification service not configured: missing workflow ID' }, { status: 503 });
         }
 
         const userId = String(session.user.id);
+
+        console.log(`[Didit] Creating session for user ${userId} with workflow ${workflowId}`);
 
         const res = await fetch(`${DIDIT_BASE}/v3/session/`, {
             method: 'POST',
@@ -37,16 +55,23 @@ export async function POST(request) {
             }),
         });
 
+        const responseText = await res.text();
+        console.log(`[Didit] Session creation response (${res.status}):`, responseText);
+
         if (!res.ok) {
-            const err = await res.text();
-            console.error('[Didit] Session creation failed:', err);
+            console.error('[Didit] Session creation failed:', res.status, responseText);
             return NextResponse.json({ error: 'Failed to create verification session' }, { status: 500 });
         }
 
-        const data = await res.json();
+        const data = JSON.parse(responseText);
         const { session_id, verification_url } = data;
 
-        // Save the session ID to the user record so we can look them up on callback/webhook
+        if (!session_id || !verification_url) {
+            console.error('[Didit] Unexpected response shape:', data);
+            return NextResponse.json({ error: 'Invalid response from verification service' }, { status: 500 });
+        }
+
+        // Save session ID to the user record
         await prisma.user.update({
             where: { id: parseInt(userId) },
             data: { diditSessionId: session_id },
