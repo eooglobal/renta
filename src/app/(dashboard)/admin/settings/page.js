@@ -122,6 +122,20 @@ const defaultSettings = [
     type: "password",
     description: "Used to verify Nomba webhook signatures.",
   },
+  {
+    key: "PROMOTION_PRICE",
+    group: "PAYMENT_GATEWAY",
+    label: "Promotion Price",
+    type: "text",
+    description: "Amount landlords pay to promote a property listing.",
+  },
+  {
+    key: "PROMOTION_DURATION_DAYS",
+    group: "PAYMENT_GATEWAY",
+    label: "Promotion Duration (Days)",
+    type: "text",
+    description: "How many days a promoted property remains featured.",
+  },
 
   { key: "PUSHER_APP_ID", group: "PUSHER", label: "App ID", type: "text" },
   {
