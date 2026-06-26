@@ -87,16 +87,30 @@ export async function POST(request) {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error?.message || "Groq API Error");
+      const errorMessage = data.error?.message || "Groq API Error";
+      return NextResponse.json(
+        { error: `AI support is temporarily unavailable: ${errorMessage}` },
+        { status: response.status || 500 },
+      );
     }
 
-    return NextResponse.json({
-      reply: data.choices[0].message.content,
-    });
+    const reply = data?.choices?.[0]?.message?.content;
+    if (!reply) {
+      return NextResponse.json(
+        { error: "AI support did not return a valid reply." },
+        { status: 502 },
+      );
+    }
+
+    return NextResponse.json({ reply });
   } catch (error) {
     console.error("Support Chat Error:", error);
     return NextResponse.json(
-      { error: "Failed to process chat" },
+      {
+        error:
+          error.message ||
+          "AI support is temporarily unavailable. Please try again later.",
+      },
       { status: 500 },
     );
   }
