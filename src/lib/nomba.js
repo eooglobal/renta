@@ -42,7 +42,7 @@ export async function getToken() {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      accountId,
+      "X-Nomba-Account-Id": accountId,
     },
     body: JSON.stringify({
       grant_type: "client_credentials",
@@ -101,7 +101,7 @@ export async function initializePayment({
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
-      accountId,
+      "X-Nomba-Account-Id": accountId,
     },
     body: JSON.stringify({
       orderReference: reference,
@@ -118,13 +118,18 @@ export async function initializePayment({
 
   if (!res.ok || (data.code !== "00" && data.responseCode !== "00")) {
     throw new Error(
-      data.description || data.message || "Failed to initialize Nomba payment",
+      data.description ||
+        data.message ||
+        data.error?.message ||
+        "Failed to initialize Nomba payment",
     );
   }
 
+  const orderData = data.data?.order || data.data;
+
   return {
-    checkoutLink: data.data.checkoutLink,
-    orderReference: data.data.orderReference,
+    checkoutLink: orderData?.checkoutLink || orderData?.checkoutUrl,
+    orderReference: orderData?.orderReference || reference,
   };
 }
 
@@ -143,7 +148,7 @@ export async function verifyPayment(orderReference) {
   const res = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
-      accountId,
+      "X-Nomba-Account-Id": accountId,
     },
   });
 
@@ -255,7 +260,7 @@ export async function getBanks() {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
-      accountId,
+      "X-Nomba-Account-Id": accountId,
     },
   });
 
@@ -287,7 +292,7 @@ export async function resolveAccount(accountNumber, bankCode) {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
-      accountId,
+      "X-Nomba-Account-Id": accountId,
     },
     body: JSON.stringify({
       accountNumber,
