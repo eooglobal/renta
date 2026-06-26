@@ -67,6 +67,7 @@ function ProfilePageInner() {
   const [banksError, setBanksError] = useState("");
   const [resolving, setResolving] = useState(false);
   const [resolvedName, setResolvedName] = useState("");
+  const [manualAccountName, setManualAccountName] = useState("");
   const [nameConfirmed, setNameConfirmed] = useState(false);
   const [resolveError, setResolveError] = useState("");
   const [isFirstLoad, setIsFirstLoad] = useState(true);
@@ -125,6 +126,7 @@ function ProfilePageInner() {
           if (data.bankAccount && data.bankCode) {
             setNameConfirmed(true);
             setResolvedName(data.firstName + " " + data.lastName);
+            setManualAccountName(data.firstName + " " + data.lastName);
           }
         }
       } catch (err) {
@@ -187,6 +189,7 @@ function ProfilePageInner() {
       const data = await res.json();
       if (res.ok && data.account_name) {
         setResolvedName(data.account_name);
+        setManualAccountName(data.account_name);
       } else {
         setResolveError(data.error || "Could not resolve account name");
       }
@@ -216,12 +219,14 @@ function ProfilePageInner() {
     setSaving(true);
 
     if ((form.bankAccount || form.bankCode) && !nameConfirmed) {
-      toast.error(
-        "Confirm Account Name",
-        "Please resolve and confirm your bank account name.",
-      );
-      setSaving(false);
-      return;
+      if (!manualAccountName.trim()) {
+        toast.error(
+          "Confirm Account Name",
+          "Please resolve and confirm your bank account name, or enter it manually.",
+        );
+        setSaving(false);
+        return;
+      }
     }
 
     if (showPassSection && form.newPassword) {
@@ -248,6 +253,7 @@ function ProfilePageInner() {
         bankName: form.bankName,
         bankAccount: form.bankAccount,
         bankCode: form.bankCode,
+        accountName: (resolvedName || manualAccountName).trim(),
       };
 
       if (showPassSection && form.newPassword) {
@@ -267,7 +273,10 @@ function ProfilePageInner() {
         const friendly = friendlyError(data.error || "Update failed");
         toast.error(friendly.title, friendly.message);
       } else {
-        toast.success("Profile Saved", "Profile updated successfully!");
+        toast.success(
+          "Profile Saved",
+          data.warning || "Profile updated successfully!",
+        );
         setForm((prev) => ({
           ...prev,
           currentPassword: "",
@@ -275,6 +284,9 @@ function ProfilePageInner() {
           confirmPassword: "",
         }));
         setShowPassSection(false);
+        if (manualAccountName.trim()) {
+          setNameConfirmed(true);
+        }
       }
     } catch (err) {
       const friendly = friendlyError(err);
@@ -655,6 +667,24 @@ function ProfilePageInner() {
             </div>
           )}
 
+          <div className="form-group mt-3">
+            <label className="form-label">Account Name</label>
+            <input
+              type="text"
+              value={manualAccountName}
+              onChange={(e) => {
+                setManualAccountName(e.target.value);
+                setNameConfirmed(false);
+              }}
+              className="form-input"
+              placeholder="Enter the full name on the bank account"
+            />
+            <p className="text-xs text-muted mt-2">
+              If automatic lookup fails or looks unreliable in sandbox, enter
+              the full account name manually.
+            </p>
+          </div>
+
           {resolvedName && !nameConfirmed && (
             <div
               className="mt-3 p-4 border rounded"
@@ -679,7 +709,10 @@ function ProfilePageInner() {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setNameConfirmed(true)}
+                  onClick={() => {
+                    setManualAccountName(resolvedName);
+                    setNameConfirmed(true);
+                  }}
                   className="btn btn-sm"
                   style={{ background: "var(--color-success)", color: "white" }}
                 >
