@@ -13,7 +13,7 @@ export async function GET() {
 
     const activeRentalFilter = {
       property: { landlordId },
-      status: { in: ["ACTIVE", "PENDING", "CONFIRMED"] },
+      status: { in: ["ACTIVE", "PENDING"] },
     };
 
     const [totalProperties, pendingVerification, activeTenants, monthlyIncome] =

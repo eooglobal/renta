@@ -38,7 +38,7 @@ export default function LandlordTenantsPage() {
   }, []);
 
   const activeCount = rentals.filter((r) =>
-    ["ACTIVE", "PENDING", "CONFIRMED"].includes(r.status),
+    ["ACTIVE", "PENDING"].includes(r.status),
   ).length;
 
   return (
@@ -186,23 +186,31 @@ export default function LandlordTenantsPage() {
 
               {expandedTenant === rental.id && (
                 <div
-                  className="mt-4 p-4 rounded-md"
+                  className="mt-4"
                   style={{
-                    background: "var(--bg-secondary)",
-                    border: "1px solid var(--border-color)",
+                    display: 'grid',
+                    gap: 'var(--space-4)',
                   }}
                 >
-                  <div className="flex items-center gap-2 mb-4">
-                    <UserCircle2
-                      size={18}
-                      style={{ color: "var(--color-primary)" }}
-                    />
-                    <h5 className="font-semibold text-sm m-0">
-                      Tenant Details
-                    </h5>
-                  </div>
+                  <div
+                    className="card"
+                    style={{
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                      padding: 'var(--space-5)',
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-4">
+                      <UserCircle2
+                        size={18}
+                        style={{ color: "var(--color-primary)" }}
+                      />
+                      <h5 className="font-semibold text-sm m-0">
+                        Tenant Details
+                      </h5>
+                    </div>
 
-                  <div className="grid grid-2 gap-4 text-sm">
+                    <div className="grid grid-2 gap-4 text-sm">
                     <div>
                       <p className="text-muted text-xs uppercase tracking-wider mb-1">
                         Full Name
@@ -272,14 +280,14 @@ export default function LandlordTenantsPage() {
                   </div>
 
                   {rental.tenant?.tenantProfile && (
-                    <>
-                      <div
-                        style={{
-                          height: "1px",
-                          background: "var(--border-color)",
-                          margin: "16px 0",
-                        }}
-                      />
+                    <div
+                      className="card"
+                      style={{
+                        background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-color)',
+                        padding: 'var(--space-5)',
+                      }}
+                    >
                       <div className="flex items-center gap-2 mb-4">
                         <Briefcase
                           size={18}
@@ -376,7 +384,7 @@ export default function LandlordTenantsPage() {
                           </div>
                         )}
                       </div>
-                    </>
+                    </div>
                   )}
                 </div>
               )}
