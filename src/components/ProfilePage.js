@@ -167,7 +167,10 @@ function ProfilePageInner() {
       setIsFirstLoad(false);
       return;
     }
-    const { bankAccount, bankCode } = form;
+
+    const bankAccount = form.bankAccount;
+    const bankCode = form.bankCode;
+
     if (bankAccount.length === 10 && bankCode) {
       resolveAccountName(bankAccount, bankCode);
     } else {
@@ -175,7 +178,7 @@ function ProfilePageInner() {
       setNameConfirmed(false);
       setResolveError("");
     }
-  }, [form.bankAccount, form.bankCode]);
+  }, [form.bankAccount, form.bankCode, isFirstLoad]);
 
   const resolveAccountName = async (accountNumber, bankCode) => {
     setResolving(true);
@@ -864,7 +867,8 @@ function ProfilePageInner() {
 
           {!showPassSection && (
             <p className="text-sm text-muted">
-              Click "Change Password" to update your password.
+              Click <span>&quot;Change Password&quot;</span> to update your
+              password.
             </p>
           )}
         </div>
