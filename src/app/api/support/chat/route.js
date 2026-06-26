@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import { getSetting } from "@/lib/settings";
 
 const PDR_CONTENT = `
 # Renta Platform Knowledge Base (PDR Summary)
@@ -17,74 +18,86 @@ Renta is a verified-only apartment marketplace in Nigeria (starting in Ilorin).
 
 ## FAQ:
 - Is inspection free? Yes.
-- How do I check if a room is available? Browse the listings on the Home/Search page. If a property is visible and NOT marked as 'Rented', it is available. 
+- How do I check if a room is available? Browse the listings on the Home/Search page. If a property is visible and NOT marked as 'Rented', it is available.
 - Can I message a landlord before renting? No, direct messaging is available only for active rentals to ensure safety and prevent scams.
 - How do I get paid? Automated payout after tenant confirms move-in.
 - Where is Renta available? Currently Ilorin (Tanke, Basin, Malete).
 `;
 
 export async function POST(request) {
-    const GROQ_API_KEY = process.env.GROQ_API_KEY;
-    if (!GROQ_API_KEY) {
-        return NextResponse.json({ reply: "I'm sorry, my AI brain (API Key) isn't configured yet. Please contact admin." }, { status: 500 });
-    }
+  const GROQ_API_KEY =
+    (await getSetting("GROQ_API_KEY")) || process.env.GROQ_API_KEY;
+  if (!GROQ_API_KEY) {
+    return NextResponse.json(
+      {
+        reply:
+          "I'm sorry, my AI brain (API key) isn't configured yet. Please contact admin.",
+      },
+      { status: 500 },
+    );
+  }
 
-    try {
-        const { message, history } = await request.json();
+  try {
+    const { message, history } = await request.json();
 
-        const messages = [
-            {
-                role: "system",
-                content: `You are Renta AI, the official support assistant for the Renta platform. 
-                Use the following Knowledge Base to answer user questions precisely. 
+    const messages = [
+      {
+        role: "system",
+        content: `You are Renta AI, the official support assistant for the Renta platform.
+                Use the following Knowledge Base to answer user questions precisely.
                 If you don't know the answer, ask them to contact hello@userenta.com.
                 Be helpful, professional, and concise. Use Naira (₦) for currency.
-                
+
                 CONFIDENTIALITY & SCOPE RULES:
                 - DO NOT disclose technical architecture, database types, or specific code libraries (e.g., Next.js, Prisma, MySQL, Aiven).
                 - DO NOT disclose internal security mechanisms or exact rate-limiting logic.
                 - DO NOT disclose internal infrastructure providers (e.g., Render, Contabo).
                 - Focus exclusively on user-facing features, roles, and platform rules.
                 - Only share Scout/Affiliate commission rates if specifically asked about those roles.
-                
+
                 FORMATTING RULES:
-                - Use emojis (like ✅, 🏠, 🔑) as bullet points for lists. 
+                - Use emojis (like ✅, 🏠, 🔑) as bullet points for lists.
                 - DO NOT use asterisks (*) for bullet points.
                 - Use double newlines between paragraphs for better readability.
-                
+
                 KNOWLEDGE BASE:
-                ${PDR_CONTENT}`
-            },
-            ...history.map(msg => ({ role: msg.role, content: msg.content })),
-            { role: "user", content: message }
-        ];
+                ${PDR_CONTENT}`,
+      },
+      ...history.map((msg) => ({ role: msg.role, content: msg.content })),
+      { role: "user", content: message },
+    ];
 
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${GROQ_API_KEY}`
-            },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                messages: messages,
-                temperature: 0.7,
-                max_tokens: 500
-            })
-        });
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: messages,
+          temperature: 0.7,
+          max_tokens: 500,
+        }),
+      },
+    );
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (!response.ok) {
-            throw new Error(data.error?.message || 'Groq API Error');
-        }
-
-        return NextResponse.json({
-            reply: data.choices[0].message.content
-        });
-
-    } catch (error) {
-        console.error('Support Chat Error:', error);
-        return NextResponse.json({ error: 'Failed to process chat' }, { status: 500 });
+    if (!response.ok) {
+      throw new Error(data.error?.message || "Groq API Error");
     }
+
+    return NextResponse.json({
+      reply: data.choices[0].message.content,
+    });
+  } catch (error) {
+    console.error("Support Chat Error:", error);
+    return NextResponse.json(
+      { error: "Failed to process chat" },
+      { status: 500 },
+    );
+  }
 }

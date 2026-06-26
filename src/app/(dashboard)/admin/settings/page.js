@@ -54,6 +54,12 @@ const settingGroups = [
     icon: RefreshCw,
     color: "#f97316",
   },
+  {
+    id: "AI",
+    label: "AI Assistant",
+    icon: MessageSquare,
+    color: "#10b981",
+  },
 ];
 
 const defaultSettings = [
@@ -188,6 +194,13 @@ const defaultSettings = [
     type: "password",
   },
   { key: "EMAIL_FROM", group: "EMAIL", label: "From Email", type: "text" },
+  {
+    key: "GROQ_API_KEY",
+    group: "AI",
+    label: "Groq API Key",
+    type: "password",
+    description: "API key used by the Renta support assistant.",
+  },
 ];
 
 export default function AdminSettingsPage() {
