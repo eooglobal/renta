@@ -619,7 +619,8 @@
         justify-content: flex-start;
         gap: var(--space-6);
         z-index: 99;
-        overflow-y: auto;
+        overflow: hidden;
+        overscroll-behavior: none;
         animation: slideDown 0.25s ease-out;
     }
 

@@ -31,7 +31,7 @@ export async function getToken() {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accountId}`,
+      accountId,
     },
     body: JSON.stringify({
       grant_type: "client_credentials",
@@ -42,16 +42,28 @@ export async function getToken() {
 
   const data = await res.json();
 
-  if (data.responseCode !== "00") {
-    throw new Error(data.description || "Failed to obtain Nomba access token");
+  if (!res.ok || (data.code !== "00" && data.responseCode !== "00")) {
+    throw new Error(
+      data.description || data.message || "Failed to obtain Nomba access token",
+    );
   }
 
-  // Cache the token; expiresIn is in seconds
-  const expiresIn = data.data?.expiresIn ?? data.data?.expires_in ?? 3600;
+  const expiresAt = data.data?.expiresAt;
+  const expiresIn = data.data?.expiresIn ?? data.data?.expires_in;
+  const resolvedExpiresAt = expiresAt
+    ? new Date(expiresAt).getTime()
+    : Date.now() + Number(expiresIn || 1800) * 1000;
+
   tokenCache = {
-    accessToken: data.data.accessToken,
-    expiresAt: Date.now() + expiresIn * 1000,
+    accessToken: data.data?.access_token || data.data?.accessToken,
+    expiresAt: resolvedExpiresAt,
   };
+
+  if (!tokenCache.accessToken) {
+    throw new Error(
+      "Nomba access token was not returned by the authentication endpoint",
+    );
+  }
 
   return tokenCache.accessToken;
 }
