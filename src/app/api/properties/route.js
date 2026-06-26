@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { generatePropertySlug } from "@/lib/slugs";
 import { normalizePropertyImages } from "@/lib/images/normalize";
+import { getSetting } from "@/lib/settings";
 
 // GET /api/properties — List properties with filters
 export async function GET(request) {
@@ -104,6 +105,12 @@ export async function GET(request) {
     ]);
 
     const normalizedProperties = properties.map(normalizePropertyImages);
+    const promotionPrice = Number(
+      (await getSetting("PROMOTION_PRICE")) || 5000,
+    );
+    const promotionDurationDays = Number(
+      (await getSetting("PROMOTION_DURATION_DAYS")) || 7,
+    );
 
     const response = NextResponse.json({
       properties: normalizedProperties,
@@ -112,6 +119,10 @@ export async function GET(request) {
         limit,
         total,
         totalPages: Math.ceil(total / limit),
+      },
+      promotionSettings: {
+        promotionPrice,
+        promotionDurationDays,
       },
     });
 

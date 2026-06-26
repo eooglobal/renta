@@ -11,28 +11,36 @@ export async function GET() {
 
     const landlordId = parseInt(session.user.id);
 
-    const activeRentalFilter = {
+    const tenantStatsFilter = {
       property: { landlordId },
-      status: { in: ["ACTIVE", "PENDING"] },
+      status: { in: ["PENDING", "ACTIVE", "COMPLETED", "DISPUTED"] },
+    };
+
+    const incomeFilter = {
+      property: { landlordId },
+      status: { in: ["PENDING", "ACTIVE"] },
     };
 
     const [totalProperties, pendingVerification, activeTenants, monthlyIncome] =
       await Promise.all([
         prisma.property.count({ where: { landlordId } }),
         prisma.property.count({
-          where: { landlordId, verificationStatus: { not: "VERIFIED" } },
+          where: {
+            landlordId,
+            status: { not: "VERIFIED" },
+          },
         }),
-        prisma.rental.count({ where: activeRentalFilter }),
+        prisma.rental.count({ where: tenantStatsFilter }),
         prisma.rental.aggregate({
-          where: activeRentalFilter,
-          _sum: { amount: true },
+          where: incomeFilter,
+          _sum: { rentAmount: true },
         }),
       ]);
 
     return NextResponse.json({
       totalProperties,
       activeTenants,
-      monthlyIncome: monthlyIncome._sum.amount || 0,
+      monthlyIncome: Number(monthlyIncome._sum.rentAmount || 0),
       pendingVerification,
     });
   } catch (error) {

@@ -21,20 +21,17 @@ export default function LandlordPropertiesPage() {
       const sessionRes = await fetch("/api/auth/session");
       const sessionData = await sessionRes.json();
 
-      const [propertiesRes, promotionsRes] = await Promise.all([
-        fetch(`/api/properties?landlordId=${sessionData?.user?.id}`),
-        fetch("/api/admin/promotions"),
-      ]);
+      const propertiesRes = await fetch(
+        `/api/properties?landlordId=${sessionData?.user?.id}`,
+      );
 
       const propertiesData = await propertiesRes.json();
       setProperties(propertiesData.properties || []);
 
-      if (promotionsRes.ok) {
-        const promotionsData = await promotionsRes.json();
-        setPromotionPrice(
-          Number(promotionsData.settings?.promotionPrice || 5000),
-        );
-      }
+      const configuredPromotionPrice = Number(
+        propertiesData.promotionSettings?.promotionPrice || 5000,
+      );
+      setPromotionPrice(configuredPromotionPrice);
     } catch (error) {
       console.error("Failed to fetch properties:", error);
     } finally {

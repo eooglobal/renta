@@ -15,9 +15,9 @@ export async function POST(request, { params }) {
       );
     }
 
-    const { id } = await params;
+    const { id } = params;
     const property = await prisma.property.findUnique({
-      where: { id: id },
+      where: { id },
     });
 
     if (!property) {
@@ -47,12 +47,15 @@ export async function POST(request, { params }) {
       (await getSetting("PROMOTION_DURATION_DAYS")) || 7,
     );
     const reference = generateReference("FEAT");
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.APP_URL ||
+      request.nextUrl.origin;
 
-    // Initialize Paystack payment for the feature fee
     const paymentInit = await initializePayment({
       email: session.user.email,
       amount: featurePrice,
-      reference: reference,
+      reference,
       metadata: {
         propertyId: property.id,
         landlordId: parseInt(session.user.id),
@@ -60,11 +63,16 @@ export async function POST(request, { params }) {
         featureDurationDays,
         featurePrice,
       },
-      callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/landlord?promoted=true`, // Redirect to dashboard with success flag
+      callbackUrl: `${appUrl}/landlord?promoted=true`,
     });
 
-    if (!paymentInit.authorization_url) {
-      console.error("Paystack initialization failed:", paymentInit);
+    const paymentUrl =
+      paymentInit?.paymentUrl ||
+      paymentInit?.authorization_url ||
+      paymentInit?.checkoutLink;
+
+    if (!paymentUrl) {
+      console.error("Payment initialization failed:", paymentInit);
       return NextResponse.json(
         { error: "Failed to initialize payment gateway" },
         { status: 500 },
@@ -73,8 +81,8 @@ export async function POST(request, { params }) {
 
     return NextResponse.json({
       message: "Payment initialized",
-      authorization_url: paymentInit.authorization_url,
-      paymentUrl: paymentInit.authorization_url,
+      authorization_url: paymentUrl,
+      paymentUrl,
       reference: paymentInit.reference || reference,
       amount: featurePrice,
       durationDays: featureDurationDays,
