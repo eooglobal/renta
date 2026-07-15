@@ -11,7 +11,7 @@ const PAYSTACK_BASE = 'https://api.paystack.co';
 /**
  * Initialize a Paystack transaction
  */
-export async function initializePayment({ email, amount, reference, metadata = {}, callbackUrl }) {
+export async function initializePayment({ email, amount, reference, metadata = {}, callbackUrl, splitCode, subaccount, transactionCharge, bearer }) {
     const secret = await getSetting('PAYSTACK_SECRET_KEY');
     
     const res = await fetch(`${PAYSTACK_BASE}/transaction/initialize`, {
@@ -27,6 +27,10 @@ export async function initializePayment({ email, amount, reference, metadata = {
             callback_url: callbackUrl,
             metadata,
             channels: ['card', 'bank', 'bank_transfer'],
+            ...(splitCode ? { split_code: splitCode } : {}),
+            ...(subaccount ? { subaccount } : {}),
+            ...(transactionCharge !== undefined ? { transaction_charge: Math.round(transactionCharge * 100) } : {}),
+            ...(bearer ? { bearer } : {}),
         }),
     });
 
@@ -41,6 +45,93 @@ export async function initializePayment({ email, amount, reference, metadata = {
 /**
  * Verify a Paystack transaction
  */
+/**
+ * Create a Paystack subaccount for direct settlement.
+ */
+export async function createSubaccount({ businessName, bankCode, accountNumber, percentageCharge = 0, contact = {} }) {
+    const secret = await getSetting('PAYSTACK_SECRET_KEY');
+    if (!secret) throw new Error('Paystack secret key is not configured');
+
+    const payload = {
+        business_name: businessName,
+        bank_code: bankCode,
+        account_number: accountNumber,
+        percentage_charge: percentageCharge,
+        ...(contact.name ? { primary_contact_name: contact.name } : {}),
+        ...(contact.email ? { primary_contact_email: contact.email } : {}),
+        ...(contact.phone ? { primary_contact_phone: contact.phone } : {}),
+    };
+
+    const res = await fetch(`${PAYSTACK_BASE}/subaccount`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${secret}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.status) {
+        throw new Error(data.message || 'Failed to create Paystack subaccount');
+    }
+
+    return data.data;
+}
+
+/**
+ * Update a Paystack subaccount.
+ */
+export async function updateSubaccount(idOrCode, data = {}) {
+    const secret = await getSetting('PAYSTACK_SECRET_KEY');
+    if (!secret) throw new Error('Paystack secret key is not configured');
+
+    const res = await fetch(`${PAYSTACK_BASE}/subaccount/${encodeURIComponent(idOrCode)}`, {
+        method: 'PUT',
+        headers: {
+            Authorization: `Bearer ${secret}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+
+    const response = await res.json();
+    if (!res.ok || !response.status) {
+        throw new Error(response.message || 'Failed to update Paystack subaccount');
+    }
+
+    return response.data;
+}
+
+/**
+ * Create a Paystack transaction split for multiple subaccounts.
+ */
+export async function createSplit({ name, type = 'percentage', currency = 'NGN', subaccounts = [], bearerType = 'account' }) {
+    const secret = await getSetting('PAYSTACK_SECRET_KEY');
+    if (!secret) throw new Error('Paystack secret key is not configured');
+
+    const res = await fetch(`${PAYSTACK_BASE}/split`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${secret}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            name,
+            type,
+            currency,
+            bearer_type: bearerType,
+            subaccounts,
+        }),
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.status) {
+        throw new Error(data.message || 'Failed to create Paystack split');
+    }
+
+    return data.data;
+}
 export async function verifyPayment(reference) {
     const secret = await getSetting('PAYSTACK_SECRET_KEY');
 

@@ -40,7 +40,7 @@ export default function PrivacyPage() {
             </p>
             <ul style={{ paddingLeft: '24px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <li>To verify user identity and prevent fraud.</li>
-              <li>To process payments and manage escrow funds.</li>
+              <li>To process payments, settlement records, refunds, and disputes.</li>
               <li>To facilitate communication between landlords and tenants.</li>
               <li>To provide customer support and send platform updates.</li>
             </ul>

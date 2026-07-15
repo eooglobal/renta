@@ -5,7 +5,7 @@ import styles from '../page.module.css';
 
 export const metadata = {
   title: 'Dispute Resolution Policy — Renta',
-  description: 'How Renta reviews and resolves tenant, landlord, property, escrow, and payout disputes.',
+  description: 'How Renta reviews and resolves tenant, landlord, property, payment, and payout disputes.',
 };
 
 const sectionTitleStyle = {
@@ -43,7 +43,7 @@ export default function DisputeResolutionPolicyPage() {
             <h2 style={sectionTitleStyle}>1. Purpose</h2>
             <p style={paragraphStyle}>
               This policy explains how Renta receives, reviews, and resolves disputes involving tenants, landlords,
-              scouts, property agents, payments, escrow funds, inspections, withdrawals, and property listings.
+              scouts, property agents, payments, inspections, withdrawals, payouts, and property listings.
             </p>
           </section>
 
@@ -53,7 +53,7 @@ export default function DisputeResolutionPolicyPage() {
             <ul style={listStyle}>
               <li>Property access, move-in, availability, or condition after a platform payment.</li>
               <li>Material differences between a verified listing and the actual property.</li>
-              <li>Escrow release, refund, or payment allocation questions.</li>
+              <li>Refund, reversal, or payment allocation questions.</li>
               <li>Landlord, tenant, scout, or agent misconduct on the platform.</li>
               <li>Wallet payouts, failed withdrawals, duplicate payments, or payment provider issues.</li>
               <li>Suspicious listings, fake leads, unauthorized property representation, or fraud reports.</li>
@@ -78,7 +78,7 @@ export default function DisputeResolutionPolicyPage() {
           </section>
 
           <section>
-            <h2 style={sectionTitleStyle}>4. Escrow During A Dispute</h2>
+            <h2 style={sectionTitleStyle}>4. Payments During A Dispute</h2>
             <p style={paragraphStyle}>
               Where a dispute relates to an escrow-held rental payment, Renta may keep the relevant funds on hold while
               the dispute is reviewed. Funds may be released, refunded, partially allocated, or otherwise handled based
@@ -97,7 +97,7 @@ export default function DisputeResolutionPolicyPage() {
               <li>Review account records, listing details, inspection records, payment records, and support messages.</li>
               <li>Contact the tenant, landlord, scout, agent, or other relevant party for clarification.</li>
               <li>Request additional documents, photos, videos, or identity verification where needed.</li>
-              <li>Pause escrow release, wallet withdrawals, listing visibility, or account privileges while review is ongoing.</li>
+              <li>Pause wallet withdrawals, listing visibility, payout actions, or account privileges while review is ongoing.</li>
               <li>Make a decision based on the available evidence and platform policy.</li>
             </ul>
           </section>
@@ -106,8 +106,8 @@ export default function DisputeResolutionPolicyPage() {
             <h2 style={sectionTitleStyle}>6. Possible Outcomes</h2>
             <p style={paragraphStyle}>Depending on the facts, Renta may decide to:</p>
             <ul style={listStyle}>
-              <li>Release escrow funds to the landlord.</li>
-              <li>Refund escrow funds to the tenant.</li>
+              <li>Confirm settlement to the landlord.</li>
+              <li>Pursue a refund or reversal to the tenant.</li>
               <li>Hold funds pending additional review or legal/regulatory instruction.</li>
               <li>Suspend, remove, or freeze a listing or account.</li>
               <li>Reject fraudulent, unsupported, late, or bad-faith claims.</li>

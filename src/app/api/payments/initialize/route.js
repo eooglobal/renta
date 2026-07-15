@@ -2,13 +2,36 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import {
-  initializePayment,
+  createTransactionSplit,
   generateReference,
   getActiveGateway,
+  initializeSplitPayment,
 } from "@/lib/paymentGateway";
-import { getPriceBreakdown } from "@/lib/commission";
+import { calculateRentalDistribution } from "@/lib/commission";
 
-// POST /api/payments/initialize — Start a rental payment
+function toPaystackShare(amount, totalPayable) {
+  return Number(((Number(amount) / Number(totalPayable)) * 100).toFixed(2));
+}
+
+function buildAffiliateReferralContext(tenant) {
+  if (!tenant?.referredById) return null;
+
+  return {
+    affiliateId: tenant.referredById,
+    affiliate: tenant.referredBy || null,
+  };
+}
+
+function getReadySplitSubaccounts(distribution) {
+  return distribution.recipients
+    .filter((recipient) => recipient.subaccountCode && recipient.settlementMode === "PAYSTACK_SPLIT")
+    .map((recipient) => ({
+      subaccount: recipient.subaccountCode,
+      share: toPaystackShare(recipient.amount, distribution.totalPayable),
+    }));
+}
+
+// POST /api/payments/initialize - Start a rental payment
 export async function POST(request) {
   try {
     const session = await auth();
@@ -29,10 +52,22 @@ export async function POST(request) {
       );
     }
 
-    // Fetch property
+    const gateway = await getActiveGateway();
+    if (gateway !== "paystack") {
+      return NextResponse.json(
+        { error: "Direct split rental payments require Paystack" },
+        { status: 400 },
+      );
+    }
+
     const property = await prisma.property.findUnique({
       where: { id: propertyId },
-      include: { landlord: true },
+      include: {
+        landlord: true,
+        scoutLead: {
+          include: { scout: true },
+        },
+      },
     });
 
     if (!property) {
@@ -49,7 +84,6 @@ export async function POST(request) {
       );
     }
 
-    // Check for existing active rental on this property
     const existingRental = await prisma.rental.findFirst({
       where: { propertyId, status: "ACTIVE" },
     });
@@ -61,15 +95,59 @@ export async function POST(request) {
       );
     }
 
-    // Calculate amounts
-    const breakdown = getPriceBreakdown(Number(property.rentPrice));
-    const totalAmount = breakdown.total;
-    const reference = generateReference();
-    const gateway = await getActiveGateway();
-
     const tenant = await prisma.user.findUnique({
-      where: { id: parseInt(session.user.id) },
+      where: { id: parseInt(session.user.id, 10) },
+      include: {
+        referredBy: true,
+      },
     });
+
+    if (!tenant) {
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
+    }
+
+    const affiliateReferral = buildAffiliateReferralContext(tenant);
+    const distribution = calculateRentalDistribution(Number(property.rentPrice), {
+      landlord: property.landlord,
+      scoutLead: property.scoutLead,
+      affiliateReferral,
+    });
+
+    const landlordRecipient = distribution.recipients.find((recipient) => recipient.type === "LANDLORD");
+    if (!landlordRecipient?.subaccountCode) {
+      return NextResponse.json(
+        { error: "Landlord payout setup is required before rent payment can start" },
+        { status: 409 },
+      );
+    }
+
+    const splitSubaccounts = getReadySplitSubaccounts(distribution);
+    if (splitSubaccounts.length === 0) {
+      return NextResponse.json(
+        { error: "No Paystack payout destination is available for this rental" },
+        { status: 409 },
+      );
+    }
+
+    const reference = generateReference();
+    const split = await createTransactionSplit({
+      name: `Renta rental ${property.id} ${reference}`,
+      type: "percentage",
+      currency: "NGN",
+      bearerType: "account",
+      subaccounts: splitSubaccounts,
+    });
+
+    const splitCode = split.split_code || split.splitCode;
+    const splitId = split.id || null;
+
+    if (!splitCode) {
+      return NextResponse.json(
+        { error: "Paystack did not return a split code" },
+        { status: 502 },
+      );
+    }
+
     const appUrl =
       process.env.NEXT_PUBLIC_APP_URL ||
       process.env.APP_URL ||
@@ -81,45 +159,56 @@ export async function POST(request) {
     try {
       rental = await prisma.rental.create({
         data: {
-          tenantId: parseInt(session.user.id),
+          tenantId: parseInt(session.user.id, 10),
           propertyId: property.id,
-          rentAmount: property.rentPrice,
-          serviceFee: breakdown.serviceFee,
-          totalPaid: totalAmount,
+          rentAmount: distribution.rentAmount,
+          serviceFee: distribution.serviceFee,
+          totalPaid: distribution.totalPayable,
           startDate: new Date(),
           endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
           status: "PENDING",
-        },
-      });
-
-      const escrow = await prisma.escrow.create({
-        data: {
-          rentalId: rental.id,
-          amount: totalAmount,
-          status: "PENDING",
+          paymentMode: "DIRECT_SPLIT",
+          splitCode,
+          splitId,
+          landlordPayoutAmount: distribution.landlordPayout,
+          platformRevenueAmount: distribution.platformRevenue + distribution.pendingSetupAmount,
+          scoutCommissionAmount: distribution.scoutCommission,
+          affiliateCommissionAmount: distribution.affiliateCommission,
+          scoutId: distribution.recipients.find((recipient) => recipient.type === "SCOUT")?.userId || null,
+          affiliateId: distribution.recipients.find((recipient) => recipient.type === "AFFILIATE")?.userId || null,
+          affiliateReferralId: null,
+          paystackRef: reference,
         },
       });
 
       await prisma.payment.create({
         data: {
           rentalId: rental.id,
-          amount: totalAmount,
-          paystackRef: gateway === "paystack" ? reference : null,
-          nombaRef: gateway === "nomba" ? reference : null,
+          amount: distribution.totalPayable,
+          paystackRef: reference,
+          nombaRef: null,
           status: "PENDING",
+          gateway: "PAYSTACK",
+          splitPayload: {
+            splitCode,
+            splitId,
+            subaccounts: splitSubaccounts,
+            distribution,
+          },
         },
       });
 
-      paymentInit = await initializePayment({
+      paymentInit = await initializeSplitPayment({
         email: tenant.email,
-        amount: totalAmount,
+        amount: distribution.totalPayable,
         reference,
+        splitCode,
         callbackUrl: `${appUrl}/tenant/payments/verify?reference=${reference}`,
         metadata: {
           rentalId: rental.id,
           propertyId: property.id,
           tenantId: session.user.id,
-          escrowId: escrow.id,
+          paymentMode: "DIRECT_SPLIT",
           custom_fields: [
             {
               display_name: "Property",
@@ -154,6 +243,7 @@ export async function POST(request) {
       reference:
         paymentInit.reference || paymentInit.orderReference || reference,
       rental,
+      distribution,
     });
   } catch (error) {
     console.error("Payment initialize error:", error);

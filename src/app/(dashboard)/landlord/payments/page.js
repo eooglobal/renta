@@ -22,7 +22,7 @@ export default function LandlordPaymentsPage() {
                     <div className="card border border-gray-100 shadow-sm rounded-xl overflow-hidden">
                         <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-2">
                             <ShieldCheck size={20} className="text-primary-color" />
-                            <h3 className="font-semibold text-lg m-0">Escrow & Payouts Guide</h3>
+                            <h3 className="font-semibold text-lg m-0">Payments & Payouts Guide</h3>
                         </div>
                         <div className="p-6">
                             <ul className="flex flex-col gap-6" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
@@ -31,8 +31,8 @@ export default function LandlordPaymentsPage() {
                                         <ShieldCheck size={20} />
                                     </div>
                                     <div className="flex-1">
-                                        <h4 className="font-semibold text-base mb-1" style={{ fontSize: '15px' }}>The Escrow System</h4>
-                                        <p className="text-sm text-gray-500 leading-relaxed" style={{ color: 'var(--text-muted)' }}>When a tenant pays rent, the funds are held securely in Renta's escrow. This guarantees to the tenant that the property is genuine.</p>
+                                        <h4 className="font-semibold text-base mb-1" style={{ fontSize: '15px' }}>Direct Settlement</h4>
+                                        <p className="text-sm text-gray-500 leading-relaxed" style={{ color: 'var(--text-muted)' }}>When a tenant pays rent, Paystack split settlement sends eligible amounts directly to verified recipients while Renta keeps a full transaction record.</p>
                                     </div>
                                 </li>
                                 <li className="flex gap-4 items-start">

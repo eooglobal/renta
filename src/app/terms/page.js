@@ -71,11 +71,10 @@ export default function TermsPage() {
                 marginBottom: "16px",
               }}
             >
-              2. Platform Role & Escrow
+              2. Platform Role & Payments
             </h2>
             <p style={{ color: "var(--text-secondary)", marginBottom: "16px" }}>
-              Renta acts as an intermediary. We verify property listings and
-              provide an escrow service to protect both parties.
+              Renta acts as an intermediary. We verify property listings, coordinate inspections, and process rentals through secure payment partners.
             </p>
             <ul
               style={{
@@ -91,9 +90,7 @@ export default function TermsPage() {
                 through the Platform&apos;s secure payment gateway.
               </li>
               <li>
-                <strong>Escrow:</strong> Funds are held by Renta and only
-                released to the Landlord after the Tenant confirms move-in or 48
-                hours after the move-in date, whichever comes first.
+                <strong>Settlement:</strong> New rental payments are processed through the Platform payment gateway and may be split directly to verified recipients according to Renta's settlement rules.
               </li>
               <li>
                 <strong>Service Fee:</strong> Renta charges a non-refundable 10%
@@ -114,7 +111,7 @@ export default function TermsPage() {
             </h2>
             <p style={{ color: "var(--text-secondary)", marginBottom: "16px" }}>
               Users must provide accurate information, including legal names and
-              valid identification (NIN) where required.
+              valid identity verification where required.
             </p>
             <ul
               style={{

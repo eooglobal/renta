@@ -22,7 +22,7 @@ export async function generateMetadata({ params }) {
                 { slug: id }
             ]
         },
-        include: { images: true, city: true, area: true }
+        include: { images: true, videos: true, city: true, area: true }
     });
 
     if (!property) return { title: 'Property Not Found - Renta' };
@@ -56,7 +56,7 @@ export default async function PublicListingPage({ params }) {
                 { slug: id }
             ]
         },
-        include: { images: { orderBy: { isPrimary: 'desc' } }, city: true, area: true }
+        include: { images: { orderBy: { isPrimary: 'desc' } }, videos: { orderBy: { createdAt: 'desc' } }, city: true, area: true }
     });
 
     const session = await auth();
@@ -121,6 +121,25 @@ export default async function PublicListingPage({ params }) {
                             )}
                         </div>
 
+                        {property.videos && property.videos.length > 0 && (
+                            <div className={styles.section}>
+                                <h3 className={styles.sectionTitle}>
+                                    <Info size={24} className="text-primary" /> Walkthrough Videos
+                                </h3>
+                                <div className={styles.videoGrid}>
+                                    {property.videos.map((video) => (
+                                        <video
+                                            key={video.id}
+                                            className={styles.videoPlayer}
+                                            src={video.url}
+                                            controls
+                                            playsInline
+                                            preload="metadata"
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         <div className={styles.section}>
                             <h3 className={styles.sectionTitle}>
                                 <Info size={24} className="text-primary" /> About This Home
@@ -161,7 +180,7 @@ export default async function PublicListingPage({ params }) {
                             <div className="mb-8">
                                 <h4 className="font-bold mb-4">Interested in this property?</h4>
                                 <p className="text-sm text-gray-600 leading-relaxed">
-                                    Join 10k+ users on Renta to view full images, book free inspections, and pay securely using our Escrow system.
+                                    Join Renta to view full images, book free inspections, and pay securely through the platform.
                                 </p>
                             </div>
 

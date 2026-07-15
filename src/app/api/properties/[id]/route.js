@@ -16,6 +16,7 @@ export async function GET(request, { params }) {
       },
       include: {
         images: { orderBy: { isPrimary: "desc" } },
+        videos: { orderBy: { createdAt: "desc" } },
         landlord: {
           select: {
             id: true,
@@ -218,7 +219,7 @@ export async function PUT(request, { params }) {
     const updated = await prisma.property.update({
       where: { id: id },
       data: updateData,
-      include: { images: true },
+      include: { images: true, videos: true },
     });
 
     return NextResponse.json({
@@ -269,16 +270,17 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // Fetch all images to delete them physically
-    const images = await prisma.propertyImage.findMany({
-      where: { propertyId: id },
-    });
+    // Fetch all media to delete them physically
+    const [images, videos] = await Promise.all([
+      prisma.propertyImage.findMany({ where: { propertyId: id } }),
+      prisma.propertyVideo.findMany({ where: { propertyId: id } }),
+    ]);
 
     const { deleteFileByUrl } = await import("@/lib/fileCleanup");
 
     // Non-blocking cleanup
-    Promise.all(images.map((img) => deleteFileByUrl(img.url))).catch((err) => {
-      console.error("Failed to cleanup property images:", err);
+    Promise.all([...images, ...videos].map((media) => deleteFileByUrl(media.url))).catch((err) => {
+      console.error("Failed to cleanup property media:", err);
     });
 
     await prisma.property.delete({ where: { id: id } });

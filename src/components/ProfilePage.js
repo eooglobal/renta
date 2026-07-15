@@ -22,6 +22,7 @@ import {
 import Link from "next/link";
 import { useToast } from "@/components/Toast";
 import { friendlyError } from "@/lib/errors";
+import PaymentSetupCard from "@/components/PaymentSetupCard";
 
 export default function ProfilePage() {
   return (
@@ -92,7 +93,7 @@ function ProfilePageInner() {
     } else if (verificationResult === "failed") {
       toast.error(
         "Verification Failed",
-        "Identity verification failed. Please try again or use NIN.",
+        "Identity verification failed. Please try again with Didit.",
       );
     } else if (verificationResult === "pending") {
       toast.success(
@@ -415,13 +416,6 @@ function ProfilePageInner() {
               {ninStatusMap[profile?.ninStatus]?.label || "Pending"}
             </span>
           </div>
-          {profile?.ninNumber && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted">
-                NIN: {profile.ninNumber}
-              </span>
-            </div>
-          )}
         </div>
       </div>
 
@@ -446,23 +440,7 @@ function ProfilePageInner() {
               To build trust on Renta, please verify your identity. This is
               required to access rental features.
             </p>
-
-            {/* Option 1: Didit (Primary, recommended) */}
             <DiditVerifyButton />
-
-            {/* Option 2: NIN (Fallback, collapsible) */}
-            <NinFallback
-              onSuccess={() => {
-                setProfile((prev) => ({ ...prev, ninStatus: "VERIFIED" }));
-                toast.success(
-                  "Identity Verified",
-                  "Identity successfully verified!",
-                );
-              }}
-              onFail={() =>
-                setProfile((prev) => ({ ...prev, ninStatus: "FAILED" }))
-              }
-            />
           </div>
         </div>
       )}
@@ -503,6 +481,8 @@ function ProfilePageInner() {
           </div>
         </div>
       )}
+
+      <PaymentSetupCard profile={profile} />
 
       <form onSubmit={handleSubmit}>
         {/* Personal Information */}
@@ -898,7 +878,7 @@ function ProfilePageInner() {
   );
 }
 
-// ── Didit Verification Button ─────────────────────────────────
+// Didit Verification Button
 function DiditVerifyButton() {
   const [loading, setLoading] = useState(false);
   const toast = useToast();
@@ -954,7 +934,7 @@ function DiditVerifyButton() {
         </span>
       </div>
       <p className="text-sm text-muted mb-3">
-        Quick identity check using your government-issued ID. Powered by Didit —
+        Quick identity check using your government-issued ID. Powered by Didit -
         no manual data entry required.
       </p>
       <button
@@ -981,115 +961,3 @@ function DiditVerifyButton() {
   );
 }
 
-// ── NIN Fallback (collapsible) ────────────────────────────────
-function NinFallback({ onSuccess, onFail }) {
-  const [open, setOpen] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-  const toast = useToast();
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const nin = e.target.elements.nin.value;
-    if (!nin || nin.length !== 11) {
-      toast.error("Invalid NIN", "NIN must be exactly 11 digits.");
-      return;
-    }
-    setVerifying(true);
-    try {
-      const res = await fetch("/api/verification/nin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nin }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        onSuccess();
-      } else {
-        const friendly = friendlyError(data.error || "Verification failed.");
-        toast.error(friendly.title, friendly.message);
-        if (data.error?.toLowerCase().includes("failed")) onFail();
-      }
-    } catch (err) {
-      const friendly = friendlyError(err);
-      toast.error(friendly.title, friendly.message);
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  return (
-    <div style={{ marginTop: 4 }}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          fontSize: "var(--text-sm)",
-          color: "var(--text-muted)",
-          textDecoration: "underline",
-          padding: 0,
-        }}
-      >
-        {open ? "▲ Hide NIN option" : "▼ Use NIN number instead"}
-      </button>
-
-      {open && (
-        <div
-          style={{
-            marginTop: 12,
-            padding: "14px",
-            borderRadius: "10px",
-            background: "#f8f8f8",
-            border: "1px solid var(--border-color)",
-          }}
-        >
-          <p
-            style={{
-              fontSize: 12,
-              color: "var(--text-muted)",
-              marginBottom: 10,
-            }}
-          >
-            Enter your 11-digit National Identity Number as a fallback option.
-          </p>
-          <form
-            onSubmit={handleSubmit}
-            className="flex items-end gap-3"
-            style={{ maxWidth: "380px" }}
-          >
-            <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: 11 }}>
-                11-Digit NIN
-              </label>
-              <input
-                type="text"
-                name="nin"
-                placeholder="e.g. 12345678901"
-                className="form-input"
-                pattern="\d{11}"
-                maxLength={11}
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="btn btn-outline"
-              disabled={verifying}
-            >
-              {verifying ? (
-                <Loader2
-                  size={16}
-                  style={{ animation: "spin 1s linear infinite" }}
-                />
-              ) : (
-                "Verify"
-              )}
-            </button>
-          </form>
-        </div>
-      )}
-    </div>
-  );
-}

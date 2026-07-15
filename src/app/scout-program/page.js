@@ -22,7 +22,7 @@ const STEPS = [
         icon: <ClipboardList size={28} />,
         number: '01',
         title: 'Register as a Scout',
-        desc: 'Create a free Renta account, select the "Scout" role, and complete your NIN verification.',
+        desc: 'Create a free Renta account, select the "Scout" role, and complete your identity verification.',
     },
     {
         icon: <MapPin size={28} />,

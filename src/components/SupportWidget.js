@@ -15,7 +15,7 @@ export default function SupportWidget() {
     "Is inspection free?",
     "How do I verify my home?",
     "What are the service fees?",
-    "How does escrow work?",
+    "How do payments work?",
   ];
 
   // Initialize messages from localStorage

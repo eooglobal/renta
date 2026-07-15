@@ -10,10 +10,10 @@ Renta is a product of Landmark Property Oasis Ltd.
 - Verification: Every property is physically inspected before it goes live.
 - Pricing: The landlord sets the rent. Renta adds a flat 10% service fee.
 - Fees: No agency fees, no development levies, and no caution fees unless the landlord clearly states otherwise in the property description.
-- Escrow: Tenants pay through Renta. Funds are held securely and only released after the tenant moves in and confirms access.
+- Payments: Tenants pay through Renta. New rentals use secure Paystack split settlement with platform records and dispute support.
 
 ## User Roles
-- Tenants: Search listings, book inspections, complete screening, and pay through escrow.
+- Tenants: Search listings, book inspections, complete screening, and pay securely through Renta.
 - Landlords: List properties, manage listings, receive verified leads, and request withdrawals to their registered bank account.
 - Scouts: Source and onboard properties, then earn commissions on successful outcomes.
 - Affiliates: Refer users and earn commissions through online promotion.
@@ -22,13 +22,13 @@ Renta is a product of Landmark Property Oasis Ltd.
 - Is inspection free? Yes, inspection booking is free.
 - How do I know a property is available? If a property is visible and not marked as rented, it is available.
 - Can I contact the landlord before renting? Direct messaging is only available for active rentals.
-- How do payments work? Payments go through escrow for protection.
+- How do payments work? Payments go through Renta using secure gateway settlement and platform dispute records.
 - What must I complete before renting? Identity verification and tenant screening are required before renting.
 
 ## Landlord FAQ
 - Can I list my property for free? Yes.
 - Who sets the rent? The landlord sets the rent.
-- When do I get paid? Payment is released after the tenant confirms successful move-in.
+- When do I get paid? Eligible direct-split payments settle through Paystack to verified payout accounts.
 - How do withdrawals work? Withdrawals are sent to the landlord’s registered bank account after request processing.
 - Do I need to verify my bank account? Yes, bank details are required for withdrawals.
 

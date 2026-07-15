@@ -53,7 +53,7 @@ export async function initializePayment(params) {
         };
     }
 
-    // Default: paystack — returns { authorization_url, access_code, reference } as-is
+    // Default: paystack â€” returns { authorization_url, access_code, reference } as-is
     return paystack.initializePayment(params);
 }
 
@@ -72,14 +72,44 @@ export async function verifyPayment(reference) {
         return { status, paid_at: paidAt ?? null, ...rest };
     }
 
-    // Default: paystack — returns its full data object as-is
+    // Default: paystack â€” returns its full data object as-is
     return paystack.verifyPayment(reference);
 }
 
 /**
  * Fetch bank list from active gateway
  */
-export async function getBanks() {
+
+async function requirePaystackForDirectSplit() {
+    const gateway = await getActiveGateway();
+    if (gateway !== 'paystack') {
+        throw new Error('Direct split payments require Paystack as the active gateway');
+    }
+}
+
+/**
+ * Create a direct settlement destination through Paystack.
+ */
+export async function createPaymentDestination(params) {
+    await requirePaystackForDirectSplit();
+    return paystack.createSubaccount(params);
+}
+
+/**
+ * Create a Paystack transaction split for direct rental settlement.
+ */
+export async function createTransactionSplit(params) {
+    await requirePaystackForDirectSplit();
+    return paystack.createSplit(params);
+}
+
+/**
+ * Initialize a payment that uses a Paystack split/subaccount configuration.
+ */
+export async function initializeSplitPayment(params) {
+    await requirePaystackForDirectSplit();
+    return paystack.initializePayment(params);
+}export async function getBanks() {
     const gateway = await getActiveGateway();
     if (gateway === 'nomba') {
         return nomba.getBanks();

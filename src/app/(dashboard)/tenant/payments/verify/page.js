@@ -60,10 +60,10 @@ function PaymentVerifyContent() {
                         Payment Successful!
                     </h2>
                     <p className="text-muted" style={{ marginBottom: 'var(--space-6)' }}>
-                        {message}. Your funds are now held securely in escrow.
+                        {message}
                     </p>
                     <p className="text-muted text-sm" style={{ marginBottom: 'var(--space-8)' }}>
-                        Once you move in and confirm access, the funds will be released to the landlord.
+                        Your receipt and rental record are now available. Contact Renta support immediately if there is an access issue.
                     </p>
                     <Link href="/tenant/rentals" className="btn btn-primary btn-lg" style={{ width: '100%' }}>
                         View My Rentals

@@ -66,13 +66,6 @@ export default function EditPropertyPage() {
     studentFriendly: false,
   });
   const [cities, setCities] = useState([]);
-  const [inspectionSlots, setInspectionSlots] = useState([]);
-  const [slotForm, setSlotForm] = useState({
-    date: "",
-    startTime: "",
-    endTime: "",
-  });
-  const [slotSaving, setSlotSaving] = useState(false);
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -106,7 +99,6 @@ export default function EditPropertyPage() {
 
         const p = data.property;
         setProperty(p);
-        setInspectionSlots(p.inspectionSlots || []);
         setForm({
           title: p.title || "",
           description: p.description || "",
@@ -513,171 +505,9 @@ export default function EditPropertyPage() {
             <Calendar size={18} style={{ color: "var(--color-primary)" }} />{" "}
             Inspection Schedule
           </h3>
-          <p className="text-sm text-muted mb-4">
-            Add available tour times so tenants can book inspections from the
-            property page.
+          <p className="text-sm text-muted mb-0">
+            Renta staff now manage inspections directly with tenants, so landlords do not need to create inspection slots.
           </p>
-
-          <div
-            className="grid grid-3"
-            style={{ marginBottom: "var(--space-4)" }}
-          >
-            <div className="form-group">
-              <label className="form-label">Date</label>
-              <input
-                type="date"
-                className="form-input"
-                value={slotForm.date}
-                onChange={(e) =>
-                  setSlotForm((prev) => ({ ...prev, date: e.target.value }))
-                }
-                min={new Date().toISOString().split("T")[0]}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Start Time</label>
-              <input
-                type="time"
-                className="form-input"
-                value={slotForm.startTime}
-                onChange={(e) =>
-                  setSlotForm((prev) => ({
-                    ...prev,
-                    startTime: e.target.value,
-                  }))
-                }
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">End Time</label>
-              <input
-                type="time"
-                className="form-input"
-                value={slotForm.endTime}
-                onChange={(e) =>
-                  setSlotForm((prev) => ({ ...prev, endTime: e.target.value }))
-                }
-              />
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="btn btn-outline"
-            disabled={slotSaving}
-            onClick={async () => {
-              if (!slotForm.date || !slotForm.startTime || !slotForm.endTime) {
-                toast.error(
-                  "Missing Slot Details",
-                  "Please select a date, start time, and end time.",
-                );
-                return;
-              }
-
-              setSlotSaving(true);
-              try {
-                const res = await fetch("/api/inspections/slots", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    propertyId,
-                    date: slotForm.date,
-                    startTime: slotForm.startTime,
-                    endTime: slotForm.endTime,
-                  }),
-                });
-                const data = await res.json();
-
-                if (!res.ok) {
-                  const friendly = friendlyError(
-                    data.error || "Failed to create inspection slot",
-                  );
-                  toast.error(friendly.title, friendly.message);
-                } else {
-                  toast.success(
-                    "Inspection Slot Added",
-                    "Tenants can now book this time slot.",
-                  );
-                  setInspectionSlots((prev) =>
-                    [...prev, data.slot].sort(
-                      (a, b) =>
-                        new Date(a.date) - new Date(b.date) ||
-                        a.startTime.localeCompare(b.startTime),
-                    ),
-                  );
-                  setSlotForm({ date: "", startTime: "", endTime: "" });
-                }
-              } catch (err) {
-                const friendly = friendlyError(err);
-                toast.error(friendly.title, friendly.message);
-              } finally {
-                setSlotSaving(false);
-              }
-            }}
-          >
-            {slotSaving ? (
-              <>
-                <Loader2
-                  size={16}
-                  style={{ animation: "spin 1s linear infinite" }}
-                />{" "}
-                Saving Slot...
-              </>
-            ) : (
-              <>
-                <Clock size={16} /> Add Inspection Slot
-              </>
-            )}
-          </button>
-
-          <div className="mt-4 flex flex-col gap-3">
-            {inspectionSlots.length === 0 ? (
-              <div className="text-sm text-muted">
-                No inspection slots added yet.
-              </div>
-            ) : (
-              inspectionSlots
-                .slice()
-                .sort(
-                  (a, b) =>
-                    new Date(a.date) - new Date(b.date) ||
-                    a.startTime.localeCompare(b.startTime),
-                )
-                .map((slot) => (
-                  <div
-                    key={slot.id}
-                    className="flex justify-between items-center"
-                    style={{
-                      padding: "var(--space-3)",
-                      border: "1px solid var(--border-color)",
-                      borderRadius: "var(--radius-md)",
-                      background:
-                        slot.status === "BOOKED"
-                          ? "var(--bg-secondary)"
-                          : "transparent",
-                      flexWrap: "wrap",
-                      gap: "var(--space-2)",
-                    }}
-                  >
-                    <div>
-                      <div className="font-medium">
-                        {new Date(slot.date).toLocaleDateString("en-GB", {
-                          dateStyle: "medium",
-                        })}
-                      </div>
-                      <div className="text-sm text-muted">
-                        {slot.startTime} - {slot.endTime}
-                      </div>
-                    </div>
-                    <span
-                      className={`badge ${slot.status === "BOOKED" ? "badge-info" : "badge-verified"}`}
-                    >
-                      {slot.status}
-                    </span>
-                  </div>
-                ))
-            )}
-          </div>
         </div>
 
         {/* Actions */}

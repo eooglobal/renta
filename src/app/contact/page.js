@@ -187,7 +187,7 @@ export default function ContactPage() {
                   lineHeight: "1.6",
                 }}
               >
-                Need urgent help with an ongoing inspection or escrow payment?
+                Need urgent help with an ongoing inspection or rental payment?
                 Reach out to our direct support line.
               </p>
               <a

@@ -58,16 +58,25 @@ export default function TenantRentalsPage() {
         }
     };
 
-    const handleDispute = async (escrowId) => {
-        const reason = window.prompt("Please detail the reason for the dispute. This will halt escrow release until an Admin reviews it.");
+    const handleDispute = async (rental) => {
+        const isDirectSplit = rental.paymentMode === 'DIRECT_SPLIT';
+        const reason = window.prompt(
+            isDirectSplit
+                ? 'Please explain the issue. Renta support will review this direct split payment case and contact you.'
+                : 'Please detail the reason for the dispute. This will halt escrow release until an Admin reviews it.'
+        );
         if (!reason) return;
         if (reason.length < 10) {
-            alert("Please provide a more detailed reason for the dispute (at least 10 characters).");
+            alert('Please provide a more detailed reason for the dispute (at least 10 characters).');
             return;
         }
 
+        const endpoint = isDirectSplit
+            ? `/api/rentals/${rental.id}/dispute`
+            : `/api/escrow/${rental.escrow?.id}/dispute`;
+
         try {
-            const res = await fetch(`/api/escrow/${escrowId}/dispute`, {
+            const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ reason })
@@ -75,19 +84,17 @@ export default function TenantRentalsPage() {
             const data = await res.json();
             if (res.ok) {
                 alert(data.message);
-                const fetchRes = await fetch('/api/tenant/rentals');
-                const newData = await fetchRes.json();
-                if (fetchRes.ok) setRentals(newData);
+                await fetchRentals();
             } else {
                 alert(data.error);
             }
         } catch (err) {
-            console.error("Dispute failed", err);
-            alert("Failed to submit dispute.");
+            console.error('Dispute failed', err);
+            alert('Failed to submit dispute.');
         }
     };
 
-    // Downloads are handled server-side — no client-side bundle needed
+    // Downloads are handled server-side; no client-side bundle needed
 
     return (
         <div className="fade-in">
@@ -119,7 +126,7 @@ export default function TenantRentalsPage() {
 
                         return (
                             <div key={rental.id} className="card">
-                                {/* Card main row — stacks on mobile, side-by-side on desktop */}
+                                {/* Card main row Ã¢â‚¬â€ stacks on mobile, side-by-side on desktop */}
                                 <div className="rental-card-row">
                                     {/* Property Image */}
                                     {image && (
@@ -157,7 +164,7 @@ export default function TenantRentalsPage() {
                                             </span>
                                             <span className="text-xs text-muted flex items-center gap-1">
                                                 <Calendar size={12} />
-                                                {new Date(rental.startDate).toLocaleDateString('en-GB', { dateStyle: 'medium' })} —&nbsp;
+                                                {new Date(rental.startDate).toLocaleDateString('en-GB', { dateStyle: 'medium' })} Ã¢â‚¬â€&nbsp;
                                                 {new Date(rental.endDate).toLocaleDateString('en-GB', { dateStyle: 'medium' })}
                                             </span>
                                         </div>
@@ -177,12 +184,12 @@ export default function TenantRentalsPage() {
                                             <div>
                                                 <span className="text-xs text-muted">Rent Paid</span>
                                                 <p className="font-bold" style={{ color: 'var(--color-primary)' }}>
-                                                    ₦{Number(rental.totalPaid).toLocaleString()}
+                                                    Ã¢â€šÂ¦{Number(rental.totalPaid).toLocaleString()}
                                                 </p>
                                                 <span className="text-xs text-muted">Rental ID: <strong>#{rental.id}</strong></span>
                                             </div>
 
-                                            {/* Buttons — wrap on small screens */}
+                                            {/* Buttons Ã¢â‚¬â€ wrap on small screens */}
                                             <div style={{
                                                 display: 'flex',
                                                 gap: 'var(--space-2)',
@@ -271,12 +278,24 @@ export default function TenantRentalsPage() {
                                                         <button
                                                             className="btn btn-sm btn-outline"
                                                             style={{ borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
-                                                            onClick={() => handleDispute(rental.escrow.id)}
+                                                            onClick={() => handleDispute(rental)}
                                                         >
                                                             <AlertTriangle size={14} style={{ marginRight: 4 }} />
                                                             Raise Dispute
                                                         </button>
                                                     </>
+                                                )}
+
+                                                {/* Direct split dispute action */}
+                                                {rental.paymentMode === 'DIRECT_SPLIT' && rental.status === 'ACTIVE' && (
+                                                    <button
+                                                        className="btn btn-sm btn-outline"
+                                                        style={{ borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
+                                                        onClick={() => handleDispute(rental)}
+                                                    >
+                                                        <AlertTriangle size={14} style={{ marginRight: 4 }} />
+                                                        Raise Dispute
+                                                    </button>
                                                 )}
                                             </div>
                                         </div>
@@ -322,7 +341,7 @@ async function generateDownloadPDF({ rental, tenantName, landlordName, typedName
         if (!d) return 'N/A';
         return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     };
-    const fmtCurrency = (v) => '₦' + Number(v).toLocaleString('en-NG');
+    const fmtCurrency = (v) => 'Ã¢â€šÂ¦' + Number(v).toLocaleString('en-NG');
 
     // Header
     doc.setFillColor(0, 0, 0);
@@ -400,7 +419,7 @@ async function generateDownloadPDF({ rental, tenantName, landlordName, typedName
     y += 4;
 
     const clauses = [
-        ['4. ESCROW TERMS', 'All rental funds are held securely in escrow by Renta. Funds are released to the Landlord only after the Tenant confirms access. In disputes, funds remain held until resolved.'],
+        ['4. PAYMENT AND SETTLEMENT TERMS', 'Rental payments made through Renta are processed through the Platform payment gateway. Eligible settlement may be split directly to verified recipients, while Renta keeps the payment record and may support refund, reversal, or dispute review where applicable.'],
         ['5. TENANT OBLIGATIONS', 'Maintain property condition, no subletting without consent, no unlawful use, report damages via Renta.'],
         ['6. LANDLORD OBLIGATIONS', 'Ensure habitable condition, grant peaceful enjoyment, attend to maintenance requests via Renta.'],
         ['7. TERMINATION', 'Either party may terminate with 30 days written notice via Renta. Early termination may result in penalties.'],

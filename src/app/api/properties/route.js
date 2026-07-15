@@ -88,6 +88,10 @@ export async function GET(request) {
             where: { isPrimary: true },
             take: 1,
           },
+          videos: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
           landlord: {
             select: {
               id: true,
@@ -363,6 +367,7 @@ export async function POST(request) {
       },
       include: {
         images: true,
+        videos: true,
       },
     });
 

@@ -51,12 +51,9 @@ function ContractText({ rental, tenantName, landlordName }) {
             <p style={{ marginBottom: 'var(--space-1)' }}><strong>Platform Service Fee:</strong> {serviceFee}</p>
             <p style={{ marginBottom: 'var(--space-4)' }}><strong>Total Amount Paid:</strong> {totalPaid}</p>
 
-            <p style={{ fontWeight: 'var(--font-semibold)', color: 'var(--text-primary)', marginBottom: 'var(--space-2)' }}>4. ESCROW TERMS</p>
+            <p style={{ fontWeight: 'var(--font-semibold)', color: 'var(--text-primary)', marginBottom: 'var(--space-2)' }}>4. PAYMENT AND SETTLEMENT TERMS</p>
             <p style={{ marginBottom: 'var(--space-4)' }}>
-                All rental funds are held securely in escrow by Renta upon payment. Funds will only be released to
-                the Landlord after the Tenant has confirmed successful access to the property. In the event of a
-                dispute, funds shall remain in escrow until resolution by the Renta support team or an appointed
-                mediator.
+                Rental payments made through Renta are processed through the Platform payment gateway. Eligible settlement may be split directly to verified recipients, while Renta keeps the payment record and may support refund, reversal, or dispute review where applicable.
             </p>
 
             <p style={{ fontWeight: 'var(--font-semibold)', color: 'var(--text-primary)', marginBottom: 'var(--space-2)' }}>5. TENANT OBLIGATIONS</p>
@@ -74,8 +71,7 @@ function ContractText({ rental, tenantName, landlordName }) {
             <p style={{ marginBottom: 'var(--space-4)' }}>
                 Either party may terminate this Agreement by providing at least 30 days written notice via the Renta
                 platform prior to the intended termination date, subject to applicable tenancy laws. Early termination
-                without proper notice may result in forfeiture of the escrow funds or other penalties as determined by
-                Renta.
+                without proper notice may result in penalties or other remedies determined under Renta policy and applicable law.
             </p>
 
             <p style={{ fontWeight: 'var(--font-semibold)', color: 'var(--text-primary)', marginBottom: 'var(--space-2)' }}>8. DISPUTE RESOLUTION</p>
@@ -401,14 +397,14 @@ function generateContractPDF({ rental, tenantName, landlordName, typedName, sign
 
     // ---- Contract Clauses ----
     const clauses = [
-        ['4. ESCROW TERMS',
-            'All rental funds are held securely in escrow by Renta upon payment. Funds will only be released to the Landlord after the Tenant has confirmed successful access to the property. In the event of a dispute, funds remain in escrow until resolved by Renta.'],
+        ['4. PAYMENT AND SETTLEMENT TERMS',
+            'Rental payments made through Renta are processed through the Platform payment gateway. Eligible settlement may be split directly to verified recipients, while Renta keeps the payment record and may support refund, reversal, or dispute review where applicable.'],
         ['5. TENANT OBLIGATIONS',
             'The Tenant shall maintain the property in a clean condition, not sublet without consent, avoid unlawful use, and report damages via the Renta platform promptly.'],
         ['6. LANDLORD OBLIGATIONS',
             'The Landlord shall ensure the property is habitable at commencement, grant peaceful enjoyment, and attend to maintenance requests via the Renta platform.'],
         ['7. TERMINATION',
-            'Either party may terminate with 30 days written notice via the Renta platform. Early termination without notice may result in forfeiture of escrow funds or other penalties.'],
+            'Either party may terminate with 30 days written notice via the Renta platform. Early termination without notice may result in penalties or other remedies under Renta policy.'],
         ['8. DISPUTE RESOLUTION',
             'Disputes shall first be submitted through the Renta platform dispute resolution process. If unresolved in 14 days, the matter may proceed to mediation or the appropriate court.'],
         ['9. ELECTRONIC SIGNATURE',

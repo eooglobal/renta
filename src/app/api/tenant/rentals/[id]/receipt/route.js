@@ -111,7 +111,7 @@ export async function GET(request, { params }) {
             doc.rect(0, footerY, doc.page.width, 80).fill('#111111');
             doc.fillColor('#888888').fontSize(8).font('Helvetica-Oblique')
                 .text('Thank you for choosing Renta. This is an electronically generated receipt.', 50, footerY + 18, { align: 'center', width: doc.page.width - 100 })
-                .text('Funds are held in escrow and released upon successful move-in confirmation.', 50, footerY + 32, { align: 'center', width: doc.page.width - 100 });
+                .text('Payment processed through Renta. Contact support immediately if there is an access issue.', 50, footerY + 32, { align: 'center', width: doc.page.width - 100 });
 
             doc.end();
         });

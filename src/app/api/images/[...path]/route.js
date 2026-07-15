@@ -1,8 +1,7 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { NextResponse } from 'next/server';
-import { s3Client, bucketName } from '@/lib/r2';
-import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getR2Runtime, GetObjectCommand } from '@/lib/r2';
 
 export async function GET(request, { params }) {
     try {
@@ -26,6 +25,7 @@ export async function GET(request, { params }) {
         const contentType = contentTypes[ext] || 'application/octet-stream';
 
         // 1. Try fetching from Cloudflare R2
+        const { s3Client, bucketName } = await getR2Runtime();
         if (s3Client && bucketName) {
             try {
                 const command = new GetObjectCommand({

@@ -15,6 +15,7 @@ import {
   Eye,
   EyeOff,
   Zap,
+  Cloud,
 } from "lucide-react";
 
 const settingGroups = [
@@ -47,6 +48,12 @@ const settingGroups = [
     label: "Maps & Location",
     icon: Globe,
     color: "#3b82f6",
+  },
+  {
+    id: "STORAGE",
+    label: "Storage / Cloudflare R2",
+    icon: Cloud,
+    color: "#0ea5e9",
   },
   {
     id: "EMAIL",
@@ -183,6 +190,69 @@ const defaultSettings = [
     type: "text",
   },
 
+  {
+    key: "R2_ACCOUNT_ID",
+    group: "STORAGE",
+    label: "Cloudflare Account ID",
+    type: "text",
+    description: "Cloudflare account ID used to build the R2 S3-compatible endpoint.",
+  },
+  {
+    key: "R2_ACCESS_KEY_ID",
+    group: "STORAGE",
+    label: "R2 Access Key ID",
+    type: "text",
+    description: "Access key for the R2 bucket used by property images and videos.",
+  },
+  {
+    key: "R2_SECRET_ACCESS_KEY",
+    group: "STORAGE",
+    label: "R2 Secret Access Key",
+    type: "password",
+    description: "Secret key for the R2 bucket. Keep this private.",
+  },
+  {
+    key: "R2_BUCKET_NAME",
+    group: "STORAGE",
+    label: "R2 Bucket Name",
+    type: "text",
+    description: "Bucket where Renta stores uploaded property media.",
+  },
+  {
+    key: "R2_PUBLIC_URL",
+    group: "STORAGE",
+    label: "R2 Public URL",
+    type: "text",
+    description: "Optional public/custom domain, for example https://cdn.userenta.com. If empty, Renta uses the media proxy route.",
+  },
+
+  {
+    key: "EMAIL_PROVIDER",
+    group: "EMAIL",
+    label: "Email Provider",
+    type: "text",
+    description: "Use zeptomail for ZeptoMail API delivery or smtp for SMTP fallback.",
+  },
+  {
+    key: "ZEPTOMAIL_SEND_TOKEN",
+    group: "EMAIL",
+    label: "ZeptoMail Send Token",
+    type: "password",
+    description: "Agent send mail token from ZeptoMail > SMTP/API.",
+  },
+  {
+    key: "ZEPTOMAIL_API_URL",
+    group: "EMAIL",
+    label: "ZeptoMail API URL",
+    type: "text",
+    description: "Default: https://api.zeptomail.com/v1.1/email",
+  },
+  {
+    key: "EMAIL_FROM_NAME",
+    group: "EMAIL",
+    label: "From Name",
+    type: "text",
+  },
   {
     key: "EMAIL_SERVER_HOST",
     group: "EMAIL",

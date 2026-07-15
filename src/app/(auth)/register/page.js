@@ -305,7 +305,7 @@ function RegisterForm() {
                                 ? 'Help connect landlords with Renta and earn 3% commission.'
                                 : formData.role === 'AFFILIATE'
                                     ? 'Share listings and earn 2% on successful rentals.'
-                                    : 'Find verified apartments at real prices with escrow protection.'}
+                                    : 'Find verified apartments at real prices with secure platform payments.'}
                     </p>
                     <div className={styles.features}>
                         <div className={styles.feature}>
@@ -314,7 +314,7 @@ function RegisterForm() {
                         </div>
                         <div className={styles.feature}>
                             <span className={styles.featureIcon}>✓</span>
-                            <span>NIN-verified community</span>
+                            <span>verified community</span>
                         </div>
                         <div className={styles.feature}>
                             <span className={styles.featureIcon}>✓</span>

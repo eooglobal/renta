@@ -1,29 +1,35 @@
 import { unlink } from 'fs/promises';
 import path from 'path';
 import { deleteFromR2 } from './r2';
+import { getSetting } from './settings';
 
 /**
  * Deletes a file from either R2 or the local filesystem
- * @param {string} url - The URL of the image
+ * @param {string} url - The URL of the image or video
  */
 export async function deleteFileByUrl(url) {
     if (!url) return;
 
     try {
-        if (url.startsWith('http') && url.includes('r2.cloudflarestorage.com') || url.includes(process.env.R2_PUBLIC_URL)) {
-            // Extract key from URL
-            // Example URL: https://pub-xxx.r2.dev/properties/id/filename.jpg
-            const baseUrl = process.env.R2_PUBLIC_URL;
-            if (baseUrl) {
-                const key = url.replace(baseUrl, '').replace(/^\//, '');
+        const publicUrl = await getSetting('R2_PUBLIC_URL');
+        const hasConfiguredPublicUrl = publicUrl && url.startsWith(publicUrl);
+        const isCloudflareR2Url = url.startsWith('http') && url.includes('r2.cloudflarestorage.com');
+
+        if (hasConfiguredPublicUrl || isCloudflareR2Url) {
+            const key = hasConfiguredPublicUrl
+                ? url.replace(publicUrl, '').replace(/^\//, '')
+                : new URL(url).pathname.replace(/^\//, '');
+
+            if (key) {
                 await deleteFromR2(key);
             }
-        } else if (url.startsWith('/api/images/')) {
-            // Local file
-            // Example URL: /api/images/properties/id/filename.jpg
+            return;
+        }
+
+        if (url.startsWith('/api/images/')) {
             const relativePath = url.replace('/api/images/', '');
             const absolutePath = path.join(process.cwd(), 'public', 'uploads', relativePath);
-            
+
             try {
                 await unlink(absolutePath);
                 console.log(`[FILE] Deleted local file: ${absolutePath}`);

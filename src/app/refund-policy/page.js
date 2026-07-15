@@ -55,12 +55,12 @@ export default function RefundPolicyPage() {
             <p style={paragraphStyle}>This policy applies to payments made through official Renta payment channels, including:</p>
             <ul style={listStyle}>
               <li>Rental payments made by tenants through the platform.</li>
-              <li>Escrow-held funds related to a property rental.</li>
+              <li>Rental payments related to a property transaction.</li>
               <li>Platform-controlled payment flows that can be verified in Renta records.</li>
             </ul>
             <p style={{ color: 'var(--text-secondary)' }}>
               Payments made outside Renta, including direct transfers to landlords, agents, scouts, or third parties,
-              are not protected by Renta escrow and may not be eligible for a Renta-managed refund.
+              are outside Renta's platform controls and may not be eligible for a Renta-managed refund.
             </p>
           </section>
 
@@ -72,7 +72,7 @@ export default function RefundPolicyPage() {
               <li>The landlord cannot provide access to the property after a valid platform payment.</li>
               <li>The property is no longer available before move-in and no acceptable alternative is provided.</li>
               <li>A duplicate or erroneous payment is confirmed by the payment provider and Renta records.</li>
-              <li>Renta administration determines, after review, that escrow funds should be returned to the tenant.</li>
+              <li>Renta administration determines, after review, that a refund or reversal should be pursued for the tenant.</li>
             </ul>
           </section>
 
@@ -83,7 +83,7 @@ export default function RefundPolicyPage() {
               <li>The tenant paid outside the Renta platform.</li>
               <li>The tenant changed their mind after the landlord fulfilled the agreed rental conditions.</li>
               <li>The tenant provided false, incomplete, or misleading information during screening or KYC.</li>
-              <li>The claim is submitted after funds have already been validly released to the landlord.</li>
+              <li>The claim is submitted after settlement has already been validly completed to the landlord.</li>
               <li>The issue results from user misconduct, policy violations, or off-platform arrangements.</li>
             </ul>
             <p style={{ color: 'var(--text-secondary)' }}>

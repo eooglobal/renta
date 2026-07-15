@@ -10,7 +10,7 @@ import NotificationCenter from '@/components/NotificationCenter';
 import {
     Home, Search, FileText, Wrench, MessageSquare, User,
     Building, Plus, Users, Wallet, ClipboardList, Link as LinkIcon,
-    Shield, DollarSign, AlertTriangle, Settings, LogOut, Menu, X, Star
+    Shield, DollarSign, AlertTriangle, Settings, LogOut, Menu, X, Star, Calendar
 } from 'lucide-react';
 
 const MENU_ITEMS = {
@@ -53,6 +53,7 @@ const MENU_ITEMS = {
         { href: '/admin/finance', icon: DollarSign, label: 'Financials' },
         { href: '/admin/leads', icon: ClipboardList, label: 'Scout Leads' },
         { href: '/admin/rentals', icon: FileText, label: 'Rentals' },
+        { href: '/admin/inspections', icon: Calendar, label: 'Inspections' },
         { href: '/admin/escrow', icon: Shield, label: 'Escrow' },
         { href: '/admin/commissions', icon: DollarSign, label: 'Commissions' },
         { href: '/admin/disputes', icon: AlertTriangle, label: 'Disputes' },
@@ -83,13 +84,16 @@ export default function DashboardLayout({ children }) {
             {/* Sidebar */}
             <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
                 <div className={styles.sidebarHeader}>
-                    <Link href="/" className={styles.sidebarLogo}>Renta</Link>
+                    <Link href="/" className={styles.sidebarLogo} aria-label="Renta home">
+                        <span className={styles.logoMark}><img src="/favicon.png" alt="" /></span>
+                        <span className={styles.logoText}>Renta</span>
+                    </Link>
                     <button
                         className={styles.closeSidebar}
                         onClick={() => setSidebarOpen(false)}
                         aria-label="Close sidebar"
                     >
-                        ✕
+                        <X size={20} />
                     </button>
                 </div>
 
@@ -100,10 +104,10 @@ export default function DashboardLayout({ children }) {
                         // Role-based filtering for admins
                         const adminRole = session.user.adminRole;
                         if (adminRole === 'VERIFICATION_OFFICER') {
-                            return ['Dashboard', 'Properties', 'Scout Leads', 'Disputes'].includes(item.label);
+                            return ['Dashboard', 'Properties', 'Scout Leads', 'Inspections', 'Disputes'].includes(item.label);
                         }
                         if (adminRole === 'SUPPORT') {
-                            return ['Dashboard', 'Users', 'Disputes', 'Rentals', 'Commissions'].includes(item.label);
+                            return ['Dashboard', 'Users', 'Inspections', 'Disputes', 'Rentals', 'Commissions'].includes(item.label);
                         }
                         return true;
                     }).map((item) => (
@@ -140,13 +144,19 @@ export default function DashboardLayout({ children }) {
             <main className={styles.main}>
                 {/* Top Bar */}
                 <header className={styles.topbar}>
-                    <button
-                        className={styles.menuToggle}
-                        onClick={() => setSidebarOpen(true)}
-                        aria-label="Open menu"
-                    >
-                        <Menu size={24} />
-                    </button>
+                    <div className={styles.topbarLeft}>
+                        <button
+                            className={styles.menuToggle}
+                            onClick={() => setSidebarOpen(true)}
+                            aria-label="Open menu"
+                        >
+                            <Menu size={24} />
+                        </button>
+                        <Link href="/" className={styles.topbarBrand} aria-label="Renta home">
+                            <span className={styles.logoMark}><img src="/favicon.png" alt="" /></span>
+                            <span className={styles.logoText}>Renta</span>
+                        </Link>
+                    </div>
                     <div className={styles.topbarRight}>
                         <NotificationCenter />
                         <span className={`badge badge-${role === 'ADMIN' ? 'info' : 'primary'}`}>

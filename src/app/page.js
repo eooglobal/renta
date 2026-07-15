@@ -6,10 +6,10 @@ import LandingFooter from '@/components/LandingFooter';
 
 export const metadata = {
   title: 'Renta — Verified Apartments for Rent in Ilorin',
-  description: 'Find verified apartments for rent in Ilorin, Kwara State. Zero agent inflation, 100% escrow protection, and verified property listings.',
+  description: 'Find verified apartments for rent in Ilorin, Kwara State. Zero agent inflation, secure Paystack payments, and verified property listings.',
   openGraph: {
     title: 'Renta — Rent Verified Apartments at Real Prices',
-    description: 'No agent inflation. No fake listings. Rent securely with escrow protection.',
+    description: 'No agent inflation. No fake listings. Rent securely through Renta.',
     url: 'https://userenta.com',
     siteName: 'Renta',
     locale: 'en_NG',
@@ -36,7 +36,7 @@ export default function Home() {
             </h1>
             <p className={styles.heroSubtitle}>
               No agent inflation. No fake listings. No scams. Just verified apartments
-              at landlord-approved prices with escrow protection.
+              at landlord-approved prices with secure platform payments.
             </p>
             <div className={styles.heroCtas}>
               <Link href="/register" className="btn btn-primary btn-lg">
@@ -54,7 +54,7 @@ export default function Home() {
               <div className={styles.statDivider}></div>
               <div className={styles.stat}>
                 <span className={styles.statNumber}>100%</span>
-                <span className={styles.statLabel}>Escrow Protected</span>
+                <span className={styles.statLabel}>Secure Payments</span>
               </div>
               <div className={styles.statDivider}></div>
               <div className={styles.stat}>
@@ -94,7 +94,7 @@ export default function Home() {
             <div className={styles.problemCard}>
               <div className={styles.problemIcon}><Ban size={40} /></div>
               <h4>Rental Scams</h4>
-              <p>Paying rent but never getting keys. Your money stays in escrow until you confirm access.</p>
+              <p>Paying rent but never getting keys. Renta verifies listings, manages inspections, and keeps disputes on-platform.</p>
             </div>
           </div>
         </div>
@@ -125,13 +125,13 @@ export default function Home() {
             <div className={styles.step}>
               <div className={styles.stepNumber}>3</div>
               <h4>Pay Securely</h4>
-              <p>Pay rent + 10% service fee. Funds are held in escrow — the landlord doesn&rsquo;t receive a kobo until you move in.</p>
+              <p>Pay rent + 10% service fee through Renta. Paystack splits settlement to verified recipients and Renta keeps a full payment record.</p>
             </div>
             <div className={styles.stepConnector}></div>
             <div className={styles.step}>
               <div className={styles.stepNumber}>4</div>
               <h4>Move In</h4>
-              <p>Confirm access, funds are released, and your digital rental agreement is ready. Welcome home!</p>
+              <p>Move in with your digital rental agreement, receipt, and Renta support record ready. Welcome home!</p>
             </div>
           </div>
         </div>
@@ -147,7 +147,7 @@ export default function Home() {
             </h2>
             <ul className={styles.landlordFeatures}>
               <li className="flex items-center gap-2"><Check size={16} /> Set your own rent price — no agent interference</li>
-              <li className="flex items-center gap-2"><Check size={16} /> Get verified tenants with NIN verification</li>
+              <li className="flex items-center gap-2"><Check size={16} /> Get verified tenants with identity verification</li>
               <li className="flex items-center gap-2"><Check size={16} /> Receive payments directly to your bank</li>
               <li className="flex items-center gap-2"><Check size={16} /> Digital rental agreements included</li>
               <li className="flex items-center gap-2"><Check size={16} /> Track maintenance requests in one place</li>
@@ -208,7 +208,7 @@ export default function Home() {
                 <span>₦220,000</span>
               </div>
               <p className={`${styles.priceNote} flex justify-center gap-4`}>
-                <span className="flex items-center gap-1"><Check size={14} /> Escrow protected</span>
+                <span className="flex items-center gap-1"><Check size={14} /> Secure payment</span>
                 <span className="flex items-center gap-1"><Check size={14} /> No hidden charges</span>
                 <span className="flex items-center gap-1"><Check size={14} /> Paid once yearly</span>
               </p>

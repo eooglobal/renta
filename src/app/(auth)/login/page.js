@@ -146,7 +146,7 @@ export default function LoginPage() {
             <div className={styles.authRight}>
                 <div className={styles.authRightContent}>
                     <h2>Renta makes renting simple.</h2>
-                    <p>Verified apartments. Real prices. Escrow protection.</p>
+                    <p>Verified apartments. Real prices. Secure payments.</p>
                     <div className={styles.features}>
                         <div className={styles.feature}>
                             <span className={styles.featureIcon}>✓</span>
@@ -154,7 +154,7 @@ export default function LoginPage() {
                         </div>
                         <div className={styles.feature}>
                             <span className={styles.featureIcon}>✓</span>
-                            <span>100% escrow protected</span>
+                            <span>Secure platform payments</span>
                         </div>
                         <div className={styles.feature}>
                             <span className={styles.featureIcon}>✓</span>

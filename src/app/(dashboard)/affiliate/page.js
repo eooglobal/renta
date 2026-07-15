@@ -87,7 +87,7 @@ export default function AffiliateDashboard() {
                 }}
               >
                 To start earning commissions, please complete your National
-                Identity Number (NIN) verification.
+                Didit identity verification.
               </p>
               <Link
                 href="/affiliate/profile"

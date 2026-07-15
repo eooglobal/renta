@@ -44,7 +44,7 @@ export default function TenantDashboard() {
                         <div style={{ flex: 1 }}>
                             <h4 style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--color-error)', margin: '0 0 4px 0' }}>Action Required: Verify Your Identity</h4>
                             <p style={{ fontSize: '14px', margin: '0 0 12px 0', color: 'var(--text-color)' }}>
-                                To unlock all features and ensure community safety, please complete your NIN verification.
+                                To unlock all features and ensure community safety, please complete your identity verification.
                             </p>
                             <a href="/tenant/profile" className="btn btn-sm" style={{ background: 'var(--color-error)', color: 'white', border: 'none' }}>
                                 Verify Now

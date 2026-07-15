@@ -1,85 +1,68 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Calendar as CalendarIcon, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { X, Calendar as CalendarIcon, CheckCircle, Phone, Clock, AlertCircle } from 'lucide-react';
 import styles from './InspectionModal.module.css';
 import { useToast } from '@/components/Toast';
 import { friendlyError } from '@/lib/errors';
 
+const TIME_WINDOWS = ['Morning', 'Afternoon', 'Evening'];
+
 export default function InspectionModal({ propertyId, propertyTitle, onClose }) {
     const toast = useToast();
-    const [slots, setSlots] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [booking, setBooking] = useState(false);
+    const [form, setForm] = useState({
+        tenantPhone: '',
+        preferredDate: '',
+        preferredTimeWindow: TIME_WINDOWS[0],
+    });
+    const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
 
-    const [selectedDate, setSelectedDate] = useState(null);
-    const [selectedSlotId, setSelectedSlotId] = useState(null);
+    const handleChange = (field, value) => {
+        setForm((prev) => ({ ...prev, [field]: value }));
+        setError('');
+    };
 
-    useEffect(() => {
-        const fetchSlots = async () => {
-            try {
-                const res = await fetch(`/api/inspections?propertyId=${propertyId}`);
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Failed to fetch slots');
-
-                // Only show AVAILABLE slots
-                const availableSlots = data.filter(s => s.status === 'AVAILABLE');
-                setSlots(availableSlots);
-
-                // Group by date to find unique dates
-                const uniqueDates = [...new Set(availableSlots.map(s => s.date.split('T')[0]))];
-                if (uniqueDates.length > 0) {
-                    setSelectedDate(uniqueDates[0]);
-                }
-            } catch (err) {
-                const friendly = friendlyError(err);
-                setError(friendly.message);
-                toast.error(friendly.title, friendly.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (propertyId) fetchSlots();
-    }, [propertyId, toast]);
-
-    const handleBook = async () => {
-        if (!selectedSlotId) return;
+    const handleSubmit = async () => {
+        if (!form.tenantPhone || !form.preferredDate || !form.preferredTimeWindow) {
+            setError('Please enter your phone number, preferred date, and time window.');
+            return;
+        }
 
         try {
-            setBooking(true);
+            setSubmitting(true);
             const res = await fetch('/api/inspections', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ slotId: selectedSlotId })
+                body: JSON.stringify({
+                    propertyId,
+                    tenantPhone: form.tenantPhone,
+                    preferredDate: form.preferredDate,
+                    preferredTimeWindow: form.preferredTimeWindow,
+                }),
             });
             const data = await res.json();
 
-            if (!res.ok) throw new Error(data.error);
-            toast.success('Inspection Scheduled', 'Your inspection has been successfully booked!');
+            if (!res.ok) throw new Error(data.error || 'Failed to request inspection');
+            toast.success('Inspection Request Sent', 'Renta staff will contact you to confirm the inspection.');
             setSuccess(true);
         } catch (err) {
             const friendly = friendlyError(err);
+            setError(friendly.message);
             toast.error(friendly.title, friendly.message);
         } finally {
-            setBooking(false);
+            setSubmitting(false);
         }
     };
 
-    // Helper functions for dates
-    const formatDate = (dateStr) => {
-        const d = new Date(dateStr);
-        return {
-            day: d.toLocaleDateString('en-US', { weekday: 'short' }),
-            date: d.getDate(),
-            full: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-        };
-    };
-
-    const uniqueDates = [...new Set(slots.map(s => s.date.split('T')[0]))].sort();
-    const currentSlots = slots.filter(s => s.date.split('T')[0] === selectedDate);
+    const formattedDate = form.preferredDate
+        ? new Date(form.preferredDate).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+        })
+        : '';
 
     if (success) {
         return (
@@ -89,18 +72,22 @@ export default function InspectionModal({ propertyId, propertyTitle, onClose }) 
                         <div className={styles.successIcon}>
                             <CheckCircle size={40} />
                         </div>
-                        <h2>Booking Confirmed!</h2>
+                        <h2>Request Received</h2>
                         <p className="text-muted mt-2">
-                            Your inspection for <strong>{propertyTitle}</strong> has been scheduled.
+                            Renta staff will contact you to confirm your inspection for <strong>{propertyTitle}</strong>.
                         </p>
-                        <div className="bg-gray-50 p-4 rounded-lg mt-6 text-sm border">
-                            <p className="flex items-center justify-center gap-2 mb-1">
+                        <div className={styles.summaryBox}>
+                            <p>
                                 <CalendarIcon size={16} className="text-primary" />
-                                {formatDate(selectedDate).full}
+                                {formattedDate}
                             </p>
-                            <p className="flex items-center justify-center gap-2">
+                            <p>
                                 <Clock size={16} className="text-primary" />
-                                {slots.find(s => s.id === selectedSlotId)?.startTime} - {slots.find(s => s.id === selectedSlotId)?.endTime}
+                                {form.preferredTimeWindow}
+                            </p>
+                            <p>
+                                <Phone size={16} className="text-primary" />
+                                {form.tenantPhone}
                             </p>
                         </div>
                         <button className="btn btn-primary mt-8 w-full" onClick={onClose}>
@@ -115,74 +102,76 @@ export default function InspectionModal({ propertyId, propertyTitle, onClose }) 
     return (
         <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
             <div className={`${styles.modal} fade-in`}>
-                <button className={styles.closeButton} onClick={onClose}>
+                <button className={styles.closeButton} onClick={onClose} aria-label="Close inspection request modal">
                     <X size={20} />
                 </button>
 
                 <div className={styles.header}>
-                    <h3>Book an Inspection</h3>
+                    <h3>Request an Inspection</h3>
                     <p>{propertyTitle}</p>
                 </div>
 
                 <div className={styles.content}>
-                    {loading ? (
-                        <div className="flex justify-center p-8"><span className="spinner"></span></div>
-                    ) : error ? (
+                    {error && (
                         <div className={styles.errorBox}>
                             <AlertCircle size={20} />
                             <span>{error}</span>
                         </div>
-                    ) : slots.length === 0 ? (
-                        <div className="text-center p-8">
-                            <CalendarIcon size={48} className="text-gray-300 mb-4" />
-                            <p className="text-gray-500">No inspection slots available at the moment. Please contact the landlord.</p>
-                        </div>
-                    ) : (
-                        <>
-                            <div className={styles.sectionTitle}>Select Date</div>
-                            <div className={styles.dateGrid}>
-                                {uniqueDates.map(date => {
-                                    const info = formatDate(date);
-                                    return (
-                                        <div
-                                            key={date}
-                                            className={`${styles.dateCard} ${selectedDate === date ? styles.active : ''}`}
-                                            onClick={() => {
-                                                setSelectedDate(date);
-                                                setSelectedSlotId(null);
-                                            }}
-                                        >
-                                            <span className={styles.day}>{info.day}</span>
-                                            <span className={styles.date}>{info.date}</span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-
-                            <div className={styles.sectionTitle}>Available Times ({formatDate(selectedDate).full})</div>
-                            <div className={styles.timeGrid}>
-                                {currentSlots.map(slot => (
-                                    <div
-                                        key={slot.id}
-                                        className={`${styles.timeSlot} ${selectedSlotId === slot.id ? styles.selected : ''}`}
-                                        onClick={() => setSelectedSlotId(slot.id)}
-                                    >
-                                        {slot.startTime} - {slot.endTime}
-                                    </div>
-                                ))}
-                            </div>
-                        </>
                     )}
+
+                    <div className={styles.requestIntro}>
+                        Renta staff will call you to confirm the visit and accompany you for the inspection.
+                    </div>
+
+                    <div className={styles.formGrid}>
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="inspection-phone">Phone Number</label>
+                            <input
+                                id="inspection-phone"
+                                type="tel"
+                                className="form-input"
+                                value={form.tenantPhone}
+                                onChange={(e) => handleChange('tenantPhone', e.target.value)}
+                                placeholder="08030000000"
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="inspection-date">Preferred Date</label>
+                            <input
+                                id="inspection-date"
+                                type="date"
+                                className="form-input"
+                                value={form.preferredDate}
+                                min={new Date().toISOString().split('T')[0]}
+                                onChange={(e) => handleChange('preferredDate', e.target.value)}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="inspection-window">Preferred Time</label>
+                            <select
+                                id="inspection-window"
+                                className="form-input"
+                                value={form.preferredTimeWindow}
+                                onChange={(e) => handleChange('preferredTimeWindow', e.target.value)}
+                            >
+                                {TIME_WINDOWS.map((window) => (
+                                    <option key={window} value={window}>{window}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <div className={styles.footer}>
                     <button className="btn btn-outline flex-1" onClick={onClose}>Cancel</button>
                     <button
                         className="btn btn-primary flex-1"
-                        disabled={!selectedSlotId || booking || loading}
-                        onClick={handleBook}
+                        disabled={submitting}
+                        onClick={handleSubmit}
                     >
-                        {booking ? 'Booking...' : 'Confirm Request'}
+                        {submitting ? 'Sending...' : 'Send Request'}
                     </button>
                 </div>
             </div>

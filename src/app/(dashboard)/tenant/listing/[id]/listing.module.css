@@ -360,3 +360,16 @@
         padding: var(--space-2) var(--space-3);
     }
 }
+.videoGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-4);
+}
+
+.videoPlayer {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-xl);
+    background: var(--color-gray-900);
+    object-fit: cover;
+}

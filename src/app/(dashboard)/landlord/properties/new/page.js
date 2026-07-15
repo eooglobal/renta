@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, X, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Camera, X, ArrowLeft, ArrowRight, Video } from 'lucide-react';
 import styles from './new-property.module.css';
 import dashStyles from '../../../tenant/dashboard.module.css';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
@@ -32,6 +32,8 @@ export default function NewPropertyPage() {
     const [loading, setLoading] = useState(false);
     const [images, setImages] = useState([]);
     const [previews, setPreviews] = useState([]);
+    const [videos, setVideos] = useState([]);
+    const [videoPreviews, setVideoPreviews] = useState([]);
     const [location, setLocation] = useState(null);
     const [locationError, setLocationError] = useState('');
 
@@ -130,6 +132,45 @@ export default function NewPropertyPage() {
         setImages(images.filter((_, i) => i !== index));
         setPreviews(previews.filter((_, i) => i !== index));
     };
+    const handleVideoSelect = (e) => {
+        const files = Array.from(e.target.files || []);
+        const maxVideos = 3;
+        const maxVideoBytes = 50 * 1024 * 1024;
+        const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+
+        if (files.length + videos.length > maxVideos) {
+            toast.error('Video Limit Exceeded', `Maximum ${maxVideos} videos allowed.`);
+            return;
+        }
+
+        const invalidFile = files.find(file => !allowedTypes.includes(file.type));
+        if (invalidFile) {
+            toast.error('Unsupported Video', 'Only MP4, WebM, and MOV videos are allowed.');
+            return;
+        }
+
+        const oversizedFile = files.find(file => file.size > maxVideoBytes);
+        if (oversizedFile) {
+            toast.error('Video Too Large', 'Each video must be 50MB or smaller.');
+            return;
+        }
+
+        setVideos(prev => [...prev, ...files]);
+        setVideoPreviews(prev => [
+            ...prev,
+            ...files.map(file => ({
+                name: file.name,
+                url: URL.createObjectURL(file),
+            })),
+        ]);
+    };
+
+    const removeVideo = (index) => {
+        const preview = videoPreviews[index];
+        if (preview?.url) URL.revokeObjectURL(preview.url);
+        setVideos(videos.filter((_, i) => i !== index));
+        setVideoPreviews(videoPreviews.filter((_, i) => i !== index));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -177,7 +218,23 @@ export default function NewPropertyPage() {
                     body: imageForm,
                 });
             }
+            if (videos.length > 0) {
+                const videoForm = new FormData();
+                videos.forEach(video => videoForm.append('videos', video));
 
+                const videoRes = await fetch(`/api/properties/${data.property.id}/videos`, {
+                    method: 'POST',
+                    body: videoForm,
+                });
+
+                if (!videoRes.ok) {
+                    const videoData = await videoRes.json();
+                    const friendly = friendlyError(videoData.error || 'Failed to upload videos');
+                    toast.error(friendly.title, friendly.message);
+                    setLoading(false);
+                    return;
+                }
+            }
             toast.success('Property Created', 'Property created! It will be reviewed by our verification team.');
             setTimeout(() => router.push('/landlord/properties'), 2000);
         } catch (err) {
@@ -207,7 +264,7 @@ export default function NewPropertyPage() {
                 <div className={styles.progressLine}></div>
                 <div className={`${styles.progressStep} ${step >= 2 ? styles.active : ''}`}>
                     <span className={styles.stepNum}>2</span>
-                    <span>Photos</span>
+                    <span>Media</span>
                 </div>
                 <div className={styles.progressLine}></div>
                 <div className={`${styles.progressStep} ${step >= 3 ? styles.active : ''}`}>
@@ -367,7 +424,7 @@ export default function NewPropertyPage() {
                                 }
                                 setStep(2);
                             }}>
-                                Next: Add Photos →
+                                Next: Add Media →
                             </button>
                         </div>
                     </div>
@@ -376,8 +433,8 @@ export default function NewPropertyPage() {
                 {/* Step 2: Photos */}
                 {step === 2 && (
                     <div className={`card ${styles.formSection}`}>
-                        <h4 className={styles.sectionLabel}>Property Photos</h4>
-                        <p className="text-muted text-sm mb-4">Upload up to 10 photos. The first photo will be the cover image.</p>
+                        <h4 className={styles.sectionLabel}>Property Media</h4>
+                        <p className="text-muted text-sm mb-4">Upload up to 10 photos and up to 3 walkthrough videos. The first photo will be the cover image.</p>
 
                         {locationError && (
                             <div className="card mb-4" style={{ background: 'var(--color-error-light)', borderLeft: '4px solid var(--color-error)', padding: 'var(--space-2) var(--space-4)' }}>
@@ -419,6 +476,33 @@ export default function NewPropertyPage() {
                                         {index === 0 && <span className={styles.coverBadge}>Cover</span>}
                                         <button type="button" className={styles.removeBtn}
                                             onClick={() => removeImage(index)}><X size={16} /></button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        
+                        <div className={styles.videoUploadBlock}>
+                            <input
+                                type="file" id="video-upload" accept="video/mp4,video/webm,video/quicktime" multiple
+                                onChange={handleVideoSelect}
+                                className={styles.fileInput}
+                            />
+                            <label htmlFor="video-upload" className={styles.uploadBtn}>
+                                <Video size={20} />
+                                <span>Add Walkthrough Video</span>
+                            </label>
+                            <p className="text-xs text-muted mt-2">MP4, WebM, or MOV up to 50MB each. Max 3 videos</p>
+                        </div>
+
+                        {videoPreviews.length > 0 && (
+                            <div className={styles.previewGrid}>
+                                {videoPreviews.map((preview, index) => (
+                                    <div key={preview.url} className={styles.previewItem}>
+                                        <video src={preview.url} muted controls playsInline />
+                                        <span className={styles.videoBadge}>Video</span>
+                                        <button type="button" className={styles.removeBtn}
+                                            onClick={() => removeVideo(index)}><X size={16} /></button>
                                     </div>
                                 ))}
                             </div>
@@ -467,7 +551,7 @@ export default function NewPropertyPage() {
                             </div>
                             <div className={styles.reviewItem}>
                                 <span className="text-muted text-sm">Photos</span>
-                                <strong>{images.length} image(s)</strong>
+                                <strong>{images.length} image(s), {videos.length} video(s)</strong>
                             </div>
                         </div>
 

@@ -1,5 +1,66 @@
 import nodemailer from 'nodemailer';
 import { getSetting } from './settings';
+function recipientNameFromEmail(email) {
+    return String(email || '').split('@')[0] || 'Renta user';
+}
+
+function normalizeEmailRecipients(to) {
+    const recipients = Array.isArray(to) ? to : [to];
+    return recipients.map((recipient) => {
+        if (typeof recipient === 'string') {
+            return {
+                email_address: {
+                    address: recipient,
+                    name: recipientNameFromEmail(recipient),
+                },
+            };
+        }
+
+        return {
+            email_address: {
+                address: recipient.email || recipient.address,
+                name: recipient.name || recipient.firstName || recipientNameFromEmail(recipient.email || recipient.address),
+            },
+        };
+    });
+}
+
+async function sendWithZeptoMail({ to, subject, html, fromAddress, appName }) {
+    const token = await getSetting('ZEPTOMAIL_SEND_TOKEN') || await getSetting('ZEPTOMAIL_API_TOKEN');
+    const apiUrl = await getSetting('ZEPTOMAIL_API_URL') || 'https://api.zeptomail.com/v1.1/email';
+    const fromName = await getSetting('EMAIL_FROM_NAME') || appName;
+
+    if (!token) {
+        throw new Error('ZeptoMail send token is not configured.');
+    }
+
+    const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: `Zoho-enczapikey ${token}`,
+        },
+        body: JSON.stringify({
+            from: { address: fromAddress, name: fromName },
+            to: normalizeEmailRecipients(to),
+            subject,
+            htmlbody: wrapInTemplate(appName, subject, html),
+        }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.error) {
+        throw new Error(data.error?.message || data.message || 'ZeptoMail request failed');
+    }
+
+    return {
+        success: true,
+        provider: 'zeptomail',
+        messageId: data.request_id || data.data?.[0]?.additional_info?.[0]?.request_id || null,
+        response: data,
+    };
+}
 
 /**
  * Creates a Nodemailer transporter from platform settings (SMTP credentials).
@@ -32,8 +93,17 @@ async function createTransporter() {
 export async function sendEmail({ to, subject, html }) {
     const fromAddress = await getSetting('EMAIL_FROM') || 'noreply@userenta.com';
     const appName     = await getSetting('NEXT_PUBLIC_APP_NAME') || 'Renta';
+    const provider    = String(await getSetting('EMAIL_PROVIDER') || '').toLowerCase();
+    const zeptoToken  = await getSetting('ZEPTOMAIL_SEND_TOKEN') || await getSetting('ZEPTOMAIL_API_TOKEN');
+    const useZeptoMail = provider === 'zeptomail' || Boolean(zeptoToken);
 
     try {
+        if (useZeptoMail) {
+            const result = await sendWithZeptoMail({ to, subject, html, fromAddress, appName });
+            console.log(`[ZeptoMail] Email sent to ${to} | RequestId: ${result.messageId || 'unknown'}`);
+            return result;
+        }
+
         const transporter = await createTransporter();
 
         const info = await transporter.sendMail({
@@ -44,10 +114,10 @@ export async function sendEmail({ to, subject, html }) {
         });
 
         console.log(`[SMTP] Email sent to ${to} | MessageId: ${info.messageId}`);
-        return { success: true, messageId: info.messageId };
+        return { success: true, provider: 'smtp', messageId: info.messageId };
     } catch (error) {
-        console.error(`[SMTP] CRITICAL: Failed to send email to ${to}:`, error.message);
-        return { success: false, error: error.message };
+        console.error(`[Email] CRITICAL: Failed to send email to ${to}:`, error.message);
+        return { success: false, provider: useZeptoMail ? 'zeptomail' : 'smtp', error: error.message };
     }
 }
 
@@ -160,8 +230,8 @@ export async function sendWelcomeEmail(user) {
                 <tr>
                     <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;">
                         <span style="font-size:18px;">🔒</span>
-                        <strong style="margin-left:10px;color:#000;">Secure escrow payments</strong>
-                        <p style="margin:4px 0 0 34px;color:#666;font-size:13px;">Your money is held safely until you confirm you've moved in. Landlords only get paid after you're in.</p>
+                        <strong style="margin-left:10px;color:#000;">Secure platform payments</strong>
+                        <p style="margin:4px 0 0 34px;color:#666;font-size:13px;">Payments are processed through Renta with verified listings, payment records, and support for access issues.</p>
                     </td>
                 </tr>
                 <tr>
@@ -195,37 +265,45 @@ export async function sendWelcomeEmail(user) {
  */
 export async function sendPaymentConfirmation({ tenant, property, rental }) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
+    const isDirectSplit = rental.paymentMode === 'DIRECT_SPLIT';
+    const statusCopy = isDirectSplit
+        ? `Your payment for <strong>${property.title}</strong> has been received. Paystack split settlement has been initiated for the landlord and eligible commission recipients.`
+        : `Your payment for <strong>${property.title}</strong> has been received and is now recorded successfully on Renta.`;
+    const assuranceCopy = isDirectSplit
+        ? `<strong>Payment settlement is processing.</strong> Renta has recorded the transaction and will support you if there is any issue with access or move-in.`
+        : `<strong>Your payment is recorded.</strong> If anything goes wrong with access or move-in, contact Renta support immediately and we will help review the transaction.`;
+
     return sendEmail({
         to: tenant.email,
-        subject: `💳 Payment Confirmed — ${property.title}`,
+        subject: `Payment Confirmed - ${property.title}`,
         html: `
-            <h2 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#000;">Payment Received! 🎊</h2>
-            <p style="margin:0 0 24px;color:#555;">Your payment for <strong>${property.title}</strong> has been received and is now held securely in escrow.</p>
+            <h2 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#000;">Payment Received</h2>
+            <p style="margin:0 0 24px;color:#555;">${statusCopy}</p>
 
             <div style="background:#f8f8f8;border-radius:12px;padding:24px;margin-bottom:24px;">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                         <td style="padding:8px 0;color:#777;border-bottom:1px solid #eee;">Rent Amount</td>
-                        <td style="padding:8px 0;text-align:right;font-weight:600;border-bottom:1px solid #eee;">₦${Number(rental.rentAmount).toLocaleString()}</td>
+                        <td style="padding:8px 0;text-align:right;font-weight:600;border-bottom:1px solid #eee;">NGN ${Number(rental.rentAmount).toLocaleString()}</td>
                     </tr>
                     <tr>
                         <td style="padding:8px 0;color:#777;border-bottom:1px solid #eee;">Service Fee (10%)</td>
-                        <td style="padding:8px 0;text-align:right;font-weight:600;border-bottom:1px solid #eee;">₦${Number(rental.serviceFee).toLocaleString()}</td>
+                        <td style="padding:8px 0;text-align:right;font-weight:600;border-bottom:1px solid #eee;">NGN ${Number(rental.serviceFee).toLocaleString()}</td>
                     </tr>
                     <tr>
                         <td style="padding:12px 0 0;font-weight:700;font-size:16px;">Total Paid</td>
-                        <td style="padding:12px 0 0;text-align:right;font-weight:800;font-size:16px;color:#FDA829;">₦${Number(rental.totalPaid).toLocaleString()}</td>
+                        <td style="padding:12px 0 0;text-align:right;font-weight:800;font-size:16px;color:#FDA829;">NGN ${Number(rental.totalPaid).toLocaleString()}</td>
                     </tr>
                 </table>
             </div>
 
             <div style="background:#fff7e6;border:1px solid #FDA829;border-radius:12px;padding:18px 22px;margin-bottom:24px;">
-                <p style="margin:0;font-size:14px;color:#7a4a00;">🔒 <strong>Your funds are safe.</strong> The money will only be released to the landlord after you move in and confirm access. If anything goes wrong, contact us and we'll help.</p>
+                <p style="margin:0;font-size:14px;color:#7a4a00;">${assuranceCopy}</p>
             </div>
 
             <div style="text-align:center;">
                 <a href="${appUrl}/tenant/rentals" style="display:inline-block;background:#000;color:#FDA829;font-weight:700;padding:13px 36px;border-radius:50px;text-decoration:none;">
-                    View My Rental →
+                    View My Rental
                 </a>
             </div>
         `,
@@ -233,7 +311,7 @@ export async function sendPaymentConfirmation({ tenant, property, rental }) {
 }
 
 /**
- * 💰 Escrow Released — landlord funds sent
+ * Funds released - landlord funds sent
  */
 export async function sendEscrowReleaseEmail({ landlord, property, rental }) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
@@ -313,7 +391,7 @@ export async function sendPropertyRejectedEmail(landlord, property, reason) {
 }
 
 /**
- * 🆔 NIN Verification Status
+ * Identity verification status
  */
 export async function sendNinStatusEmail(user, status, reason = '') {
     const appUrl      = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';

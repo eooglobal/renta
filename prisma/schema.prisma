@@ -9,49 +9,56 @@ datasource db {
 }
 
 model User {
-  id                  Int                  @id @default(autoincrement())
-  email               String               @unique
-  phone               String?              @unique
-  passwordHash        String               @map("password_hash")
-  role                UserRole             @default(TENANT)
-  adminRole           AdminRole?           @map("admin_role")
-  firstName           String               @map("first_name")
-  lastName            String               @map("last_name")
-  avatar              String?
-  ninNumber           String?              @unique @map("nin_number")
-  ninStatus           NinStatus            @default(PENDING) @map("nin_status")
-  status              UserStatus           @default(ACTIVE)
-  bankName            String?              @map("bank_name")
-  bankAccount         String?              @map("bank_account")
-  bankCode            String?              @map("bank_code")
-  createdAt           DateTime             @default(now()) @map("created_at")
-  updatedAt           DateTime             @updatedAt @map("updated_at")
-  affiliateReferrals  AffiliateReferral[]
-  commissions         Commission[]
-  releasedEscrows     Escrow[]             @relation("ReleasedByAdmin")
-  maintenanceRequests MaintenanceRequest[]
-  receivedMessages    Message[]            @relation("ReceivedMessages")
-  sentMessages        Message[]            @relation("SentMessages")
-  notifications       Notification[]
-  properties          Property[]           @relation("LandlordProperties")
-  verifiedProperties  Property[]           @relation("VerifiedByAdmin")
-  rentals             Rental[]             @relation("TenantRentals")
-  scoutArea           ScoutArea[]
-  scoutLeads          ScoutLead[]
-  tenantProfile       TenantProfile?
-  wallet              Wallet?
-  referredById        Int?                 @map("referred_by_id")
-  referredBy          User?                @relation("UserReferrals", fields: [referredById], references: [id])
-  referredUsers       User[]               @relation("UserReferrals")
-  diditSessionId      String?              @unique @map("didit_session_id")
+  id                     Int                  @id @default(autoincrement())
+  email                  String               @unique
+  phone                  String?              @unique
+  passwordHash           String               @map("password_hash")
+  role                   UserRole             @default(TENANT)
+  adminRole              AdminRole?           @map("admin_role")
+  firstName              String               @map("first_name")
+  lastName               String               @map("last_name")
+  avatar                 String?
+  ninNumber              String?              @unique @map("nin_number")
+  ninStatus              NinStatus            @default(PENDING) @map("nin_status")
+  status                 UserStatus           @default(ACTIVE)
+  bankName               String?              @map("bank_name")
+  bankAccount            String?              @map("bank_account")
+  bankCode               String?              @map("bank_code")
+  bankAccountName        String?              @map("bank_account_name")
+  paystackSubaccountCode String?              @unique @map("paystack_subaccount_code")
+  paystackSubaccountId   Int?                 @map("paystack_subaccount_id")
+  paymentSetupStatus     PaymentSetupStatus   @default(NOT_STARTED) @map("payment_setup_status")
+  paymentSetupVerifiedAt DateTime?            @map("payment_setup_verified_at")
+  createdAt              DateTime             @default(now()) @map("created_at")
+  updatedAt              DateTime             @updatedAt @map("updated_at")
+  affiliateReferrals     AffiliateReferral[]
+  commissions            Commission[]
+  releasedEscrows        Escrow[]             @relation("ReleasedByAdmin")
+  maintenanceRequests    MaintenanceRequest[]
+  receivedMessages       Message[]            @relation("ReceivedMessages")
+  sentMessages           Message[]            @relation("SentMessages")
+  notifications          Notification[]
+  properties             Property[]           @relation("LandlordProperties")
+  verifiedProperties     Property[]           @relation("VerifiedByAdmin")
+  rentals                Rental[]             @relation("TenantRentals")
+  scoutArea              ScoutArea[]
+  scoutLeads             ScoutLead[]
+  tenantProfile          TenantProfile?
+  wallet                 Wallet?
+  referredById           Int?                 @map("referred_by_id")
+  referredBy             User?                @relation("UserReferrals", fields: [referredById], references: [id])
+  referredUsers          User[]               @relation("UserReferrals")
+  diditSessionId         String?              @unique @map("didit_session_id")
+  inspectionRequests     InspectionRequest[]  @relation("TenantInspectionRequests")
+  assignedInspections    InspectionRequest[]  @relation("AssignedInspectionRequests")
 
   @@map("users")
 }
 
 model RateLimit {
   id        Int      @id @default(autoincrement())
-  ip        String   // Can also be userId depending on route
-  endpoint  String   // e.g., 'login', 'create_property'
+  ip        String // Can also be userId depending on route
+  endpoint  String // e.g., 'login', 'create_property'
   count     Int      @default(1)
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
@@ -101,10 +108,12 @@ model Property {
   featuredUntil      DateTime?          @map("featured_until")
   isFeatured         Boolean            @default(false) @map("is_featured")
   inspectionSlots    InspectionSlot[]
+  inspectionRequests InspectionRequest[]
   landlord           User               @relation("LandlordProperties", fields: [landlordId], references: [id])
   scoutLead          ScoutLead?         @relation(fields: [scoutLeadId], references: [id])
   verifiedBy         User?              @relation("VerifiedByAdmin", fields: [verifiedById], references: [id])
   images             PropertyImage[]
+  videos             PropertyVideo[]
   rentals            Rental[]
   city               City               @relation(fields: [cityId], references: [id])
   area               Area               @relation(fields: [areaId], references: [id])
@@ -136,32 +145,67 @@ model PropertyImage {
   @@map("property_images")
 }
 
+
+model PropertyVideo {
+  id           Int      @id @default(autoincrement())
+  propertyId   String   @map("property_id")
+  url          String
+  originalName String?  @map("original_name")
+  mimeType     String   @map("mime_type")
+  sizeBytes    Int      @map("size_bytes")
+  createdAt    DateTime @default(now()) @map("created_at")
+  property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("property_videos")
+}
+
 model Rental {
-  id                  Int                  @id @default(autoincrement())
-  propertyId          String               @map("property_id")
-  tenantId            Int                  @map("tenant_id")
-  rentAmount          Decimal              @map("rent_amount") @db.Decimal(12, 2)
-  serviceFee          Decimal              @map("service_fee") @db.Decimal(12, 2)
-  totalPaid           Decimal              @map("total_paid") @db.Decimal(12, 2)
-  startDate           DateTime             @map("start_date")
-  endDate             DateTime             @map("end_date")
-  status              RentalStatus         @default(PENDING)
-  affiliateReferralId Int?                 @map("affiliate_referral_id")
-  paystackRef         String?              @unique @map("paystack_ref")
-  createdAt           DateTime             @default(now()) @map("created_at")
-  updatedAt           DateTime             @updatedAt @map("updated_at")
-  escrow              Escrow?
-  maintenanceRequests MaintenanceRequest[]
-  payments            Payment[]
-  agreement           RentalAgreement?
-  affiliateReferral   AffiliateReferral?   @relation(fields: [affiliateReferralId], references: [id])
-  property            Property             @relation(fields: [propertyId], references: [id])
-  tenant              User                 @relation("TenantRentals", fields: [tenantId], references: [id])
+  id                        Int                  @id @default(autoincrement())
+  propertyId                String               @map("property_id")
+  tenantId                  Int                  @map("tenant_id")
+  rentAmount                Decimal              @map("rent_amount") @db.Decimal(12, 2)
+  serviceFee                Decimal              @map("service_fee") @db.Decimal(12, 2)
+  totalPaid                 Decimal              @map("total_paid") @db.Decimal(12, 2)
+  startDate                 DateTime             @map("start_date")
+  endDate                   DateTime             @map("end_date")
+  status                    RentalStatus         @default(PENDING)
+  affiliateReferralId       Int?                 @map("affiliate_referral_id")
+  scoutId                   Int?                 @map("scout_id")
+  affiliateId               Int?                 @map("affiliate_id")
+  paymentMode               PaymentMode          @default(ESCROW) @map("payment_mode")
+  splitCode                 String?              @map("split_code")
+  splitId                   Int?                 @map("split_id")
+  landlordPayoutAmount      Decimal?             @map("landlord_payout_amount") @db.Decimal(12, 2)
+  platformRevenueAmount     Decimal?             @map("platform_revenue_amount") @db.Decimal(12, 2)
+  scoutCommissionAmount     Decimal?             @map("scout_commission_amount") @db.Decimal(12, 2)
+  affiliateCommissionAmount Decimal?             @map("affiliate_commission_amount") @db.Decimal(12, 2)
+  paystackRef               String?              @unique @map("paystack_ref")
+  disputeReason            String?              @map("dispute_reason") @db.Text
+  disputedAt               DateTime?            @map("disputed_at")
+  disputedById             Int?                 @map("disputed_by_id")
+  disputeResolvedAt        DateTime?            @map("dispute_resolved_at")
+  disputeResolutionNote    String?              @map("dispute_resolution_note") @db.Text
+  createdAt                 DateTime             @default(now()) @map("created_at")
+  updatedAt                 DateTime             @updatedAt @map("updated_at")
+  escrow                    Escrow?
+  maintenanceRequests       MaintenanceRequest[]
+  payments                  Payment[]
+  commissions               Commission[]
+  agreement                 RentalAgreement?
+  affiliateReferral         AffiliateReferral?   @relation(fields: [affiliateReferralId], references: [id])
+  property                  Property             @relation(fields: [propertyId], references: [id])
+  tenant                    User                 @relation("TenantRentals", fields: [tenantId], references: [id])
 
   @@index([propertyId])
   @@index([tenantId])
   @@index([status])
   @@index([affiliateReferralId], map: "rentals_affiliate_referral_id_fkey")
+  @@index([scoutId])
+  @@index([affiliateId])
+  @@index([paymentMode])
+  @@index([splitCode])
+  @@index([disputedById])
   @@map("rentals")
 }
 
@@ -185,55 +229,69 @@ model Escrow {
 }
 
 model Payment {
-  id          Int           @id @default(autoincrement())
-  rentalId    Int           @map("rental_id")
-  amount      Decimal       @db.Decimal(12, 2)
-  paystackRef String?       @unique @map("paystack_ref")
-  nombaRef    String?       @unique @map("nomba_ref")
-  status      PaymentStatus @default(PENDING)
-  paidAt      DateTime?     @map("paid_at")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  rental      Rental        @relation(fields: [rentalId], references: [id])
+  id             Int            @id @default(autoincrement())
+  rentalId       Int            @map("rental_id")
+  amount         Decimal        @db.Decimal(12, 2)
+  paystackRef    String?        @unique @map("paystack_ref")
+  disputeReason            String?              @map("dispute_reason") @db.Text
+  disputedAt               DateTime?            @map("disputed_at")
+  disputedById             Int?                 @map("disputed_by_id")
+  disputeResolvedAt        DateTime?            @map("dispute_resolved_at")
+  disputeResolutionNote    String?              @map("dispute_resolution_note") @db.Text
+  nombaRef       String?        @unique @map("nomba_ref")
+  status         PaymentStatus  @default(PENDING)
+  gateway        PaymentGateway @default(PAYSTACK)
+  gatewayPayload Json?          @map("gateway_payload")
+  splitPayload   Json?          @map("split_payload")
+  paidAt         DateTime?      @map("paid_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  rental         Rental         @relation(fields: [rentalId], references: [id])
 
   @@index([rentalId])
   @@map("payments")
 }
 
 model Commission {
-  id         Int              @id @default(autoincrement())
-  escrowId   Int              @map("escrow_id")
-  userId     Int              @map("user_id")
-  type       CommissionType
-  amount     Decimal          @db.Decimal(12, 2)
-  percentage Decimal          @db.Decimal(5, 2)
-  status     CommissionStatus @default(PENDING)
-  expiresAt  DateTime?        @map("expires_at")
-  paidAt     DateTime?        @map("paid_at")
-  createdAt  DateTime         @default(now()) @map("created_at")
-  escrow     Escrow           @relation(fields: [escrowId], references: [id])
-  user       User             @relation(fields: [userId], references: [id])
+  id                     Int                      @id @default(autoincrement())
+  escrowId               Int?                     @map("escrow_id")
+  rentalId               Int?                     @map("rental_id")
+  userId                 Int                      @map("user_id")
+  type                   CommissionType
+  amount                 Decimal                  @db.Decimal(12, 2)
+  percentage             Decimal                  @db.Decimal(5, 2)
+  status                 CommissionStatus         @default(PENDING)
+  settlementMode         CommissionSettlementMode @default(WALLET) @map("settlement_mode")
+  paystackSubaccountCode String?                  @map("paystack_subaccount_code")
+  expiresAt              DateTime?                @map("expires_at")
+  paidAt                 DateTime?                @map("paid_at")
+  createdAt              DateTime                 @default(now()) @map("created_at")
+  escrow                 Escrow?                  @relation(fields: [escrowId], references: [id])
+  rental                 Rental?                  @relation(fields: [rentalId], references: [id])
+  user                   User                     @relation(fields: [userId], references: [id])
 
   @@index([escrowId])
+  @@index([rentalId])
   @@index([userId])
+  @@index([settlementMode])
   @@map("commissions")
 }
 
 model ScoutLead {
-  id              Int          @id @default(autoincrement())
-  scoutId         Int          @map("scout_id")
-  landlordName    String       @map("landlord_name")
-  landlordPhone   String       @map("landlord_phone")
-  propertyAddress String       @map("property_address")
-  areaId          Int          @map("area_id")
-  notes           String?      @db.Text
-  status          LeadStatus   @default(SUBMITTED)
-  createdAt       DateTime     @default(now()) @map("created_at")
-  updatedAt       DateTime     @updatedAt @map("updated_at")
-  latitude        Decimal?     @db.Decimal(10, 8)
-  longitude       Decimal?     @db.Decimal(11, 8)
+  id              Int        @id @default(autoincrement())
+  scoutId         Int        @map("scout_id")
+  landlordName    String     @map("landlord_name")
+  landlordPhone   String     @map("landlord_phone")
+  propertyAddress String     @map("property_address")
+  areaId          Int        @map("area_id")
+  notes           String?    @db.Text
+  status          LeadStatus @default(SUBMITTED)
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  latitude        Decimal?   @db.Decimal(10, 8)
+  longitude       Decimal?   @db.Decimal(11, 8)
   properties      Property[]
-  scout           User         @relation(fields: [scoutId], references: [id])
-  area            Area         @relation(fields: [areaId], references: [id])
+  scout           User       @relation(fields: [scoutId], references: [id])
+  area            Area       @relation(fields: [areaId], references: [id])
 
   @@index([scoutId])
   @@index([areaId])
@@ -307,18 +365,43 @@ model InspectionSlot {
   @@map("inspection_slots")
 }
 
+model InspectionRequest {
+  id                  Int                     @id @default(autoincrement())
+  propertyId          String                  @map("property_id")
+  tenantId            Int                     @map("tenant_id")
+  tenantPhone         String?                 @map("tenant_phone")
+  preferredDate       DateTime?               @map("preferred_date")
+  preferredTimeWindow String?                 @map("preferred_time_window")
+  status              InspectionRequestStatus @default(REQUESTED)
+  scheduledAt         DateTime?               @map("scheduled_at")
+  assignedStaffId     Int?                    @map("assigned_staff_id")
+  adminNote           String?                 @map("admin_note") @db.Text
+  createdAt           DateTime                @default(now()) @map("created_at")
+  updatedAt           DateTime                @updatedAt @map("updated_at")
+  property            Property                @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenant              User                    @relation("TenantInspectionRequests", fields: [tenantId], references: [id])
+  assignedStaff       User?                   @relation("AssignedInspectionRequests", fields: [assignedStaffId], references: [id])
+
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([assignedStaffId])
+  @@map("inspection_requests")
+}
+
 model RentalAgreement {
-  id               Int       @id @default(autoincrement())
-  rentalId         Int       @unique @map("rental_id")
-  documentUrl      String?   @map("document_url")
-  tenantSignature   String?   @db.Text @map("tenant_signature")
-  landlordSignature String?   @db.Text @map("landlord_signature")
-  tenantSigned       Boolean   @default(false) @map("tenant_signed")
-  landlordSigned     Boolean   @default(false) @map("landlord_signed")
-  tenantSignedAt     DateTime? @map("tenant_signed_at")
-  landlordSignedAt   DateTime? @map("landlord_signed_at")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  rental             Rental    @relation(fields: [rentalId], references: [id])
+  id                Int       @id @default(autoincrement())
+  rentalId          Int       @unique @map("rental_id")
+  documentUrl       String?   @map("document_url")
+  tenantSignature   String?   @map("tenant_signature") @db.Text
+  landlordSignature String?   @map("landlord_signature") @db.Text
+  tenantSigned      Boolean   @default(false) @map("tenant_signed")
+  landlordSigned    Boolean   @default(false) @map("landlord_signed")
+  tenantSignedAt    DateTime? @map("tenant_signed_at")
+  landlordSignedAt  DateTime? @map("landlord_signed_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  rental            Rental    @relation(fields: [rentalId], references: [id])
 
   @@map("rental_agreements")
 }
@@ -510,6 +593,23 @@ enum PaymentStatus {
   FAILED
 }
 
+enum PaymentMode {
+  ESCROW
+  DIRECT_SPLIT
+}
+
+enum PaymentGateway {
+  PAYSTACK
+  NOMBA
+}
+
+enum PaymentSetupStatus {
+  NOT_STARTED
+  PENDING
+  VERIFIED
+  FAILED
+}
+
 enum CommissionType {
   SCOUT
   AFFILIATE
@@ -518,8 +618,17 @@ enum CommissionType {
 
 enum CommissionStatus {
   PENDING
+  PENDING_SETUP
   PAID
   CANCELLED
+}
+
+enum CommissionSettlementMode {
+  WALLET
+  PAYSTACK_SPLIT
+  PENDING_SETUP
+  MANUAL
+  PLATFORM
 }
 
 enum LeadStatus {
@@ -536,6 +645,13 @@ enum InspectionStatus {
   CANCELLED
 }
 
+enum InspectionRequestStatus {
+  REQUESTED
+  CONTACTED
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
 enum MaintenanceStatus {
   SUBMITTED
   IN_PROGRESS

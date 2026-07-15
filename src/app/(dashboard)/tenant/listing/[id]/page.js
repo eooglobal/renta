@@ -168,6 +168,25 @@ export default function TenantPropertyDetails() {
                         </div>
                     )}
 
+                    {property.videos && property.videos.length > 0 && (
+                        <div className={styles.section}>
+                            <h3 className={styles.sectionTitle}>
+                                <Info size={24} className="text-primary" /> Walkthrough Videos
+                            </h3>
+                            <div className={styles.videoGrid}>
+                                {property.videos.map((video) => (
+                                    <video
+                                        key={video.id}
+                                        className={styles.videoPlayer}
+                                        src={video.url}
+                                        controls
+                                        playsInline
+                                        preload="metadata"
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     {/* About Section */}
                     <div className={styles.section}>
                         <h3 className={styles.sectionTitle}>
@@ -237,7 +256,7 @@ export default function TenantPropertyDetails() {
                         ) : (
                             <div className="mb-6 p-4 bg-gray-50 rounded-xl text-sm border border-gray-100">
                                 <Info size={16} className="inline mr-2 text-primary" />
-                                Includes Renta Escrow Protection & 24/7 Support.
+                                Includes secure platform payment records and Renta support.
                             </div>
                         )}
 

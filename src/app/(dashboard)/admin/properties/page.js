@@ -179,7 +179,7 @@ export default function AdminPropertiesPage() {
                         className="badge badge-verified"
                         style={{ marginLeft: 4 }}
                       >
-                        NIN ✓
+                        ID verified
                       </span>
                     )}
                   </td>

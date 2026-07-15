@@ -4,8 +4,9 @@ import { NextResponse } from "next/server";
 import { sendPropertyVerifiedEmail } from "@/lib/email";
 import { createNotification } from "@/lib/notifications";
 import { normalizePropertyImages } from "@/lib/images/normalize";
+import { getLandlordPublicationBlockers } from "@/lib/propertyReadiness";
 
-// GET /api/admin/properties — List all properties for admin review
+// GET /api/admin/properties - List all properties for admin review
 export async function GET(request) {
   try {
     const session = await auth();
@@ -70,7 +71,7 @@ export async function GET(request) {
   }
 }
 
-// PATCH /api/admin/properties — Verify/reject a property
+// PATCH /api/admin/properties - Verify/reject a property
 export async function PATCH(request) {
   try {
     const session = await auth();
@@ -114,6 +115,18 @@ export async function PATCH(request) {
 
     switch (action) {
       case "verify":
+        {
+          const blockers = getLandlordPublicationBlockers(property.landlord);
+          if (blockers.length > 0) {
+            return NextResponse.json(
+              {
+                error: `Cannot verify property until landlord completes ${blockers.join(" and ")}.`,
+                blockers,
+              },
+              { status: 409 },
+            );
+          }
+        }
         updateData = {
           status: "VERIFIED",
           verificationStatus: "VERIFIED",
@@ -128,7 +141,7 @@ export async function PATCH(request) {
 
         createNotification(property.landlordId, {
           type: "VERIFICATION",
-          title: "Property Verified ✓",
+          title: "Property Verified",
           message: `Your property "${property.title}" has been verified and is now live.`,
           link: "/landlord/properties",
         });
@@ -151,6 +164,18 @@ export async function PATCH(request) {
         break;
 
       case "activate":
+        {
+          const blockers = getLandlordPublicationBlockers(property.landlord);
+          if (blockers.length > 0) {
+            return NextResponse.json(
+              {
+                error: `Cannot activate property until landlord completes ${blockers.join(" and ")}.`,
+                blockers,
+              },
+              { status: 409 },
+            );
+          }
+        }
         updateData = { status: "VERIFIED" };
         break;
 

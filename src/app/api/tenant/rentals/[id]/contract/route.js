@@ -127,7 +127,7 @@ export async function GET(request, { params }) {
                 ['Total Amount Paid:', fmtAmount(rental.totalPaid)],
             ]);
 
-            section('4. ESCROW TERMS', 'All rental funds are held securely in escrow by Renta. Funds are released to the Landlord only after the Tenant confirms access to the property. In the event of a dispute, funds remain held until the matter is resolved by Renta administration.');
+            section('4. PAYMENT AND SETTLEMENT TERMS', 'Rental payments made through Renta are processed through the Platform payment gateway. Eligible settlement may be split directly to verified recipients, while Renta keeps the payment record and may support refund, reversal, or dispute review where applicable.');
 
             section('5. TENANT OBLIGATIONS', 'Maintain the property in good condition. No subletting without written consent. No unlawful use of the premises. Report damages promptly via the Renta platform.');
 

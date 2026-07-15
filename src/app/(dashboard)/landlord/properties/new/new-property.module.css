@@ -305,3 +305,25 @@
         grid-template-columns: 1fr;
     }
 }
+.previewItem video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: var(--color-gray-900);
+}
+
+.videoUploadBlock {
+    margin-top: var(--space-5);
+}
+
+.videoBadge {
+    position: absolute;
+    left: var(--space-2);
+    bottom: var(--space-2);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    background: rgba(0, 0, 0, 0.72);
+    color: white;
+    font-size: var(--text-xs);
+    font-weight: 600;
+}

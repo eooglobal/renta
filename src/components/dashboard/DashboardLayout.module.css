@@ -18,31 +18,65 @@
     left: 0;
     bottom: 0;
     z-index: 50;
+    overflow: hidden;
     transition: transform var(--transition-base);
 }
 
 .sidebarHeader {
+    min-height: var(--header-height);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-5) var(--space-6);
+    padding: var(--space-4) var(--space-5);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.sidebarLogo {
-    font-family: var(--font-heading);
-    font-size: var(--text-xl);
-    font-weight: var(--font-extrabold);
+.sidebarLogo,
+.topbarBrand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
     color: var(--color-primary);
     text-decoration: none;
 }
 
+.logoMark {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(253, 168, 41, 0.14);
+    border: 1px solid rgba(253, 168, 41, 0.26);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.logoMark img {
+    width: 24px;
+    height: 24px;
+    display: block;
+}
+
+.logoText {
+    font-family: var(--font-heading);
+    font-size: var(--text-xl);
+    font-weight: var(--font-extrabold);
+    line-height: 1;
+    letter-spacing: 0;
+}
+
 .closeSidebar {
     display: none;
-    background: none;
-    border: none;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: var(--text-lg);
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    color: rgba(255, 255, 255, 0.72);
     cursor: pointer;
 }
 
@@ -51,15 +85,19 @@
     flex: 1;
     padding: var(--space-4) var(--space-3);
     overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
 }
 
 .navItem {
+    min-height: 44px;
     display: flex;
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
     border-radius: var(--radius-md);
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.68);
     text-decoration: none;
     font-size: var(--text-sm);
     font-weight: var(--font-medium);
@@ -69,7 +107,7 @@
 
 .navItem:hover {
     background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.95);
 }
 
 .navItemActive {
@@ -83,16 +121,18 @@
 }
 
 .navIcon {
-    font-size: 1.1rem;
     width: 24px;
-    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
 }
 
 /* Sidebar Footer */
 .sidebarFooter {
-    padding: var(--space-4) var(--space-4);
+    padding: var(--space-4);
     border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .userInfo {
@@ -133,17 +173,22 @@
 
 .userRole {
     font-size: var(--text-xs);
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.48);
     text-transform: capitalize;
 }
 
 .signOutBtn {
     width: 100%;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
     padding: var(--space-2) var(--space-4);
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-md);
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.72);
     font-size: var(--text-sm);
     cursor: pointer;
     transition: all var(--transition-fast);
@@ -158,66 +203,85 @@
 /* Main Content */
 .main {
     flex: 1;
-    margin-left: var(--sidebar-width);
-    min-height: 100vh;
     min-width: 0;
-    overflow-x: hidden;
-    /* Prevent horizontal scroll */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    margin-left: var(--sidebar-width);
     max-width: calc(100vw - var(--sidebar-width));
-    /* Never exceed remaining viewport */
+    overflow-x: hidden;
 }
 
 /* Top Bar */
 .topbar {
+    min-height: var(--header-height);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: var(--header-height);
+    gap: var(--space-4);
     padding: 0 var(--space-6);
-    background: var(--bg-primary);
+    background: rgba(255, 255, 255, 0.96);
     border-bottom: 1px solid var(--border-light);
     position: sticky;
     top: 0;
     z-index: 10;
-    pointer-events: none;
-    /* Allow clicks to pass through transparent areas */
+    backdrop-filter: blur(12px);
+}
+
+.topbarLeft,
+.topbarRight {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+}
+
+.topbarRight {
+    margin-left: auto;
+}
+
+.topbarBrand {
+    display: none;
+    color: var(--color-black);
+}
+
+.topbarBrand .logoMark {
+    width: 34px;
+    height: 34px;
+    background: var(--color-primary-light);
+    border-color: rgba(253, 168, 41, 0.35);
+}
+
+.topbarBrand .logoMark img {
+    width: 22px;
+    height: 22px;
+}
+
+.topbarBrand .logoText {
+    font-size: var(--text-lg);
 }
 
 .menuToggle {
     display: none;
-    flex-direction: column;
-    gap: 5px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: var(--space-2);
-    pointer-events: auto;
-    /* Re-enable clicks for the button */
-}
-
-.menuToggle span {
-    display: block;
-    width: 22px;
-    height: 2px;
-    background: var(--color-black);
-}
-
-.topbarRight {
-    display: flex;
     align-items: center;
-    gap: var(--space-4);
-    margin-left: auto;
-    pointer-events: auto;
-    /* Re-enable clicks for the items */
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    color: var(--text-primary);
 }
 
 /* Page Content */
 .content {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
     padding: var(--space-6);
     flex: 1;
-    max-width: 100%;
     overflow-x: hidden;
-    /* Clip any wide children */
     box-sizing: border-box;
 }
 
@@ -237,6 +301,7 @@
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);
+        box-shadow: var(--shadow-xl);
     }
 
     .sidebarOpen {
@@ -244,17 +309,21 @@
     }
 
     .closeSidebar {
-        display: block;
+        display: inline-flex;
     }
 
     .main {
         margin-left: 0;
         max-width: 100vw;
-        /* Full width on mobile */
     }
 
-    .menuToggle {
-        display: flex;
+    .topbar {
+        padding: 0 var(--space-4);
+    }
+
+    .menuToggle,
+    .topbarBrand {
+        display: inline-flex;
     }
 
     .overlay {
