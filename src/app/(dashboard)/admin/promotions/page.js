@@ -5,14 +5,18 @@ import {
   Star,
   Calendar,
   ExternalLink,
-  ShieldCheck,
   AlertCircle,
   Search,
-  MoreVertical,
-  CheckCircle2,
+  Loader2,
+  Home,
+  Mail,
 } from "lucide-react";
-import styles from "../../tenant/dashboard.module.css"; // Reusing dashboard styles
 import Link from "next/link";
+
+const formatMoney = (value) => `₦${Number(value || 0).toLocaleString()}`;
+
+const formatDate = (date) =>
+  new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(date));
 
 export default function AdminPromotionsPage() {
   const [properties, setProperties] = useState([]);
@@ -58,9 +62,7 @@ export default function AdminPromotionsPage() {
         }),
       });
 
-      if (res.ok) {
-        await fetchPromotions();
-      }
+      if (res.ok) await fetchPromotions();
     } catch (err) {
       console.error("Failed to toggle feature status", err);
     } finally {
@@ -68,170 +70,260 @@ export default function AdminPromotionsPage() {
     }
   };
 
-  const filteredProperties = properties.filter(
-    (p) =>
-      p.title?.toLowerCase().includes(search.toLowerCase()) ||
-      p.landlord?.email?.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filteredProperties = properties.filter((property) => {
+    const query = search.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      property.title?.toLowerCase().includes(query) ||
+      property.landlord?.email?.toLowerCase().includes(query) ||
+      property.landlord?.firstName?.toLowerCase().includes(query) ||
+      property.landlord?.lastName?.toLowerCase().includes(query)
+    );
+  });
 
-  const featuredCount = properties.filter((p) => p.isFeatured).length;
+  const featuredCount = properties.filter((property) => property.isFeatured).length;
 
   return (
-    <div className="fade-in">
-      <div className={styles.welcomeSection}>
-        <div className="flex justify-between items-start">
-          <div>
-            <h2>Promotion Management</h2>
-            <p className="text-muted">
-              Manage featured listings and boost property visibility
-            </p>
-          </div>
-          <div className="bg-primary-light p-4 rounded-2xl flex items-center gap-4">
-            <div className="text-right">
-              <span className="block text-xs uppercase text-muted font-bold tracking-wider">
+    <div className="fade-in dashboard-page">
+      <header className="dashboard-header">
+        <div>
+          <h1>Promotion Management</h1>
+          <p>Manage featured listings and boost property visibility.</p>
+        </div>
+        <div className="dashboard-panel dashboard-surface-muted" style={{ minWidth: 220 }}>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs text-muted font-bold" style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 Active Featured
-              </span>
-              <span className="text-2xl font-black text-primary">
-                {featuredCount}
-              </span>
+              </p>
+              <h3 style={{ fontSize: "var(--text-2xl)", margin: 0 }}>{featuredCount}</h3>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white">
-              <Star size={24} fill="currentColor" />
-            </div>
+            <span className="icon-chip">
+              <Star size={20} fill="currentColor" />
+            </span>
           </div>
+        </div>
+      </header>
+
+      <div className="dashboard-grid mb-6">
+        <div className="dashboard-panel dashboard-span-4 dashboard-surface-muted">
+          <p className="text-sm text-muted">Promotion Price</p>
+          <h3 style={{ fontSize: "var(--text-xl)", margin: 0 }}>
+            {formatMoney(promotionSettings.promotionPrice)}
+          </h3>
+        </div>
+        <div className="dashboard-panel dashboard-span-4 dashboard-surface-muted">
+          <p className="text-sm text-muted">Promotion Duration</p>
+          <h3 style={{ fontSize: "var(--text-xl)", margin: 0 }}>
+            {promotionSettings.promotionDurationDays} days
+          </h3>
+        </div>
+        <div className="dashboard-panel dashboard-span-4 dashboard-surface-muted">
+          <p className="text-sm text-muted">Visible Candidates</p>
+          <h3 style={{ fontSize: "var(--text-xl)", margin: 0 }}>{filteredProperties.length}</h3>
         </div>
       </div>
 
-      {/* Quick Filters/Search */}
-      <div className="flex gap-4 mb-8">
-        <div className="relative flex-1">
+      <div className="dashboard-surface mb-6" style={{ padding: "var(--space-4)" }}>
+        <div style={{ position: "relative" }}>
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
             size={18}
+            style={{
+              position: "absolute",
+              left: "var(--space-4)",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "var(--text-muted)",
+              pointerEvents: "none",
+            }}
           />
           <input
             type="text"
-            placeholder="Search properties or landlords..."
-            className="form-input pl-10"
+            placeholder="Search properties, landlords, or emails..."
+            className="form-input"
+            style={{ paddingLeft: "var(--space-10)" }}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(event) => setSearch(event.target.value)}
           />
         </div>
       </div>
 
-      {/* Properties Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-          Array(6)
-            .fill(0)
-            .map((_, i) => (
-              <div key={i} className="card animate-pulse h-64"></div>
-            ))
-        ) : filteredProperties.length === 0 ? (
-          <div className="col-span-full py-20 text-center">
-            <AlertCircle className="mx-auto text-muted mb-4" size={48} />
-            <h3 className="text-xl font-bold">No properties found</h3>
-            <p className="text-muted">
-              Search for verified properties to promote them.
-            </p>
-          </div>
-        ) : (
-          filteredProperties.map((property) => (
-            <div
-              key={property.id}
-              className={`card overflow-hidden transition-all duration-300 ${property.isFeatured ? "border-primary ring-1 ring-primary-light ring-offset-2" : ""}`}
-            >
-              <div className="relative aspect-video">
-                {property.images?.[0] ? (
-                  <img
-                    src={property.images[0].url}
-                    alt={property.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-100 flex items-center justify-center text-muted">
-                    No Image
-                  </div>
-                )}
-                {property.isFeatured && (
-                  <div className="absolute top-3 right-3 bg-primary text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
-                    <Star size={12} fill="currentColor" /> FEATURED
-                  </div>
-                )}
-              </div>
-
-              <div className="p-5">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-bold line-clamp-1 flex-1 pr-2">
-                    {property.title}
-                  </h3>
-                  <Link
-                    href={`/listing/${property.id}`}
-                    target="_blank"
-                    className="text-muted hover:text-primary"
-                  >
-                    <ExternalLink size={18} />
-                  </Link>
-                </div>
-
-                <div className="flex items-center gap-2 text-xs text-muted mb-4">
-                  <span className="font-medium text-gray-700">Landlord:</span>
-                  <span>{property.landlord?.email}</span>
-                </div>
-
-                {property.isFeatured && property.featuredUntil && (
-                  <div className="bg-success-light text-success text-xs p-2 rounded-lg mb-4 flex items-center gap-2">
-                    <Calendar size={14} />
-                    <span>
-                      Expires:{" "}
-                      {new Date(property.featuredUntil).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() =>
-                      toggleFeature(property.id, property.isFeatured)
-                    }
-                    disabled={actionLoading === property.id}
-                    className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
-                      property.isFeatured
-                        ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                        : "bg-primary text-white hover:shadow-lg hover:shadow-primary-light active:scale-95"
-                    }`}
-                  >
-                    {actionLoading === property.id ? (
-                      <span className="spinner spinner-white"></span>
-                    ) : property.isFeatured ? (
-                      "Remove Feature"
-                    ) : (
-                      "Promote Now"
-                    )}
-                  </button>
-                </div>
+      {loading ? (
+        <div className="operation-list">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="dashboard-surface" style={{ minHeight: 132 }}>
+              <div className="flex items-center gap-4 text-muted">
+                <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />
+                Loading promotion candidates...
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      ) : filteredProperties.length === 0 ? (
+        <div className="dashboard-surface text-center" style={{ padding: "var(--space-12)" }}>
+          <AlertCircle size={44} style={{ color: "var(--text-light)", margin: "0 auto var(--space-4)" }} />
+          <h3 style={{ fontSize: "var(--text-lg)" }}>No properties found</h3>
+          <p className="text-sm text-muted">Search for verified properties to promote them.</p>
+        </div>
+      ) : (
+        <div className="operation-list">
+          {filteredProperties.map((property) => {
+            const isBusy = actionLoading === property.id;
+            const landlordName = [property.landlord?.firstName, property.landlord?.lastName]
+              .filter(Boolean)
+              .join(" ");
+
+            return (
+              <article key={property.id} className="dashboard-surface" style={{ padding: "var(--space-4)" }}>
+                <div className="promotion-row">
+                  <div className="promotion-media">
+                    {property.images?.[0]?.url ? (
+                      <img src={property.images[0].url} alt={property.title || "Property"} />
+                    ) : (
+                      <div className="promotion-media-empty">
+                        <Home size={22} />
+                        <span>No image</span>
+                      </div>
+                    )}
+                    {property.isFeatured && (
+                      <span className="promotion-featured-badge">
+                        <Star size={12} fill="currentColor" /> Featured
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="promotion-content">
+                    <div className="flex justify-between items-start gap-3" style={{ flexWrap: "wrap" }}>
+                      <div style={{ minWidth: 0 }}>
+                        <h3 style={{ fontSize: "var(--text-lg)", marginBottom: "var(--space-1)" }}>
+                          {property.title || "Untitled property"}
+                        </h3>
+                        <div className="operation-meta">
+                          <span className="flex items-center gap-1">
+                            <Mail size={12} /> {property.landlord?.email || "No email"}
+                          </span>
+                          {landlordName && <span>{landlordName}</span>}
+                          {property.featuredUntil && property.isFeatured && (
+                            <span className="flex items-center gap-1">
+                              <Calendar size={12} /> Expires {formatDate(property.featuredUntil)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <Link
+                        href={`/listing/${property.id}`}
+                        target="_blank"
+                        className="btn btn-sm btn-outline"
+                        aria-label={`Open ${property.title || "property"} listing`}
+                      >
+                        <ExternalLink size={14} /> View
+                      </Link>
+                    </div>
+
+                    <div className="promotion-footer">
+                      <span className={`badge ${property.isFeatured ? "badge-verified" : "badge-pending"}`}>
+                        {property.isFeatured ? "Featured" : "Available to promote"}
+                      </span>
+                      <button
+                        onClick={() => toggleFeature(property.id, property.isFeatured)}
+                        disabled={isBusy}
+                        className={`btn ${property.isFeatured ? "btn-outline" : "btn-primary"}`}
+                      >
+                        {isBusy ? (
+                          <>
+                            <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+                            Updating...
+                          </>
+                        ) : property.isFeatured ? (
+                          "Remove Feature"
+                        ) : (
+                          "Promote Now"
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
 
       <style jsx>{`
-        .bg-primary-light {
-          background-color: rgba(var(--color-primary-rgb), 0.1);
+        .promotion-row {
+          display: grid;
+          grid-template-columns: 178px minmax(0, 1fr);
+          gap: var(--space-5);
+          align-items: stretch;
         }
-        .bg-success-light {
-          background-color: #f0fdf4;
-          border: 1px solid #dcfce7;
-        }
-        .line-clamp-1 {
-          display: -webkit-box;
-          -webkit-line-clamp: 1;
-          -webkit-box-orient: vertical;
+
+        .promotion-media {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 4 / 3;
           overflow: hidden;
+          border-radius: var(--radius-md);
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-light);
         }
-        .ring-primary-light {
-          --tw-ring-color: rgba(var(--color-primary-rgb), 0.2);
+
+        .promotion-media img {
+          width: 100%;
+          height: 100%;
+          display: block;
+          object-fit: cover;
+        }
+
+        .promotion-media-empty {
+          height: 100%;
+          display: grid;
+          place-items: center;
+          align-content: center;
+          gap: var(--space-2);
+          color: var(--text-muted);
+          font-size: var(--text-xs);
+        }
+
+        .promotion-featured-badge {
+          position: absolute;
+          top: var(--space-2);
+          left: var(--space-2);
+          display: inline-flex;
+          align-items: center;
+          gap: var(--space-1);
+          border-radius: var(--radius-full);
+          background: var(--color-primary);
+          color: var(--color-black);
+          font-size: var(--text-xs);
+          font-weight: var(--font-bold);
+          padding: 4px 8px;
+          box-shadow: var(--shadow-sm);
+        }
+
+        .promotion-content {
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          gap: var(--space-4);
+        }
+
+        .promotion-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: var(--space-3);
+          flex-wrap: wrap;
+        }
+
+        @media (max-width: 720px) {
+          .promotion-row {
+            grid-template-columns: 1fr;
+          }
+
+          .promotion-media {
+            max-height: 230px;
+          }
         }
       `}</style>
     </div>
