@@ -273,11 +273,12 @@ export default function NewPropertyPage() {
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit}>
+            <div className={styles.propertyFormLayout}>
+                <form onSubmit={handleSubmit} className={styles.propertyFormMain}>
 
                 {/* Step 1: Property Details */}
                 {step === 1 && (
-                    <div className={`card ${styles.formSection}`}>
+                    <div className={`dashboard-surface ${styles.formSection}`}>
                         <h4 className={styles.sectionLabel}>Property Details</h4>
 
                         <div className="form-group">
@@ -366,7 +367,7 @@ export default function NewPropertyPage() {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="rentPrice" className="form-label">Annual Rent (₦)</label>
+                            <label htmlFor="rentPrice" className="form-label">Annual Rent (â‚¦)</label>
                             <input
                                 id="rentPrice" name="rentPrice" type="number" className="form-input"
                                 placeholder="e.g. 150000"
@@ -374,7 +375,7 @@ export default function NewPropertyPage() {
                             />
                             {formData.rentPrice && (
                                 <span className="form-help">
-                                    Tenant pays: ₦{totalPayable} (₦{Number(formData.rentPrice).toLocaleString()} + ₦{serviceFee} service fee)
+                                    Tenant pays: â‚¦{totalPayable} (â‚¦{Number(formData.rentPrice).toLocaleString()} + â‚¦{serviceFee} service fee)
                                 </span>
                             )}
                         </div>
@@ -424,7 +425,7 @@ export default function NewPropertyPage() {
                                 }
                                 setStep(2);
                             }}>
-                                Next: Add Media →
+                                Next: Add Media â†’
                             </button>
                         </div>
                     </div>
@@ -432,12 +433,12 @@ export default function NewPropertyPage() {
 
                 {/* Step 2: Photos */}
                 {step === 2 && (
-                    <div className={`card ${styles.formSection}`}>
+                    <div className={`dashboard-surface ${styles.formSection}`}>
                         <h4 className={styles.sectionLabel}>Property Media</h4>
                         <p className="text-muted text-sm mb-4">Upload up to 10 photos and up to 3 walkthrough videos. The first photo will be the cover image.</p>
 
                         {locationError && (
-                            <div className="card mb-4" style={{ background: 'var(--color-error-light)', borderLeft: '4px solid var(--color-error)', padding: 'var(--space-2) var(--space-4)' }}>
+                            <div className="dashboard-alert dashboard-alert-error mb-4">
                                 <p className="text-sm font-medium" style={{ color: 'var(--color-error)' }}>{locationError}</p>
                             </div>
                         )}
@@ -466,7 +467,7 @@ export default function NewPropertyPage() {
                                 </label>
                             </div>
                         </div>
-                        <p className="text-xs text-muted mt-2 mb-4">PNG, JPG up to 5MB each · Max 10 photos</p>
+                        <p className="text-xs text-muted mt-2 mb-4">PNG, JPG up to 5MB each Â· Max 10 photos</p>
 
                         {previews.length > 0 && (
                             <div className={styles.previewGrid}>
@@ -521,7 +522,7 @@ export default function NewPropertyPage() {
 
                 {/* Step 3: Review */}
                 {step === 3 && (
-                    <div className={`card ${styles.formSection}`}>
+                    <div className={`dashboard-surface ${styles.formSection}`}>
                         <h4 className={styles.sectionLabel}>Review Your Listing</h4>
 
                         <div className={styles.reviewGrid}>
@@ -547,7 +548,7 @@ export default function NewPropertyPage() {
                             </div>
                             <div className={styles.reviewItem}>
                                 <span className="text-muted text-sm">Annual Rent</span>
-                                <strong className="text-primary-color">₦{Number(formData.rentPrice).toLocaleString()}</strong>
+                                <strong className="text-primary-color">â‚¦{Number(formData.rentPrice).toLocaleString()}</strong>
                             </div>
                             <div className={styles.reviewItem}>
                                 <span className="text-muted text-sm">Photos</span>
@@ -570,22 +571,22 @@ export default function NewPropertyPage() {
                             <h5>Tenant Price Breakdown</h5>
                             <div className={styles.breakdownRow}>
                                 <span>Your Rent</span>
-                                <span>₦{Number(formData.rentPrice).toLocaleString()}</span>
+                                <span>â‚¦{Number(formData.rentPrice).toLocaleString()}</span>
                             </div>
                             <div className={styles.breakdownRow}>
                                 <span>Platform Fee (10%)</span>
-                                <span>₦{serviceFee}</span>
+                                <span>â‚¦{serviceFee}</span>
                             </div>
                             <div className={`${styles.breakdownRow} ${styles.breakdownTotal}`}>
                                 <span>Tenant Pays</span>
-                                <span>₦{totalPayable}</span>
+                                <span>â‚¦{totalPayable}</span>
                             </div>
-                            <p className="text-xs text-muted mt-2">You receive ₦{Number(formData.rentPrice).toLocaleString()} — the full rent amount.</p>
+                            <p className="text-xs text-muted mt-2">You receive â‚¦{Number(formData.rentPrice).toLocaleString()} â€” the full rent amount.</p>
                         </div>
 
                         <div className={styles.formActions}>
                             <button type="button" className="btn btn-outline" onClick={() => setStep(2)}>
-                                ← Back
+                                â† Back
                             </button>
                             <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
                                 {loading ? (
@@ -600,7 +601,28 @@ export default function NewPropertyPage() {
                         </div>
                     </div>
                 )}
-            </form>
+                </form>
+
+                <aside className={styles.propertyFormAside}>
+                    <div className="dashboard-panel dashboard-surface-muted">
+                        <p className={styles.asideLabel}>Listing Progress</p>
+                        <h3 className={styles.asideTitle}>Step {step} of 3</h3>
+                        <div className={styles.asideChecklist}>
+                            <span className={step >= 1 ? styles.complete : ''}>Details</span>
+                            <span className={step >= 2 ? styles.complete : ''}>Media</span>
+                            <span className={step >= 3 ? styles.complete : ''}>Review</span>
+                        </div>
+                    </div>
+                    <div className="dashboard-panel">
+                        <p className={styles.asideLabel}>Better Listings</p>
+                        <ul className={styles.asideTips}>
+                            <li>Use a clear title with the apartment type and area.</li>
+                            <li>Add bright photos and at least one walkthrough video.</li>
+                            <li>Confirm the rent before submitting for verification.</li>
+                        </ul>
+                    </div>
+                </aside>
+            </div>
         </div>
     );
 }

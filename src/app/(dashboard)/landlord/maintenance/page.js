@@ -52,15 +52,15 @@ export default function LandlordMaintenancePage() {
 
             {/* Stats Row */}
             <div className="grid grid-3 mb-6">
-                <div className="card text-center" style={{ borderLeft: '4px solid var(--color-warning)' }}>
+                <div className="dashboard-panel dashboard-surface-muted text-center">
                     <p className="text-sm text-muted">Pending</p>
                     <h3 style={{ fontSize: 'var(--text-2xl)', color: 'var(--color-warning)' }}>{pendingCount}</h3>
                 </div>
-                <div className="card text-center" style={{ borderLeft: '4px solid var(--color-info)' }}>
+                <div className="dashboard-panel dashboard-surface-muted text-center">
                     <p className="text-sm text-muted">In Progress</p>
                     <h3 style={{ fontSize: 'var(--text-2xl)', color: 'var(--color-info)' }}>{inProgressCount}</h3>
                 </div>
-                <div className="card text-center" style={{ borderLeft: '4px solid var(--color-success)' }}>
+                <div className="dashboard-panel dashboard-surface-muted text-center">
                     <p className="text-sm text-muted">Resolved</p>
                     <h3 style={{ fontSize: 'var(--text-2xl)', color: 'var(--color-success)' }}>{resolvedCount}</h3>
                 </div>

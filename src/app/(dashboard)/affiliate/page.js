@@ -44,11 +44,7 @@ export default function AffiliateDashboard() {
       {/* Verification Alert Banner */}
       {session?.user?.ninStatus !== "VERIFIED" && (
         <div
-          className="card mb-6"
-          style={{
-            background: "var(--color-error-light)",
-            borderLeft: "4px solid var(--color-error)",
-          }}
+          className="dashboard-alert dashboard-alert-error mb-6"
         >
           <div className="flex items-start gap-3">
             <div style={{ color: "var(--color-error)", marginTop: "2px" }}>

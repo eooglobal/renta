@@ -224,7 +224,7 @@ export default function MessageCenter() {
                 }
                 .contact-item.active {
                     background: var(--bg-card);
-                    border-left: 4px solid var(--color-primary);
+                    border: 1px solid rgba(253, 168, 41, 0.24);
                 }
 
                 /* Scrollbar styling for a cleaner look */

@@ -85,7 +85,7 @@ export default function TenantMaintenancePage() {
             {message && (
                 <div className="card mb-4 flex items-center gap-2" style={{
                     background: message.includes('success') ? 'var(--color-success-light)' : 'var(--color-error-light)',
-                    borderLeft: `4px solid ${message.includes('success') ? 'var(--color-success)' : 'var(--color-error)'}`,
+
                 }}>
                     <span className="text-sm font-medium">{message}</span>
                 </div>

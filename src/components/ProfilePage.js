@@ -342,16 +342,16 @@ function ProfilePageInner() {
     : "";
 
   return (
-    <div className="fade-in">
-      <header className="mb-6">
-        <h1 style={{ fontSize: "var(--text-2xl)" }}>My Profile</h1>
-        <p className="text-muted">
-          Manage your account information and settings.
-        </p>
+    <div className="fade-in dashboard-page dashboard-page-narrow">
+      <header className="dashboard-header">
+        <div>
+          <h1>My Profile</h1>
+          <p>Manage your account information and settings.</p>
+        </div>
       </header>
 
       {/* Profile Header Card */}
-      <div className="card mb-6">
+      <div className="dashboard-surface mb-6">
         <div className="flex items-center gap-4">
           <div
             style={{
@@ -396,7 +396,7 @@ function ProfilePageInner() {
       </div>
 
       {/* Status Bar */}
-      <div className="card mb-6" style={{ background: "var(--bg-secondary)" }}>
+      <div className="dashboard-panel dashboard-surface-muted mb-6">
         <div className="flex gap-6" style={{ flexWrap: "wrap" }}>
           <div className="flex items-center gap-2">
             <Shield size={16} style={{ color: "var(--text-muted)" }} />
@@ -422,13 +422,7 @@ function ProfilePageInner() {
       {/* Identity Verification Widget (all users, when not yet verified) */}
       {(profile?.ninStatus === "PENDING" ||
         profile?.ninStatus === "FAILED") && (
-        <div
-          className="card mb-6"
-          style={{
-            borderLeft: "4px solid var(--color-primary)",
-            background: "var(--bg-secondary)",
-          }}
-        >
+        <div className="dashboard-surface dashboard-surface-muted mb-6">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <Shield size={20} style={{ color: "var(--color-primary)" }} />
@@ -447,13 +441,7 @@ function ProfilePageInner() {
 
       {/* Tenant Screening Widget */}
       {profile?.role === "TENANT" && (
-        <div
-          className="card mb-6"
-          style={{
-            borderLeft: "4px solid var(--color-info)",
-            background: "var(--bg-secondary)",
-          }}
-        >
+        <div className="dashboard-surface dashboard-surface-muted mb-6">
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <Briefcase size={20} style={{ color: "var(--color-info)" }} />
@@ -486,7 +474,7 @@ function ProfilePageInner() {
 
       <form onSubmit={handleSubmit}>
         {/* Personal Information */}
-        <div className="card mb-6">
+        <div className="dashboard-surface mb-6">
           <h3
             className="mb-4 flex items-center gap-2"
             style={{ fontSize: "var(--text-lg)" }}
@@ -549,7 +537,7 @@ function ProfilePageInner() {
         </div>
 
         {/* Bank Details */}
-        <div className="card mb-6">
+        <div className="dashboard-surface mb-6">
           <h3
             className="mb-4 flex items-center gap-2"
             style={{ fontSize: "var(--text-lg)" }}
@@ -637,14 +625,7 @@ function ProfilePageInner() {
           )}
 
           {resolveError && (
-            <div
-              className="mt-3 p-3 rounded text-xs"
-              style={{
-                background: "var(--color-error-light)",
-                color: "var(--color-error)",
-                borderRadius: "var(--radius-md)",
-              }}
-            >
+            <div className="dashboard-alert dashboard-alert-error mt-3 text-xs">
               {resolveError}
             </div>
           )}
@@ -668,14 +649,7 @@ function ProfilePageInner() {
           </div>
 
           {resolvedName && !nameConfirmed && (
-            <div
-              className="mt-3 p-4 border rounded"
-              style={{
-                background: "var(--color-info-light)",
-                borderColor: "#bfdbfe",
-                borderRadius: "var(--radius-md)",
-              }}
-            >
+                <div className="dashboard-alert dashboard-alert-info mt-3">
               <p
                 className="text-sm font-bold"
                 style={{ color: "#1d4ed8", marginBottom: "8px" }}
@@ -732,21 +706,14 @@ function ProfilePageInner() {
           )}
 
           {nameConfirmed && resolvedName && (
-            <div
-              className="mt-3 p-3 rounded text-sm flex items-center gap-2"
-              style={{
-                background: "var(--color-success-light)",
-                color: "#15803d",
-                borderRadius: "var(--radius-md)",
-              }}
-            >
+            <div className="dashboard-alert dashboard-alert-success mt-3 text-sm">
               <CheckCircle size={14} /> Confirmed: {resolvedName}
             </div>
           )}
         </div>
 
         {/* Password Section */}
-        <div className="card mb-6">
+        <div className="dashboard-surface mb-6">
           <div className="flex justify-between items-center mb-4">
             <h3
               className="flex items-center gap-2"
@@ -909,12 +876,8 @@ function DiditVerifyButton() {
 
   return (
     <div
-      style={{
-        padding: "16px",
-        borderRadius: "12px",
-        background: "white",
-        border: "2px solid var(--color-primary)",
-      }}
+      className="dashboard-panel"
+      style={{ background: "white" }}
     >
       <div className="flex items-center gap-2 mb-2">
         <Shield size={16} style={{ color: "var(--color-primary)" }} />

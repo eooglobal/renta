@@ -56,7 +56,7 @@ export default function AffiliateLinksPage() {
                         padding: 'var(--space-4)',
                         background: 'var(--color-primary-light)',
                         borderRadius: 'var(--radius-md)',
-                        borderLeft: '4px solid var(--color-primary)'
+                        border: '1px solid rgba(253, 168, 41, 0.24)'
                     }}>
                         <h4 className="font-bold" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-primary-dark)', marginBottom: 'var(--space-1)' }}>💡 Pro Tip</h4>
                         <p className="text-sm">Focus on referring students looking for hostels or corp members (NYSC) moving into town. They are highly motivated to rent quickly!</p>

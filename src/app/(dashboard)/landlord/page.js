@@ -41,12 +41,7 @@ function DashboardContent() {
     <div className="fade-in">
       {isPromoted && (
         <div
-          className="card mb-6"
-          style={{
-            background: "#f0fdf4",
-            borderLeft: "4px solid #22c55e",
-            padding: "var(--space-4)",
-          }}
+          className="dashboard-alert dashboard-alert-success mb-6"
         >
           <div className="flex items-center gap-3">
             <CheckCircle2 className="text-success" size={24} />
@@ -69,11 +64,7 @@ function DashboardContent() {
       {/* Verification Alert Banner */}
       {session?.user?.ninStatus !== "VERIFIED" && (
         <div
-          className="card mb-6"
-          style={{
-            background: "var(--color-error-light)",
-            borderLeft: "4px solid var(--color-error)",
-          }}
+          className="dashboard-alert dashboard-alert-error mb-6"
         >
           <div className="flex items-start gap-3">
             <div style={{ color: "var(--color-error)", marginTop: "2px" }}>

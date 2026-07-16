@@ -36,7 +36,7 @@ export default function TenantDashboard() {
 
             {/* Verification Alert Banner */}
             {session?.user?.ninStatus !== 'VERIFIED' && (
-                <div className="card mb-6" style={{ background: 'var(--color-error-light)', borderLeft: '4px solid var(--color-error)' }}>
+                <div className="dashboard-alert dashboard-alert-error mb-6">
                     <div className="flex items-start gap-3">
                         <div style={{ color: 'var(--color-error)', marginTop: '2px' }}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>

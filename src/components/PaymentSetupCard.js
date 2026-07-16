@@ -144,13 +144,7 @@ export default function PaymentSetupCard({ profile }) {
   };
 
   return (
-    <div
-      className="card mb-6"
-      style={{
-        borderLeft: `4px solid ${isComplete ? "var(--color-success)" : "var(--color-warning)"}`,
-        background: "var(--bg-secondary)",
-      }}
-    >
+    <div className="dashboard-surface dashboard-surface-muted mb-6">
       <div className="flex items-center justify-between gap-4 mb-4" style={{ flexWrap: "wrap" }}>
         <div className="flex items-center gap-2">
           <CreditCard size={20} style={{ color: "var(--color-primary)" }} />
@@ -169,28 +163,14 @@ export default function PaymentSetupCard({ profile }) {
       ) : (
         <>
           {!isKycVerified && (
-            <div
-              className="mb-4 p-3 rounded text-sm flex items-center gap-2"
-              style={{
-                background: "#fef3c7",
-                color: "#92400e",
-                borderRadius: "var(--radius-md)",
-              }}
-            >
+            <div className="dashboard-alert mb-4 text-sm">
               <AlertTriangle size={16} />
               Complete identity verification before setting up payouts.
             </div>
           )}
 
           {error && (
-            <div
-              className="mb-4 p-3 rounded text-sm"
-              style={{
-                background: "var(--color-error-light)",
-                color: "var(--color-error)",
-                borderRadius: "var(--radius-md)",
-              }}
-            >
+            <div className="dashboard-alert dashboard-alert-error mb-4 text-sm">
               {error}
             </div>
           )}
@@ -247,14 +227,7 @@ export default function PaymentSetupCard({ profile }) {
             </div>
 
             {isComplete && setup?.paystackSubaccountCode && (
-              <div
-                className="mb-4 p-3 rounded text-sm flex items-center gap-2"
-                style={{
-                  background: "var(--color-success-light)",
-                  color: "#15803d",
-                  borderRadius: "var(--radius-md)",
-                }}
-              >
+              <div className="dashboard-alert dashboard-alert-success mb-4 text-sm">
                 <CheckCircle size={16} />
                 Paystack destination active: {setup.paystackSubaccountCode}
               </div>

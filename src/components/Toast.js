@@ -133,10 +133,9 @@ function ToastContainer({ toasts, dismiss }) {
                             style={{
                                 background: '#fff',
                                 border: `1px solid ${c.border}`,
-                                borderLeft: `4px solid ${c.accent}`,
-                                borderRadius: '12px',
+                                borderRadius: '10px',
                                 padding: '14px 16px',
-                                boxShadow: '0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
+                                boxShadow: '0 14px 34px rgba(16,24,40,0.12), 0 2px 6px rgba(16,24,40,0.05)',
                                 display: 'flex',
                                 gap: '12px',
                                 alignItems: 'flex-start',
@@ -145,7 +144,7 @@ function ToastContainer({ toasts, dismiss }) {
                             }}
                         >
                             {/* Icon */}
-                            <span style={{ color: c.accent, flexShrink: 0, marginTop: '1px' }}>
+                            <span style={{ color: c.accent, background: c.bg, border: `1px solid ${c.border}`, borderRadius: '8px', width: 34, height: 34, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                 {c.icon}
                             </span>
 
