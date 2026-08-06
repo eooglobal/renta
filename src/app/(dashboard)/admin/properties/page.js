@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Check, X, AlertCircle } from "lucide-react";
 import styles from "../../tenant/dashboard.module.css";
 
 const statusLabel = (status) => {
@@ -40,6 +40,7 @@ export default function AdminPropertiesPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("PENDING");
   const [actionLoading, setActionLoading] = useState(null);
+  const [actionError, setActionError] = useState(null);
 
   const fetchProperties = async (statusFilter = filter) => {
     setLoading(true);
@@ -63,17 +64,22 @@ export default function AdminPropertiesPage() {
 
   const handleAction = async (propertyId, action) => {
     setActionLoading(propertyId);
+    setActionError(null);
     try {
       const res = await fetch("/api/admin/properties", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ propertyId, action }),
       });
+      const data = await res.json();
       if (res.ok) {
         fetchProperties();
+      } else {
+        setActionError(data.error || "Action failed. Please try again.");
       }
     } catch (error) {
       console.error("Action failed:", error);
+      setActionError("Network error. Please check your connection.");
     } finally {
       setActionLoading(null);
     }
@@ -128,7 +134,7 @@ export default function AdminPropertiesPage() {
           {filters.map((f) => (
             <button
               key={f.value}
-              onClick={() => setFilter(f.value)}
+              onClick={() => { setFilter(f.value); setActionError(null); }}
               className={`btn btn-sm ${filter === f.value ? "btn-primary" : "btn-outline"}`}
             >
               {f.label}
@@ -136,6 +142,21 @@ export default function AdminPropertiesPage() {
           ))}
         </div>
       </div>
+
+      {actionError && (
+        <div style={{
+          margin: "0 0 16px", padding: "12px 16px",
+          background: "#fee2e2", color: "#991b1b",
+          borderRadius: 10, display: "flex", alignItems: "center", gap: 8,
+          fontSize: 14, fontWeight: 500
+        }}>
+          <AlertCircle size={16} />
+          {actionError}
+          <button onClick={() => setActionError(null)} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#991b1b" }}>
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center" style={{ padding: "60px 0" }}>
@@ -205,25 +226,20 @@ export default function AdminPropertiesPage() {
                       <div className="flex gap-2">
                         <button
                           className="btn btn-sm"
-                          style={{
-                            background: "var(--color-success)",
-                            color: "white",
-                          }}
+                          style={{ background: "var(--color-success)", color: "white", display: "flex", alignItems: "center", gap: 4 }}
                           onClick={() => handleAction(property.id, "verify")}
                           disabled={actionLoading === property.id}
                         >
-                          ✓ Approve
+                          {actionLoading === property.id ? <span className="spinner" style={{ width: 14, height: 14 }} /> : <Check size={14} />}
+                          Approve
                         </button>
                         <button
                           className="btn btn-sm btn-outline"
-                          style={{
-                            borderColor: "var(--color-error)",
-                            color: "var(--color-error)",
-                          }}
+                          style={{ borderColor: "var(--color-error)", color: "var(--color-error)", display: "flex", alignItems: "center", gap: 4 }}
                           onClick={() => handleAction(property.id, "reject")}
                           disabled={actionLoading === property.id}
                         >
-                          ✕ Reject
+                          <X size={14} /> Reject
                         </button>
                       </div>
                     )}

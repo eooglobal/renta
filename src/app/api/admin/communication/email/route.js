@@ -11,31 +11,37 @@ export async function POST(req) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { audience, subject, body } = await req.json();
+        const { audience, subject, body, specificUserIds } = await req.json();
 
         if (!subject || !body) {
             return NextResponse.json({ error: 'Subject and body are required' }, { status: 400 });
         }
 
-        // Fetch target users
-        let whereClause = {};
-        if (audience !== 'ALL') {
-            whereClause.role = audience;
-        }
+        let users = [];
 
-        const users = await prisma.user.findMany({
-            where: {
-                ...whereClause,
-                status: 'ACTIVE' // only send to active users
-            },
-            select: { email: true, firstName: true }
-        });
+        if (specificUserIds && specificUserIds.length > 0) {
+            // Specific users mode
+            users = await prisma.user.findMany({
+                where: { id: { in: specificUserIds.map(Number) } },
+                select: { email: true, firstName: true }
+            });
+        } else {
+            // Broadcast mode - fetch by audience/role
+            let whereClause = { status: 'ACTIVE' };
+            if (audience && audience !== 'ALL') {
+                whereClause.role = audience;
+            }
+            users = await prisma.user.findMany({
+                where: whereClause,
+                select: { email: true, firstName: true }
+            });
+        }
 
         if (users.length === 0) {
-            return NextResponse.json({ error: 'No users found for this audience' }, { status: 404 });
+            return NextResponse.json({ error: 'No users found for the selected audience' }, { status: 404 });
         }
 
-        // Send emails, catching individual failures so one bad address won't stop the rest
+        // Send emails, catching individual failures
         const emailPromises = users.map(user =>
             sendEmail(user.email, subject, body, `Hello ${user.firstName},<br><br>${body}`)
                 .catch(err => console.error(`Failed to send email to ${user.email}:`, err))
