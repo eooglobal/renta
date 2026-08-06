@@ -2,7 +2,6 @@ import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { verifyPayment } from '@/lib/paymentGateway';
-import { sendPaymentConfirmation } from '@/lib/email';
 import { applyRentalPaymentSuccess } from '@/lib/rentalPaymentSuccess';
 import { dispatchRentalPaidNotifications } from '@/lib/notificationDispatcher';
 
@@ -61,12 +60,6 @@ export async function GET(request) {
 
             const tenant = payment.rental.tenant;
             const property = payment.rental.property;
-
-            sendPaymentConfirmation({
-                tenant,
-                property,
-                rental: payment.rental,
-            }).catch(console.error);
 
             dispatchRentalPaidNotifications(payment).catch(console.error);
 

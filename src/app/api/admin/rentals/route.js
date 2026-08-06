@@ -27,6 +27,10 @@ export async function GET(request) {
                         select: {
                             id: true,
                             title: true,
+                            address: true,
+                            type: true,
+                            rentPrice: true,
+                            status: true,
                             city: { select: { name: true } },
                             area: { select: { name: true } },
                             landlord: {
@@ -34,7 +38,8 @@ export async function GET(request) {
                                     id: true,
                                     firstName: true,
                                     lastName: true,
-                                    email: true
+                                    email: true,
+                                    phone: true
                                 }
                             }
                         }
@@ -44,7 +49,8 @@ export async function GET(request) {
                             id: true,
                             firstName: true,
                             lastName: true,
-                            email: true
+                            email: true,
+                            phone: true
                         }
                     },
                     escrow: true

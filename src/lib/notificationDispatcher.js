@@ -1,6 +1,11 @@
 import { createNotification } from './notifications';
 import { sendSms } from './sms';
 import { getSetting } from './settings';
+import { 
+  sendWelcomeEmail, 
+  sendPropertyVerifiedEmail, 
+  sendPaymentConfirmation 
+} from './email';
 
 function truthy(value) {
   return String(value || '').toLowerCase() === 'true';
@@ -41,6 +46,43 @@ export async function dispatchNotification({ user, userId, type, title, message,
 
   return result;
 }
+
+export async function dispatchWelcomeNotification(user) {
+  // Fire email in background
+  sendWelcomeEmail(user).catch(console.error);
+  
+  return dispatchNotification({
+    user,
+    type: 'SYSTEM',
+    title: 'Welcome to Renta',
+    message: `Welcome to Renta, ${user.firstName}! Your account is ready.`,
+    link: '/dashboard',
+    inApp: true,
+    sms: {
+      eventKey: 'SMS_WELCOME_ENABLED',
+      message: `Welcome to Renta, ${user.firstName}! Your account is ready to use. Log in to get started.`,
+    },
+  });
+}
+
+export async function dispatchPropertyVerifiedNotification(landlord, property) {
+  // Fire email in background
+  sendPropertyVerifiedEmail({ landlord, property }).catch(console.error);
+
+  return dispatchNotification({
+    user: landlord,
+    type: 'PROPERTY_STATUS',
+    title: 'Property Verified',
+    message: `Your property "${property.title}" has been verified and is now live.`,
+    link: '/landlord/properties',
+    inApp: true,
+    sms: {
+      eventKey: 'SMS_PROPERTY_VERIFIED_ENABLED',
+      message: `Renta: Great news! Your property '${property.title}' has been verified and is now live.`,
+    },
+  });
+}
+
 function formatNaira(value) {
   return `NGN ${Number(value || 0).toLocaleString()}`;
 }
@@ -54,6 +96,9 @@ export async function dispatchRentalPaidNotifications(payment) {
   const landlord = property.landlord;
   const amount = rental.totalPaid || payment.amount || rental.rentAmount;
   const results = [];
+
+  // Fire email in background
+  sendPaymentConfirmation({ tenant, property, rental }).catch(console.error);
 
   if (tenant) {
     results.push(await dispatchNotification({

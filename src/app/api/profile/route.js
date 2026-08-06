@@ -41,6 +41,9 @@ export async function GET() {
       user.ninNumber = "***-***-" + user.ninNumber.slice(-4);
     }
 
+    const requireKycSetting = await getSetting("REQUIRE_KYC");
+    user.kycRequired = requireKycSetting !== "false";
+
     return NextResponse.json(user);
   } catch (error) {
     console.error("Profile fetch error:", error);

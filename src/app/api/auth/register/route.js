@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
-import { sendWelcomeEmail } from '@/lib/email';
+import { dispatchWelcomeNotification } from '@/lib/notificationDispatcher';
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
@@ -106,8 +106,8 @@ export async function POST(request) {
             }
         }
 
-        // Send welcome email (non-blocking)
-        sendWelcomeEmail({ email: user.email, firstName: user.firstName, role: user.role }).catch(console.error);
+        // Send welcome notification (non-blocking)
+        dispatchWelcomeNotification({ id: user.id, email: user.email, firstName: user.firstName, role: user.role, phone: user.phone }).catch(console.error);
 
         return NextResponse.json(
             { message: 'Account created successfully', user },

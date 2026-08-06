@@ -367,7 +367,7 @@ export default function NewPropertyPage() {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="rentPrice" className="form-label">Annual Rent (â‚¦)</label>
+                            <label htmlFor="rentPrice" className="form-label">Annual Rent (₦)</label>
                             <input
                                 id="rentPrice" name="rentPrice" type="number" className="form-input"
                                 placeholder="e.g. 150000"
@@ -375,7 +375,7 @@ export default function NewPropertyPage() {
                             />
                             {formData.rentPrice && (
                                 <span className="form-help">
-                                    Tenant pays: â‚¦{totalPayable} (â‚¦{Number(formData.rentPrice).toLocaleString()} + â‚¦{serviceFee} service fee)
+                                    Tenant pays: ₦{totalPayable} (₦{Number(formData.rentPrice).toLocaleString()} + ₦{serviceFee} service fee)
                                 </span>
                             )}
                         </div>
@@ -425,7 +425,7 @@ export default function NewPropertyPage() {
                                 }
                                 setStep(2);
                             }}>
-                                Next: Add Media â†’
+                                Next: Add Media →
                             </button>
                         </div>
                     </div>
@@ -548,7 +548,7 @@ export default function NewPropertyPage() {
                             </div>
                             <div className={styles.reviewItem}>
                                 <span className="text-muted text-sm">Annual Rent</span>
-                                <strong className="text-primary-color">â‚¦{Number(formData.rentPrice).toLocaleString()}</strong>
+                                <strong className="text-primary-color">₦{Number(formData.rentPrice).toLocaleString()}</strong>
                             </div>
                             <div className={styles.reviewItem}>
                                 <span className="text-muted text-sm">Photos</span>
@@ -571,22 +571,22 @@ export default function NewPropertyPage() {
                             <h5>Tenant Price Breakdown</h5>
                             <div className={styles.breakdownRow}>
                                 <span>Your Rent</span>
-                                <span>â‚¦{Number(formData.rentPrice).toLocaleString()}</span>
+                                <span>₦{Number(formData.rentPrice).toLocaleString()}</span>
                             </div>
                             <div className={styles.breakdownRow}>
                                 <span>Platform Fee (10%)</span>
-                                <span>â‚¦{serviceFee}</span>
+                                <span>₦{serviceFee}</span>
                             </div>
                             <div className={`${styles.breakdownRow} ${styles.breakdownTotal}`}>
                                 <span>Tenant Pays</span>
-                                <span>â‚¦{totalPayable}</span>
+                                <span>₦{totalPayable}</span>
                             </div>
-                            <p className="text-xs text-muted mt-2">You receive â‚¦{Number(formData.rentPrice).toLocaleString()} â€” the full rent amount.</p>
+                            <p className="text-xs text-muted mt-2">You receive ₦{Number(formData.rentPrice).toLocaleString()} — the full rent amount.</p>
                         </div>
 
                         <div className={styles.formActions}>
                             <button type="button" className="btn btn-outline" onClick={() => setStep(2)}>
-                                â† Back
+                                ← Back
                             </button>
                             <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
                                 {loading ? (
@@ -603,25 +603,7 @@ export default function NewPropertyPage() {
                 )}
                 </form>
 
-                <aside className={styles.propertyFormAside}>
-                    <div className="dashboard-panel dashboard-surface-muted">
-                        <p className={styles.asideLabel}>Listing Progress</p>
-                        <h3 className={styles.asideTitle}>Step {step} of 3</h3>
-                        <div className={styles.asideChecklist}>
-                            <span className={step >= 1 ? styles.complete : ''}>Details</span>
-                            <span className={step >= 2 ? styles.complete : ''}>Media</span>
-                            <span className={step >= 3 ? styles.complete : ''}>Review</span>
-                        </div>
-                    </div>
-                    <div className="dashboard-panel">
-                        <p className={styles.asideLabel}>Better Listings</p>
-                        <ul className={styles.asideTips}>
-                            <li>Use a clear title with the apartment type and area.</li>
-                            <li>Add bright photos and at least one walkthrough video.</li>
-                            <li>Confirm the rent before submitting for verification.</li>
-                        </ul>
-                    </div>
-                </aside>
+
             </div>
         </div>
     );

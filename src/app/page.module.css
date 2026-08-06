@@ -98,19 +98,14 @@
 
 /* Hero */
 .hero {
-    padding: calc(var(--header-height) + var(--space-20)) 0 var(--space-20);
-    background: linear-gradient(135deg, #ffffff 0%, #efefef 50%, #e8e7e3 100%);
+    padding: calc(var(--header-height) + var(--space-24)) 0 var(--space-24);
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.4)), url('/images/hero-bg.png') center/cover no-repeat;
     position: relative;
+    color: var(--color-white);
 }
 
 .hero::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: var(--border-light);
+    display: none;
 }
 
 .heroInner {
@@ -160,6 +155,7 @@
     line-height: 1.05;
     letter-spacing: -1.5px;
     margin-bottom: var(--space-6);
+    color: var(--color-white);
 }
 
 .highlight {
@@ -168,7 +164,7 @@
 
 .heroSubtitle {
     font-size: var(--text-xl);
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85);
     line-height: 1.6;
     margin-bottom: var(--space-8);
     max-width: 600px;
@@ -206,14 +202,123 @@
 
 .statLabel {
     font-size: var(--text-sm);
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.7);
     font-weight: var(--font-medium);
 }
 
 .statDivider {
     width: 1px;
     height: 40px;
-    background: var(--border-color);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Search Bar */
+.searchContainer {
+    max-width: 600px;
+    margin: 0 auto var(--space-12);
+    display: flex;
+    background: var(--color-white);
+    border-radius: var(--radius-full);
+    padding: var(--space-2);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    align-items: center;
+}
+
+.searchInput {
+    flex: 1;
+    border: none;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-base);
+    background: transparent;
+    color: var(--color-black);
+    outline: none;
+}
+
+.searchBtn {
+    background: var(--color-primary);
+    color: var(--color-white);
+    border: none;
+    padding: var(--space-3) var(--space-6);
+    border-radius: var(--radius-full);
+    font-weight: var(--font-semibold);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.searchBtn:hover {
+    background: var(--color-primary-dark);
+}
+
+/* Featured Apartments */
+.featured {
+    padding: var(--space-24) 0;
+    background: var(--bg-primary);
+}
+
+.featuredGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-6);
+    margin-top: var(--space-12);
+}
+
+.apartmentCard {
+    background: var(--color-white);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-light);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+}
+
+.apartmentCard:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.apartmentImage {
+    height: 200px;
+    width: 100%;
+    object-fit: cover;
+    background: var(--bg-secondary);
+}
+
+.apartmentDetails {
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.apartmentTitle {
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    margin-bottom: var(--space-2);
+    color: var(--text-primary);
+}
+
+.apartmentLocation {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin-bottom: var(--space-4);
+}
+
+.apartmentPrice {
+    font-family: var(--font-heading);
+    font-size: var(--text-xl);
+    font-weight: var(--font-bold);
+    color: var(--color-primary);
+    margin-top: auto;
 }
 
 /* Problems Section */

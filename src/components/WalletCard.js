@@ -186,7 +186,7 @@ export default function WalletCard({ userRole }) {
 
   const parseDate = (d) =>
     new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(d));
-  const isKycVerified = profile?.ninStatus === "VERIFIED";
+  const isKycVerified = profile?.ninStatus === "VERIFIED" || profile?.kycRequired === false;
 
   return (
     <div className="dashboard-surface">

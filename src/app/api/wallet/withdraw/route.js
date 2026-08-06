@@ -17,7 +17,11 @@ export async function POST(request) {
             select: { ninStatus: true, firstName: true, lastName: true },
         });
 
-        if (!user || user.ninStatus !== 'VERIFIED') {
+        const { getSetting } = await import('@/lib/settings');
+        const requireKycSetting = await getSetting("REQUIRE_KYC");
+        const kycRequired = requireKycSetting !== "false";
+
+        if (!user || (user.ninStatus !== 'VERIFIED' && kycRequired)) {
             return NextResponse.json(
                 { error: 'Identity verification required before requesting a withdrawal. Please complete KYC on your profile page.' },
                 { status: 403 }

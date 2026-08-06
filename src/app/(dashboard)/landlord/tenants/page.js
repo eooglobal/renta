@@ -14,6 +14,7 @@ import {
   Briefcase,
   ShieldCheck,
   UserCircle2,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -147,79 +148,103 @@ export default function LandlordTenantsPage() {
                   </div>
                 </div>
 
-                {expandedTenant === rental.id && (
-                  <div className="dashboard-grid mt-4">
-                    <section className="dashboard-panel dashboard-span-6 dashboard-surface-muted">
-                      <div className="section-heading-row">
-                        <h5 className="section-title">
-                          <UserCircle2 size={18} style={{ color: "var(--color-primary)" }} />
-                          Tenant Details
-                        </h5>
-                      </div>
-                      <div className="detail-grid">
-                        <DetailItem label="Full Name" value={tenantName || "Not provided"} />
-                        {rental.tenant?.phone && (
-                          <DetailItem label="Phone Number" value={rental.tenant.phone} icon={<Phone size={14} />} />
-                        )}
-                        {rental.tenant?.email && (
-                          <DetailItem label="Email Address" value={rental.tenant.email} icon={<Mail size={14} />} />
-                        )}
-                        <DetailItem label="Property" value={rental.property?.title || "Not provided"} icon={<Home size={14} />} />
-                        {rental.property?.address && (
-                          <DetailItem label="Property Address" value={rental.property.address} icon={<MapPin size={14} />} full />
-                        )}
-                        <DetailItem label="Rental Start Date" value={startDate} icon={<Calendar size={14} />} />
-                        <DetailItem label="Rental Status" value={rental.status} icon={<ShieldCheck size={14} />} />
-                      </div>
-                    </section>
 
-                    {rental.tenant?.tenantProfile && (
-                      <section className="dashboard-panel dashboard-span-6 dashboard-surface-muted">
-                        <div className="section-heading-row">
-                          <h5 className="section-title">
-                            <Briefcase size={18} style={{ color: "var(--color-primary)" }} />
-                            Screening Profile
-                          </h5>
-                        </div>
-                        <div className="detail-grid">
-                          <DetailItem
-                            label="Employment Status"
-                            value={rental.tenant.tenantProfile.employmentStatus?.replaceAll("_", " ") || "Not provided"}
-                          />
-                          <DetailItem
-                            label="Monthly Income"
-                            value={rental.tenant.tenantProfile.monthlyIncome
-                              ? `NGN ${Number(rental.tenant.tenantProfile.monthlyIncome).toLocaleString()}`
-                              : "Not provided"}
-                          />
-                          {rental.tenant.tenantProfile.employerName && (
-                            <DetailItem label="Employer / School" value={rental.tenant.tenantProfile.employerName} />
-                          )}
-                          {rental.tenant.tenantProfile.jobTitle && (
-                            <DetailItem label="Job Title" value={rental.tenant.tenantProfile.jobTitle} />
-                          )}
-                          {rental.tenant.tenantProfile.workAddress && (
-                            <DetailItem label="Work Address" value={rental.tenant.tenantProfile.workAddress} full />
-                          )}
-                          {rental.tenant.tenantProfile.nextOfKinName && (
-                            <DetailItem label="Next of Kin" value={rental.tenant.tenantProfile.nextOfKinName} />
-                          )}
-                          {rental.tenant.tenantProfile.nextOfKinPhone && (
-                            <DetailItem label="Next of Kin Phone" value={rental.tenant.tenantProfile.nextOfKinPhone} />
-                          )}
-                          {rental.tenant.tenantProfile.previousLandlordReference && (
-                            <DetailItem label="Reference" value={rental.tenant.tenantProfile.previousLandlordReference} full />
-                          )}
-                        </div>
-                      </section>
-                    )}
-                  </div>
-                )}
               </div>
             );
           })}
         </div>
       )}
+
+      {/* Tenant Profile Modal */}
+      {expandedTenant && (() => {
+        const rental = rentals.find(r => r.id === expandedTenant);
+        if (!rental) return null;
+        
+        const tenantName = `${rental.tenant?.firstName || ""} ${rental.tenant?.lastName || ""}`.trim();
+        const startDate = new Date(rental.startDate).toLocaleDateString("en-GB", { dateStyle: "medium" });
+        
+        return (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 'var(--space-4)', backdropFilter: 'blur(4px)' }}>
+            <div style={{ background: 'var(--bg-primary)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '850px', maxHeight: '90vh', overflowY: 'auto', padding: 'var(--space-8)', position: 'relative', boxShadow: 'var(--shadow-xl)' }}>
+              <button 
+                onClick={() => setExpandedTenant(null)}
+                style={{ position: 'absolute', top: 'var(--space-6)', right: 'var(--space-6)', background: 'var(--bg-secondary)', border: 'none', cursor: 'pointer', color: 'var(--text-primary)', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
+              >
+                <X size={20} />
+              </button>
+              
+              <h3 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-6)', fontWeight: 'var(--font-bold)' }}>Tenant Profile</h3>
+              
+              <div className="dashboard-grid">
+                <section className="dashboard-panel dashboard-span-6 dashboard-surface-muted">
+                  <div className="section-heading-row">
+                    <h5 className="section-title">
+                      <UserCircle2 size={18} style={{ color: "var(--color-primary)" }} />
+                      Tenant Details
+                    </h5>
+                  </div>
+                  <div className="detail-grid">
+                    <DetailItem label="Full Name" value={tenantName || "Not provided"} />
+                    {rental.tenant?.phone && (
+                      <DetailItem label="Phone Number" value={rental.tenant.phone} icon={<Phone size={14} />} />
+                    )}
+                    {rental.tenant?.email && (
+                      <DetailItem label="Email Address" value={rental.tenant.email} icon={<Mail size={14} />} />
+                    )}
+                    <DetailItem label="Property" value={rental.property?.title || "Not provided"} icon={<Home size={14} />} />
+                    {rental.property?.address && (
+                      <DetailItem label="Property Address" value={rental.property.address} icon={<MapPin size={14} />} full />
+                    )}
+                    <DetailItem label="Rental Start Date" value={startDate} icon={<Calendar size={14} />} />
+                    <DetailItem label="Rental Status" value={rental.status} icon={<ShieldCheck size={14} />} />
+                  </div>
+                </section>
+
+                {rental.tenant?.tenantProfile && (
+                  <section className="dashboard-panel dashboard-span-6 dashboard-surface-muted">
+                    <div className="section-heading-row">
+                      <h5 className="section-title">
+                        <Briefcase size={18} style={{ color: "var(--color-primary)" }} />
+                        Screening Profile
+                      </h5>
+                    </div>
+                    <div className="detail-grid">
+                      <DetailItem
+                        label="Employment Status"
+                        value={rental.tenant.tenantProfile.employmentStatus?.replaceAll("_", " ") || "Not provided"}
+                      />
+                      <DetailItem
+                        label="Monthly Income"
+                        value={rental.tenant.tenantProfile.monthlyIncome
+                          ? `NGN ${Number(rental.tenant.tenantProfile.monthlyIncome).toLocaleString()}`
+                          : "Not provided"}
+                      />
+                      {rental.tenant.tenantProfile.employerName && (
+                        <DetailItem label="Employer / School" value={rental.tenant.tenantProfile.employerName} />
+                      )}
+                      {rental.tenant.tenantProfile.jobTitle && (
+                        <DetailItem label="Job Title" value={rental.tenant.tenantProfile.jobTitle} />
+                      )}
+                      {rental.tenant.tenantProfile.workAddress && (
+                        <DetailItem label="Work Address" value={rental.tenant.tenantProfile.workAddress} full />
+                      )}
+                      {rental.tenant.tenantProfile.nextOfKinName && (
+                        <DetailItem label="Next of Kin" value={rental.tenant.tenantProfile.nextOfKinName} />
+                      )}
+                      {rental.tenant.tenantProfile.nextOfKinPhone && (
+                        <DetailItem label="Next of Kin Phone" value={rental.tenant.tenantProfile.nextOfKinPhone} />
+                      )}
+                      {rental.tenant.tenantProfile.previousLandlordReference && (
+                        <DetailItem label="Reference" value={rental.tenant.tenantProfile.previousLandlordReference} full />
+                      )}
+                    </div>
+                  </section>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

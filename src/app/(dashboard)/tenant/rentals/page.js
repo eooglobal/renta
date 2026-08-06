@@ -126,7 +126,7 @@ export default function TenantRentalsPage() {
 
                         return (
                             <div key={rental.id} className="card">
-                                {/* Card main row Ã¢â‚¬â€ stacks on mobile, side-by-side on desktop */}
+                                {/* Card main row — stacks on mobile, side-by-side on desktop */}
                                 <div className="rental-card-row">
                                     {/* Property Image */}
                                     {image && (
@@ -164,7 +164,7 @@ export default function TenantRentalsPage() {
                                             </span>
                                             <span className="text-xs text-muted flex items-center gap-1">
                                                 <Calendar size={12} />
-                                                {new Date(rental.startDate).toLocaleDateString('en-GB', { dateStyle: 'medium' })} Ã¢â‚¬â€&nbsp;
+                                                {new Date(rental.startDate).toLocaleDateString('en-GB', { dateStyle: 'medium' })} —&nbsp;
                                                 {new Date(rental.endDate).toLocaleDateString('en-GB', { dateStyle: 'medium' })}
                                             </span>
                                         </div>
@@ -184,12 +184,12 @@ export default function TenantRentalsPage() {
                                             <div>
                                                 <span className="text-xs text-muted">Rent Paid</span>
                                                 <p className="font-bold" style={{ color: 'var(--color-primary)' }}>
-                                                    Ã¢â€šÂ¦{Number(rental.totalPaid).toLocaleString()}
+                                                    ₦{Number(rental.totalPaid).toLocaleString()}
                                                 </p>
                                                 <span className="text-xs text-muted">Rental ID: <strong>#{rental.id}</strong></span>
                                             </div>
 
-                                            {/* Buttons Ã¢â‚¬â€ wrap on small screens */}
+                                            {/* Buttons — wrap on small screens */}
                                             <div style={{
                                                 display: 'flex',
                                                 gap: 'var(--space-2)',
@@ -341,7 +341,7 @@ async function generateDownloadPDF({ rental, tenantName, landlordName, typedName
         if (!d) return 'N/A';
         return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     };
-    const fmtCurrency = (v) => 'Ã¢â€šÂ¦' + Number(v).toLocaleString('en-NG');
+    const fmtCurrency = (v) => '₦' + Number(v).toLocaleString('en-NG');
 
     // Header
     doc.setFillColor(0, 0, 0);

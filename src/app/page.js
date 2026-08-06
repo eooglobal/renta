@@ -1,6 +1,7 @@
 import styles from './page.module.css';
 import Link from 'next/link';
 import { CheckCircle, DollarSign, Ghost, Search, Ban, MapPin, Check } from 'lucide-react';
+import { prisma } from '@/lib/db';
 import LandingHeader from '@/components/LandingHeader';
 import LandingFooter from '@/components/LandingFooter';
 
@@ -17,7 +18,13 @@ export const metadata = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  const featuredApartments = await prisma.rental.findMany({
+    where: { status: 'ACTIVE' },
+    orderBy: { createdAt: 'desc' },
+    take: 3,
+  });
+
   return (
     <div className={styles.page}>
       {/* Navigation */}
@@ -38,13 +45,19 @@ export default function Home() {
               No agent inflation. No fake listings. No scams. Just verified apartments
               at landlord-approved prices with secure platform payments.
             </p>
-            <div className={styles.heroCtas}>
-              <Link href="/register" className="btn btn-primary btn-lg">
-                Find an Apartment
-              </Link>
-              <Link href="/register?role=landlord" className="btn btn-outline btn-lg">
-                List Your Property
-              </Link>
+            <div className={styles.searchContainer}>
+              <form action="/rentals" method="GET" className="flex w-full">
+                <input 
+                  type="text" 
+                  name="q"
+                  placeholder="Search for apartments, areas, or landmarks..." 
+                  className={styles.searchInput}
+                  required
+                />
+                <button type="submit" className={styles.searchBtn}>
+                  <Search size={18} /> Search
+                </button>
+              </form>
             </div>
             <div className={styles.heroStats}>
               <div className={styles.stat}>
@@ -62,6 +75,43 @@ export default function Home() {
                 <span className={styles.statLabel}>Verified Properties</span>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Apartments */}
+      <section className={styles.featured}>
+        <div className="container">
+          <h2 className={styles.sectionTitle}>
+            Featured <span className={styles.highlight}>Apartments</span>
+          </h2>
+          <p className={styles.sectionSubtitle}>
+            Hand-picked verified properties available right now in Ilorin.
+          </p>
+          <div className={styles.featuredGrid}>
+            {featuredApartments.map((apt) => (
+              <Link href={`/rentals/${apt.id}`} key={apt.id} className={styles.apartmentCard}>
+                <img 
+                  src={apt.media && apt.media.length > 0 ? apt.media[0] : '/placeholder-apartment.jpg'} 
+                  alt={apt.title} 
+                  className={styles.apartmentImage} 
+                />
+                <div className={styles.apartmentDetails}>
+                  <h3 className={styles.apartmentTitle}>{apt.title}</h3>
+                  <p className={styles.apartmentLocation}>
+                    <MapPin size={14} /> {apt.location}
+                  </p>
+                  <div className={styles.apartmentPrice}>
+                    ₦{Number(apt.price).toLocaleString()} <span className="text-sm font-normal text-muted">/ year</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <Link href="/rentals" className="btn btn-outline btn-lg">
+              View All Apartments
+            </Link>
           </div>
         </div>
       </section>

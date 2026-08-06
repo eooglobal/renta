@@ -23,7 +23,7 @@ export default function PaymentSetupCard({ profile }) {
   });
 
   const canUseSetup = EARNING_ROLES.has(profile?.role);
-  const isKycVerified = profile?.ninStatus === "VERIFIED";
+  const isKycVerified = profile?.ninStatus === "VERIFIED" || profile?.kycRequired === false;
   const isComplete = setup?.paymentSetupStatus === "VERIFIED";
 
   const selectedBankName = useMemo(

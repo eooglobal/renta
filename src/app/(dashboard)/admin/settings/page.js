@@ -160,6 +160,13 @@ const defaultSettings = [
   },
 
   {
+    key: "REQUIRE_KYC",
+    group: "DIDIT",
+    label: "Require KYC Verification",
+    type: "text",
+    description: "Set to 'true' to require KYC for withdrawals and payments. Set to 'false' to disable.",
+  },
+  {
     key: "DIDIT_API_KEY",
     group: "DIDIT",
     label: "API Key",
