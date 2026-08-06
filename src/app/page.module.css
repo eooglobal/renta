@@ -18,6 +18,7 @@
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border-light);
     min-height: var(--header-height);
+    padding: var(--space-4) 0;
 }
 
 .navInner {

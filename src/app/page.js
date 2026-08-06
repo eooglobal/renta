@@ -140,7 +140,7 @@ export default async function Home() {
             <div className={styles.problemCard}>
               <div className={styles.problemIcon}><Search size={40} /></div>
               <h4>Inspection Fees</h4>
-              <p>Paying ₦2K–₦5K per inspection with no guarantee. Book free verified inspections on Renta.</p>
+              <p>Watch a detailed video tour of the apartment first. If you love it, book a physical inspection for a flat ₦2,000 fee anywhere.</p>
             </div>
             <div className={styles.problemCard}>
               <div className={styles.problemIcon}><Ban size={40} /></div>
