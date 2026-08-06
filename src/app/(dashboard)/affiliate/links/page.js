@@ -1,4 +1,5 @@
 import ReferralLinkWidget from '@/components/ReferralLinkWidget';
+import { Lightbulb } from 'lucide-react';
 
 export const metadata = {
     title: 'Referral Links - Renta',
@@ -58,7 +59,7 @@ export default function AffiliateLinksPage() {
                         borderRadius: 'var(--radius-md)',
                         border: '1px solid rgba(253, 168, 41, 0.24)'
                     }}>
-                        <h4 className="font-bold" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-primary-dark)', marginBottom: 'var(--space-1)' }}>💡 Pro Tip</h4>
+                        <h4 className="font-bold" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-primary-dark)', marginBottom: 'var(--space-1)', display: 'flex', alignItems: 'center', gap: '6px' }}><Lightbulb size={15} /> Pro Tip</h4>
                         <p className="text-sm">Focus on referring students looking for hostels or corp members (NYSC) moving into town. They are highly motivated to rent quickly!</p>
                     </div>
                 </div>

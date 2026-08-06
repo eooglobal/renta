@@ -160,7 +160,7 @@ export default function AdminUsersPage() {
                 </div>
             ) : users.length === 0 ? (
                 <div className={styles.emptyState}>
-                    <div className={styles.emptyIcon}>👥</div>
+                    <div className={styles.emptyIcon}><Users size={48} /></div>
                     <h3>No users found</h3>
                 </div>
             ) : (

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import styles from './login.module.css';
 import { useToast } from '@/components/Toast';
 import { friendlyError } from '@/lib/errors';
@@ -149,15 +149,15 @@ export default function LoginPage() {
                     <p>Verified apartments. Real prices. Secure payments.</p>
                     <div className={styles.features}>
                         <div className={styles.feature}>
-                            <span className={styles.featureIcon}>✓</span>
+                            <span className={styles.featureIcon}><CheckCircle2 size={16} /></span>
                             <span>No agent price inflation</span>
                         </div>
                         <div className={styles.feature}>
-                            <span className={styles.featureIcon}>✓</span>
+                            <span className={styles.featureIcon}><CheckCircle2 size={16} /></span>
                             <span>Secure platform payments</span>
                         </div>
                         <div className={styles.feature}>
-                            <span className={styles.featureIcon}>✓</span>
+                            <span className={styles.featureIcon}><CheckCircle2 size={16} /></span>
                             <span>Physically verified listings</span>
                         </div>
                     </div>

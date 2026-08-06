@@ -6,6 +6,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useState } from 'react';
 import styles from './DashboardLayout.module.css';
 import NotificationCenter from '@/components/NotificationCenter';
+import AnnouncementBanner from '@/components/AnnouncementBanner';
 
 import {
     Home, Search, FileText, Wrench, MessageSquare, User,
@@ -57,6 +58,7 @@ const MENU_ITEMS = {
         { href: '/admin/escrow', icon: Shield, label: 'Escrow' },
         { href: '/admin/commissions', icon: DollarSign, label: 'Commissions' },
         { href: '/admin/disputes', icon: AlertTriangle, label: 'Disputes' },
+        { href: '/admin/communication', icon: MessageSquare, label: 'Communication' },
         { href: '/admin/settings', icon: Settings, label: 'Settings' },
     ],
 };
@@ -75,101 +77,104 @@ export default function DashboardLayout({ children }) {
     };
 
     return (
-        <div className={styles.layout}>
-            {/* Sidebar Overlay (Mobile) */}
-            {sidebarOpen && (
-                <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />
-            )}
+        <>
+            <AnnouncementBanner />
+            <div className={styles.layout}>
+                {/* Sidebar Overlay (Mobile) */}
+                {sidebarOpen && (
+                    <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />
+                )}
 
-            {/* Sidebar */}
-            <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
-                <div className={styles.sidebarHeader}>
-                    <Link href="/" className={styles.sidebarLogo} aria-label="Renta home">
-                        <span className={styles.logoMark}><img src="/favicon.png" alt="" /></span>
-                        <span className={styles.logoText}>Renta</span>
-                    </Link>
-                    <button
-                        className={styles.closeSidebar}
-                        onClick={() => setSidebarOpen(false)}
-                        aria-label="Close sidebar"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
-
-                <nav className={styles.sidebarNav}>
-                    {menuItems.filter(item => {
-                        if (role !== 'ADMIN' || !session?.user?.adminRole || session.user.adminRole === 'SUPER_ADMIN') return true;
-
-                        // Role-based filtering for admins
-                        const adminRole = session.user.adminRole;
-                        if (adminRole === 'VERIFICATION_OFFICER') {
-                            return ['Dashboard', 'Properties', 'Scout Leads', 'Inspections', 'Disputes'].includes(item.label);
-                        }
-                        if (adminRole === 'SUPPORT') {
-                            return ['Dashboard', 'Users', 'Inspections', 'Disputes', 'Rentals', 'Commissions'].includes(item.label);
-                        }
-                        return true;
-                    }).map((item) => (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={`${styles.navItem} ${pathname === item.href ? styles.navItemActive : ''}`}
-                            onClick={() => setSidebarOpen(false)}
-                        >
-                            <span className={styles.navIcon}><item.icon size={20} /></span>
-                            <span>{item.label}</span>
-                        </Link>
-                    ))}
-                </nav>
-
-                <div className={styles.sidebarFooter}>
-                    <div className={styles.userInfo}>
-                        <div className={styles.userAvatar}>
-                            {userName.charAt(0).toUpperCase()}
-                        </div>
-                        <div className={styles.userDetails}>
-                            <span className={styles.userName}>{session?.user?.name}</span>
-                            <span className={styles.userRole}>{role}</span>
-                        </div>
-                    </div>
-                    <button onClick={handleSignOut} className={styles.signOutBtn}>
-                        <LogOut size={16} />
-                        <span>Sign Out</span>
-                    </button>
-                </div>
-            </aside>
-
-            {/* Main Content */}
-            <main className={styles.main}>
-                {/* Top Bar */}
-                <header className={styles.topbar}>
-                    <div className={styles.topbarLeft}>
-                        <button
-                            className={styles.menuToggle}
-                            onClick={() => setSidebarOpen(true)}
-                            aria-label="Open menu"
-                        >
-                            <Menu size={24} />
-                        </button>
-                        <Link href="/" className={styles.topbarBrand} aria-label="Renta home">
+                {/* Sidebar */}
+                <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
+                    <div className={styles.sidebarHeader}>
+                        <Link href="/" className={styles.sidebarLogo} aria-label="Renta home">
                             <span className={styles.logoMark}><img src="/favicon.png" alt="" /></span>
                             <span className={styles.logoText}>Renta</span>
                         </Link>
+                        <button
+                            className={styles.closeSidebar}
+                            onClick={() => setSidebarOpen(false)}
+                            aria-label="Close sidebar"
+                        >
+                            <X size={20} />
+                        </button>
                     </div>
-                    <div className={styles.topbarRight}>
-                        <NotificationCenter />
-                        <span className={`badge badge-${role === 'ADMIN' ? 'info' : 'primary'}`}>
-                            {role}
-                        </span>
-                    </div>
-                </header>
 
-                {/* Page Content */}
-                <div className={styles.content}>
-                    {children}
-                </div>
-            </main>
-        </div>
+                    <nav className={styles.sidebarNav}>
+                        {menuItems.filter(item => {
+                            if (role !== 'ADMIN' || !session?.user?.adminRole || session.user.adminRole === 'SUPER_ADMIN') return true;
+
+                            // Role-based filtering for admins
+                            const adminRole = session.user.adminRole;
+                            if (adminRole === 'VERIFICATION_OFFICER') {
+                                return ['Dashboard', 'Properties', 'Scout Leads', 'Inspections', 'Disputes'].includes(item.label);
+                            }
+                            if (adminRole === 'SUPPORT') {
+                                return ['Dashboard', 'Users', 'Inspections', 'Disputes', 'Rentals', 'Commissions'].includes(item.label);
+                            }
+                            return true;
+                        }).map((item) => (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`${styles.navItem} ${pathname === item.href ? styles.navItemActive : ''}`}
+                                onClick={() => setSidebarOpen(false)}
+                            >
+                                <span className={styles.navIcon}><item.icon size={20} /></span>
+                                <span>{item.label}</span>
+                            </Link>
+                        ))}
+                    </nav>
+
+                    <div className={styles.sidebarFooter}>
+                        <div className={styles.userInfo}>
+                            <div className={styles.userAvatar}>
+                                {userName.charAt(0).toUpperCase()}
+                            </div>
+                            <div className={styles.userDetails}>
+                                <span className={styles.userName}>{session?.user?.name}</span>
+                                <span className={styles.userRole}>{role}</span>
+                            </div>
+                        </div>
+                        <button onClick={handleSignOut} className={styles.signOutBtn}>
+                            <LogOut size={16} />
+                            <span>Sign Out</span>
+                        </button>
+                    </div>
+                </aside>
+
+                {/* Main Content */}
+                <main className={styles.main}>
+                    {/* Top Bar */}
+                    <header className={styles.topbar}>
+                        <div className={styles.topbarLeft}>
+                            <button
+                                className={styles.menuToggle}
+                                onClick={() => setSidebarOpen(true)}
+                                aria-label="Open menu"
+                            >
+                                <Menu size={24} />
+                            </button>
+                            <Link href="/" className={styles.topbarBrand} aria-label="Renta home">
+                                <span className={styles.logoMark}><img src="/favicon.png" alt="" /></span>
+                                <span className={styles.logoText}>Renta</span>
+                            </Link>
+                        </div>
+                        <div className={styles.topbarRight}>
+                            <NotificationCenter />
+                            <span className={`badge badge-${role === 'ADMIN' ? 'info' : 'primary'}`}>
+                                {role}
+                            </span>
+                        </div>
+                    </header>
+
+                    {/* Page Content */}
+                    <div className={styles.content}>
+                        {children}
+                    </div>
+                </main>
+            </div>
+        </>
     );
 }

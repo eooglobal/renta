@@ -11,36 +11,27 @@ export async function GET() {
 
     const affiliateId = parseInt(session.user.id);
 
-    const [totalClicks, conversions, wallet] = await Promise.all([
-      prisma.affiliateReferral.count({ where: { affiliateId } }),
-      prisma.affiliateReferral.count({
+    const [clickAggregation, conversions, wallet] = await Promise.all([
+      prisma.affiliateReferral.aggregate({
+        where: { affiliateId },
+        _sum: { clicks: true },
+      }),
+      prisma.rental.count({
         where: {
-          affiliateId,
-          status: 'CONVERTED',
+          affiliateReferral: { affiliateId },
+          status: { in: ['ACTIVE', 'COMPLETED', 'DISPUTED'] }
         },
-      }).catch(async () => {
-        const referrals = await prisma.affiliateReferral.findMany({
-          where: { affiliateId },
-          include: {
-            referredUser: {
-              select: {
-                rentals: { where: { status: 'ACTIVE' }, select: { id: true } },
-              },
-            },
-          },
-        });
-        return referrals.filter((ref) => ref.referredUser?.rentals?.length > 0).length;
       }),
       prisma.wallet.findUnique({
         where: { userId: affiliateId },
-        select: { balance: true },
+        select: { totalEarned: true },
       }),
     ]);
 
     return NextResponse.json({
-      totalClicks,
+      totalClicks: clickAggregation._sum.clicks || 0,
       conversions,
-      totalEarnings: wallet?.balance || 0,
+      totalEarnings: wallet?.totalEarned || 0,
     });
   } catch (error) {
     console.error('Affiliate stats error:', error);

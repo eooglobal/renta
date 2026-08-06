@@ -13,7 +13,7 @@ export async function GET() {
 
     const tenantStatsFilter = {
       property: { landlordId },
-      status: { in: ["PENDING", "ACTIVE", "COMPLETED", "DISPUTED"] },
+      status: { in: ["PENDING", "ACTIVE", "DISPUTED"] },
     };
 
     const incomeFilter = {
@@ -27,7 +27,7 @@ export async function GET() {
         prisma.property.count({
           where: {
             landlordId,
-            status: { not: "VERIFIED" },
+            status: "PENDING",
           },
         }),
         prisma.rental.count({ where: tenantStatsFilter }),

@@ -3,16 +3,16 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Home, Key, Search, Link2, CheckCircle2 } from 'lucide-react';
 import styles from '../login/login.module.css';
 import { useToast } from '@/components/Toast';
 import { friendlyError } from '@/lib/errors';
 
 const ROLES = [
-    { value: 'TENANT', label: 'Tenant', emoji: '🏠', desc: 'Find apartments' },
-    { value: 'LANDLORD', label: 'Landlord', emoji: '🔑', desc: 'List properties' },
-    { value: 'SCOUT', label: 'Scout', emoji: '🔍', desc: 'Earn commissions' },
-    { value: 'AFFILIATE', label: 'Affiliate', emoji: '🔗', desc: 'Refer & earn' },
+    { value: 'TENANT', label: 'Tenant', icon: Home, desc: 'Find apartments' },
+    { value: 'LANDLORD', label: 'Landlord', icon: Key, desc: 'List properties' },
+    { value: 'SCOUT', label: 'Scout', icon: Search, desc: 'Earn commissions' },
+    { value: 'AFFILIATE', label: 'Affiliate', icon: Link2, desc: 'Refer & earn' },
 ];
 
 export default function RegisterPage() {
@@ -138,7 +138,7 @@ function RegisterForm() {
                                             onChange={handleChange}
                                         />
                                         <div className={styles.roleCard}>
-                                            <span className={styles.roleEmoji}>{role.emoji}</span>
+                                            <span className={styles.roleEmoji}><role.icon size={22} /></span>
                                             <span>{role.label}</span>
                                         </div>
                                     </label>
@@ -309,15 +309,15 @@ function RegisterForm() {
                     </p>
                     <div className={styles.features}>
                         <div className={styles.feature}>
-                            <span className={styles.featureIcon}>✓</span>
+                            <span className={styles.featureIcon}><CheckCircle2 size={16} /></span>
                             <span>Free to join</span>
                         </div>
                         <div className={styles.feature}>
-                            <span className={styles.featureIcon}>✓</span>
+                            <span className={styles.featureIcon}><CheckCircle2 size={16} /></span>
                             <span>verified community</span>
                         </div>
                         <div className={styles.feature}>
-                            <span className={styles.featureIcon}>✓</span>
+                            <span className={styles.featureIcon}><CheckCircle2 size={16} /></span>
                             <span>Transparent 10% fee only</span>
                         </div>
                     </div>

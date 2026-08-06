@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Scale } from 'lucide-react';
 import styles from '../../tenant/dashboard.module.css';
 
 export default function AdminDisputesPage() {
@@ -64,7 +65,7 @@ export default function AdminDisputesPage() {
                 </div>
             ) : disputes.length === 0 ? (
                 <div className={styles.emptyState}>
-                    <div className={styles.emptyIcon}>⚖️</div>
+                    <div className={styles.emptyIcon}><Scale size={48} /></div>
                     <h3>No active disputes</h3>
                     <p>All escrow payments are processing smoothly.</p>
                 </div>

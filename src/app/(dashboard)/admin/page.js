@@ -34,6 +34,7 @@ export default function AdminDashboard() {
     platformRevenue: 0,
     pendingProperties: 0,
     pendingWithdrawals: 0,
+    pendingScoutLeads: 0,
   });
   const [analytics, setAnalytics] = useState({
     revenue: [],
@@ -386,7 +387,8 @@ export default function AdminDashboard() {
             <span className="spinner"></span>
           </div>
         ) : metrics.pendingProperties === 0 &&
-          metrics.pendingWithdrawals === 0 ? (
+          metrics.pendingWithdrawals === 0 &&
+          metrics.pendingScoutLeads === 0 ? (
           <div
             className={styles.emptyState}
             style={{ padding: "var(--space-6) 0" }}
@@ -420,7 +422,8 @@ export default function AdminDashboard() {
                 </Link>
               )}
             {/* We should ideally have a separate metric for scout leads, but for now we'll add the link */}
-            {(!session?.user?.adminRole ||
+            {metrics.pendingScoutLeads > 0 && 
+              (!session?.user?.adminRole ||
               session.user.adminRole === "SUPER_ADMIN" ||
               session.user.adminRole === "VERIFICATION_OFFICER") && (
               <Link
@@ -439,13 +442,9 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <span
-                  className="badge"
-                  style={{
-                    background: "var(--color-primary)",
-                    color: "var(--color-black)",
-                  }}
+                  className="badge badge-warning"
                 >
-                  Action Required
+                  {metrics.pendingScoutLeads} pending
                 </span>
               </Link>
             )}

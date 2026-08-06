@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { DollarSign, Percent, TrendingUp, Users, Building } from 'lucide-react';
+import { DollarSign, Percent, TrendingUp, Users, Building, Banknote } from 'lucide-react';
 import styles from '../../tenant/dashboard.module.css';
 
 export default function AdminCommissionsPage() {
@@ -56,7 +56,7 @@ export default function AdminCommissionsPage() {
                 </div>
             ) : commissions.length === 0 ? (
                 <div className={styles.emptyState}>
-                    <div className={styles.emptyIcon}>💰</div>
+                    <div className={styles.emptyIcon}><Banknote size={48} /></div>
                     <h3>No commissions recorded</h3>
                 </div>
             ) : (

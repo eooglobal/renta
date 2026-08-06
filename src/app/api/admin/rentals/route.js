@@ -41,6 +41,9 @@ export async function GET(request) {
                                     email: true,
                                     phone: true
                                 }
+                            },
+                            images: {
+                                select: { url: true, isPrimary: true }
                             }
                         }
                     },

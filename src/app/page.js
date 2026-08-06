@@ -19,10 +19,11 @@ export const metadata = {
 };
 
 export default async function Home() {
-  const featuredApartments = await prisma.rental.findMany({
-    where: { status: 'ACTIVE' },
+  const featuredApartments = await prisma.property.findMany({
+    where: { status: 'VERIFIED' },
     orderBy: { createdAt: 'desc' },
     take: 3,
+    include: { images: true }
   });
 
   return (
@@ -81,41 +82,43 @@ export default async function Home() {
       </section>
 
       {/* Featured Apartments */}
-      <section className={styles.featured}>
-        <div className="container">
-          <h2 className={styles.sectionTitle}>
-            Featured <span className={styles.highlight}>Apartments</span>
-          </h2>
-          <p className={styles.sectionSubtitle}>
-            Hand-picked verified properties available right now in Ilorin.
-          </p>
-          <div className={styles.featuredGrid}>
-            {featuredApartments.map((apt) => (
-              <Link href={`/rentals/${apt.id}`} key={apt.id} className={styles.apartmentCard}>
-                <img 
-                  src={apt.media && apt.media.length > 0 ? apt.media[0] : '/placeholder-apartment.jpg'} 
-                  alt={apt.title} 
-                  className={styles.apartmentImage} 
-                />
-                <div className={styles.apartmentDetails}>
-                  <h3 className={styles.apartmentTitle}>{apt.title}</h3>
-                  <p className={styles.apartmentLocation}>
-                    <MapPin size={14} /> {apt.location}
-                  </p>
-                  <div className={styles.apartmentPrice}>
-                    ₦{Number(apt.price).toLocaleString()} <span className="text-sm font-normal text-muted">/ year</span>
+      {featuredApartments.length > 0 && (
+        <section className={styles.featured}>
+          <div className="container">
+            <h2 className={styles.sectionTitle}>
+              Featured <span className={styles.highlight}>Apartments</span>
+            </h2>
+            <p className={styles.sectionSubtitle}>
+              Hand-picked verified properties available right now in Ilorin.
+            </p>
+            <div className={styles.featuredGrid}>
+              {featuredApartments.map((apt) => (
+                <Link href={`/rentals/${apt.id}`} key={apt.id} className={styles.apartmentCard}>
+                  <img 
+                    src={apt.images && apt.images.length > 0 ? apt.images[0].url : '/placeholder-apartment.jpg'} 
+                    alt={apt.title} 
+                    className={styles.apartmentImage} 
+                  />
+                  <div className={styles.apartmentDetails}>
+                    <h3 className={styles.apartmentTitle}>{apt.title}</h3>
+                    <p className={styles.apartmentLocation}>
+                      <MapPin size={14} /> {apt.address}
+                    </p>
+                    <div className={styles.apartmentPrice}>
+                      ₦{Number(apt.rentPrice).toLocaleString()} <span className="text-sm font-normal text-muted">/ year</span>
+                    </div>
                   </div>
-                </div>
+                </Link>
+              ))}
+            </div>
+            <div className="text-center mt-8">
+              <Link href="/rentals" className="btn btn-outline btn-lg">
+                View All Apartments
               </Link>
-            ))}
+            </div>
           </div>
-          <div className="text-center mt-8">
-            <Link href="/rentals" className="btn btn-outline btn-lg">
-              View All Apartments
-            </Link>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Problems Section */}
       <section className={styles.problems}>

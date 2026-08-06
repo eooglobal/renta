@@ -198,7 +198,7 @@ export default function TenantPropertyDetails() {
                     {property.amenities && (
                         <div className={styles.section}>
                             <h3 className={styles.sectionTitle}>
-                                <ShieldCheck size={24} className="text-primary" /> Amenities & Facilities
+                                <ShieldCheck size={24} className="text-primary" /> Amenities &amp; Facilities
                             </h3>
                             <div className={styles.amenitiesGrid}>
                                 {(typeof property.amenities === 'string' ? JSON.parse(property.amenities) : property.amenities).map((amenity, i) => (
@@ -216,8 +216,8 @@ export default function TenantPropertyDetails() {
                             <MapPin size={24} className="text-primary" /> Neighborhood
                         </h3>
                         {property.nearestBusStop && (
-                            <p className="text-muted mb-2" style={{ fontSize: 'var(--text-sm)' }}>
-                                🚏 Nearest Bus Stop / Landmark: <strong>{property.nearestBusStop}</strong>
+                            <p className="text-muted mb-2" style={{ fontSize: 'var(--text-sm)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <MapPin size={14} className="text-muted" /> Nearest Bus Stop / Landmark: <strong>{property.nearestBusStop}</strong>
                             </p>
                         )}
                         <p className="text-muted mb-6">Explore the area around {property.area?.name}. Exact details provided upon booking.</p>

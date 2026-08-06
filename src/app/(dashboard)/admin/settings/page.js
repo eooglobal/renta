@@ -62,6 +62,12 @@ const settingGroups = [
     color: "#f97316",
   },
   {
+    id: "SMS",
+    label: "SMS Gateway (Termii)",
+    icon: MessageSquare,
+    color: "#059669",
+  },
+  {
     id: "AI",
     label: "AI Assistant",
     icon: MessageSquare,
@@ -163,8 +169,8 @@ const defaultSettings = [
     key: "REQUIRE_KYC",
     group: "DIDIT",
     label: "Require KYC Verification",
-    type: "text",
-    description: "Set to 'true' to require KYC for withdrawals and payments. Set to 'false' to disable.",
+    type: "boolean",
+    description: "Toggle to enable or disable mandatory KYC for withdrawals and payments.",
   },
   {
     key: "DIDIT_API_KEY",
@@ -231,6 +237,42 @@ const defaultSettings = [
     label: "R2 Public URL",
     type: "text",
     description: "Optional public/custom domain, for example https://cdn.userenta.com. If empty, Renta uses the media proxy route.",
+  },
+
+  {
+    key: "SMS_ENABLED",
+    group: "SMS",
+    label: "Enable SMS",
+    type: "boolean",
+    description: "Toggle to enable or disable SMS notifications.",
+  },
+  {
+    key: "TERMII_API_KEY",
+    group: "SMS",
+    label: "Termii API Key",
+    type: "password",
+    description: "Your Termii API key.",
+  },
+  {
+    key: "TERMII_SENDER_ID",
+    group: "SMS",
+    label: "Termii Sender ID",
+    type: "text",
+    description: "Your Termii sender ID (e.g., Renta).",
+  },
+  {
+    key: "TERMII_BASE_URL",
+    group: "SMS",
+    label: "Termii Base URL",
+    type: "text",
+    description: "Defaults to https://api.ng.termii.com if left blank.",
+  },
+  {
+    key: "TERMII_CHANNEL",
+    group: "SMS",
+    label: "Termii Channel",
+    type: "text",
+    description: "Defaults to 'dnd' (e.g., generic, dnd, whatsapp).",
   },
 
   {
@@ -785,19 +827,35 @@ export default function AdminSettingsPage() {
 
                     <div style={{ display: "flex", gap: 10 }}>
                       <div style={{ flex: 1, position: "relative" }}>
-                        <input
-                          type={isPassword && !isRevealed ? "password" : "text"}
-                          value={settings[field.key] || ""}
-                          onChange={(e) =>
-                            setSettings({
-                              ...settings,
-                              [field.key]: e.target.value,
-                            })
-                          }
-                          className="form-input"
-                          style={{ paddingRight: isPassword ? 44 : 16 }}
-                          placeholder={`Enter ${field.label.toLowerCase()}...`}
-                        />
+                        {field.type === "boolean" ? (
+                          <select
+                            value={settings[field.key] || "false"}
+                            onChange={(e) =>
+                              setSettings({
+                                ...settings,
+                                [field.key]: e.target.value,
+                              })
+                            }
+                            className="form-input"
+                          >
+                            <option value="true">Enabled (True)</option>
+                            <option value="false">Disabled (False)</option>
+                          </select>
+                        ) : (
+                          <input
+                            type={isPassword && !isRevealed ? "password" : "text"}
+                            value={settings[field.key] || ""}
+                            onChange={(e) =>
+                              setSettings({
+                                ...settings,
+                                [field.key]: e.target.value,
+                              })
+                            }
+                            className="form-input"
+                            style={{ paddingRight: isPassword ? 44 : 16 }}
+                            placeholder={`Enter ${field.label.toLowerCase()}...`}
+                          />
+                        )}
                         {isPassword && (
                           <button
                             type="button"

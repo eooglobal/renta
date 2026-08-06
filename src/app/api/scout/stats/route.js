@@ -25,14 +25,14 @@ export async function GET() {
       }),
       prisma.wallet.findUnique({
         where: { userId: scoutId },
-        select: { balance: true },
+        select: { totalEarned: true },
       }),
     ]);
 
     return NextResponse.json({
       leadsSubmitted,
       verifiedProperties,
-      totalEarnings: totalEarnings?.balance || 0,
+      totalEarnings: totalEarnings?.totalEarned || 0,
     });
   } catch (error) {
     console.error('Scout stats error:', error);

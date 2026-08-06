@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ClipboardList } from "lucide-react";
 import styles from "../../tenant/dashboard.module.css";
 
 const statusLabel = (status) => {
@@ -46,7 +47,7 @@ export default function AdminPropertiesPage() {
       const params = new URLSearchParams();
       if (statusFilter === "PENDING") {
         params.set("status", "PENDING");
-        params.set("verificationStatus", "UNVERIFIED");
+        // We do not set verificationStatus to UNVERIFIED so that IN_PROGRESS and SUSPICIOUS are also included
       } else if (statusFilter) {
         params.set("status", statusFilter);
       }
@@ -96,7 +97,6 @@ export default function AdminPropertiesPage() {
         const params = new URLSearchParams();
         if (filter === "PENDING") {
           params.set("status", "PENDING");
-          params.set("verificationStatus", "UNVERIFIED");
         } else if (filter) {
           params.set("status", filter);
         }
@@ -143,7 +143,7 @@ export default function AdminPropertiesPage() {
         </div>
       ) : properties.length === 0 ? (
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>📋</div>
+          <div className={styles.emptyIcon}><ClipboardList size={48} /></div>
           <h3>
             No {filters.find((f) => f.value === filter)?.label.toLowerCase()}{" "}
             properties

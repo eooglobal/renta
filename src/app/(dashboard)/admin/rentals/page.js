@@ -111,6 +111,17 @@ function RentalDrawer({ rental, onClose }) {
 
           <section className="drawer-section">
             <h4><Building size={16} />Property</h4>
+            
+            {property.images && property.images.length > 0 && (
+              <div style={{ marginBottom: 'var(--space-4)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+                <img 
+                  src={property.images[0].url || property.images[0]} 
+                  alt="Property media" 
+                  style={{ width: '100%', height: '200px', objectFit: 'cover' }}
+                />
+              </div>
+            )}
+            
             <div className="detail-grid">
               <DetailItem label="Type" value={property.type} />
               <DetailItem label="Property Status" value={property.status} />
@@ -300,7 +311,7 @@ export default function AdminRentalsPage() {
 
       <RentalDrawer rental={selectedRental} onClose={() => setSelectedRental(null)} />
 
-      <style jsx>{`
+      <style jsx global>{`
         .rental-filter-bar {
           display: flex;
           flex-wrap: wrap;

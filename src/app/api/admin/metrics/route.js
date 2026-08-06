@@ -17,6 +17,7 @@ export async function GET() {
       escrows,
       commissions,
       pendingWithdrawals,
+      pendingScoutLeads,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.property.count({ where: { status: "VERIFIED" } }),
@@ -37,6 +38,7 @@ export async function GET() {
         select: { amount: true },
       }),
       prisma.withdrawalRequest.count({ where: { status: "PENDING" } }),
+      prisma.scoutLead.count({ where: { status: "SUBMITTED" } }),
     ]);
 
     const escrowHeld = escrows.reduce((sum, e) => sum + Number(e.amount), 0);
@@ -53,6 +55,7 @@ export async function GET() {
         platformRevenue,
         pendingProperties,
         pendingWithdrawals,
+        pendingScoutLeads,
       },
     });
   } catch (error) {
