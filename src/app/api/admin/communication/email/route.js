@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import prisma from '@/lib/prisma';
+import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 
 export async function POST(req) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await auth();
 
         if (!session || session.user.role !== 'ADMIN') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -36,19 +35,17 @@ export async function POST(req) {
             return NextResponse.json({ error: 'No users found for this audience' }, { status: 404 });
         }
 
-        // Send emails asynchronously
-        // We do this in a background loop so we don't block the API response for too long
-        const emailPromises = users.map(user => 
+        // Send emails, catching individual failures so one bad address won't stop the rest
+        const emailPromises = users.map(user =>
             sendEmail(user.email, subject, body, `Hello ${user.firstName},<br><br>${body}`)
                 .catch(err => console.error(`Failed to send email to ${user.email}:`, err))
         );
 
-        // Wait for all to dispatch (if ZeptoMail or Nodemailer is quick enough)
         await Promise.all(emailPromises);
 
         return NextResponse.json({ success: true, count: users.length });
     } catch (error) {
-        console.error('Email dispatcher error:', error);
+        console.error('Bulk email error:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
