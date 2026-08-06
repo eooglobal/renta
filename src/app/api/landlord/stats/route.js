@@ -23,7 +23,12 @@ export async function GET() {
 
     const [totalProperties, pendingVerification, activeTenants, monthlyIncome] =
       await Promise.all([
-        prisma.property.count({ where: { landlordId } }),
+        prisma.property.count({
+          where: {
+            landlordId,
+            status: { in: ["PENDING", "VERIFIED", "RENTED"] },
+          },
+        }),
         prisma.property.count({
           where: {
             landlordId,

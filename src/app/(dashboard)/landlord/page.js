@@ -17,7 +17,10 @@ function DashboardContent() {
     monthlyIncome: 0,
     pendingVerification: 0,
   });
+  const [properties, setProperties] = useState([]);
+  const [kycRequired, setKycRequired] = useState(true); // default true until loaded
   const [loading, setLoading] = useState(true);
+  const [propsLoading, setPropsLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -34,7 +37,32 @@ function DashboardContent() {
       }
     };
 
-    if (session) fetchStats();
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch("/api/profile");
+        if (res.ok) {
+          const data = await res.json();
+          setKycRequired(data.kycRequired !== false);
+        }
+      } catch {}
+    };
+
+    const fetchProperties = async () => {
+      try {
+        const res = await fetch(`/api/properties?landlordId=${session?.user?.id}&limit=5`);
+        if (res.ok) {
+          const data = await res.json();
+          setProperties(data.properties || []);
+        }
+      } catch {}
+      finally { setPropsLoading(false); }
+    };
+
+    if (session) {
+      fetchStats();
+      fetchProfile();
+      fetchProperties();
+    }
   }, [session]);
 
   return (
@@ -61,8 +89,8 @@ function DashboardContent() {
         <p className="text-muted">Manage your properties and tenants</p>
       </div>
 
-      {/* Verification Alert Banner */}
-      {session?.user?.ninStatus !== "VERIFIED" && (
+      {/* KYC Verification Alert — only shown when KYC is required and not verified */}
+      {kycRequired && session?.user?.ninStatus !== "VERIFIED" && (
         <div
           className="dashboard-alert dashboard-alert-error mb-6"
         >
@@ -185,27 +213,56 @@ function DashboardContent() {
       {/* Recent Properties */}
       <div className={styles.propertiesHeader}>
         <h3>Your Properties</h3>
-        <Link
-          href="/landlord/properties/new"
-          className="btn btn-primary btn-sm"
-        >
+        <Link href="/landlord/properties/new" className="btn btn-primary btn-sm">
           + Add Property
         </Link>
       </div>
 
-      <div className={styles.emptyState}>
-        <div className={styles.emptyIcon}>
-          <Home size={48} />
+      {propsLoading ? (
+        <div className="flex justify-center" style={{ padding: "40px 0" }}>
+          <div className="spinner" style={{ width: 28, height: 28 }} />
         </div>
-        <h3>No properties yet</h3>
-        <p>
-          Start by adding your first property. It will be verified by our team
-          before going live.
-        </p>
-        <Link href="/landlord/properties/new" className="btn btn-primary">
-          Add Your First Property
-        </Link>
-      </div>
+      ) : properties.length === 0 ? (
+        <div className={styles.emptyState}>
+          <div className={styles.emptyIcon}>
+            <Home size={48} />
+          </div>
+          <h3>No properties yet</h3>
+          <p>
+            Start by adding your first property. It will be verified by our team
+            before going live.
+          </p>
+          <Link href="/landlord/properties/new" className="btn btn-primary">
+            Add Your First Property
+          </Link>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {properties.map((p) => (
+            <Link key={p.id} href={`/landlord/properties`} className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', textDecoration: 'none' }}>
+              {p.images?.[0]?.url ? (
+                <img src={p.images[0].url} alt={p.title} style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+              ) : (
+                <div style={{ width: 60, height: 60, borderRadius: 8, background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Home size={24} style={{ opacity: 0.3 }} />
+                </div>
+              )}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)' }}>{p.title}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{p.area?.name || ''}{p.city?.name ? `, ${p.city.name}` : ''}</div>
+              </div>
+              <span className={`badge badge-${p.status === 'VERIFIED' ? 'verified' : p.status === 'RENTED' ? 'info' : 'pending'}`}>
+                {p.status === 'VERIFIED' ? 'Available' : p.status === 'RENTED' ? 'Rented' : p.status}
+              </span>
+            </Link>
+          ))}
+          {stats.totalProperties > 5 && (
+            <Link href="/landlord/properties" className="btn btn-outline btn-sm" style={{ textAlign: 'center' }}>
+              View All {stats.totalProperties} Properties
+            </Link>
+          )}
+        </div>
+      )}
     </div>
   );
 }

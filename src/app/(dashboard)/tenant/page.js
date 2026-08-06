@@ -9,6 +9,7 @@ export default function TenantDashboard() {
     const { data: session } = useSession();
     const [stats, setStats] = useState({ activeRentals: 0, escrowBalance: 0, savedListings: 0 });
     const [loading, setLoading] = useState(true);
+    const [kycRequired, setKycRequired] = useState(true);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -24,7 +25,16 @@ export default function TenantDashboard() {
                 setLoading(false);
             }
         };
-        if (session) fetchStats();
+        const fetchProfile = async () => {
+            try {
+                const res = await fetch('/api/profile');
+                if (res.ok) {
+                    const data = await res.json();
+                    setKycRequired(data.kycRequired !== false);
+                }
+            } catch {}
+        };
+        if (session) { fetchStats(); fetchProfile(); }
     }, [session]);
 
     return (
@@ -34,8 +44,8 @@ export default function TenantDashboard() {
                 <p className="text-muted">Find your next home in Ilorin</p>
             </div>
 
-            {/* Verification Alert Banner */}
-            {session?.user?.ninStatus !== 'VERIFIED' && (
+            {/* KYC Verification Alert — only shown when KYC is required */}
+            {kycRequired && session?.user?.ninStatus !== 'VERIFIED' && (
                 <div className="dashboard-alert dashboard-alert-error mb-6">
                     <div className="flex items-start gap-3">
                         <div style={{ color: 'var(--color-error)', marginTop: '2px' }}>

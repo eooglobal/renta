@@ -407,21 +407,24 @@ function ProfilePageInner() {
               {profile?.status}
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <User size={16} style={{ color: "var(--text-muted)" }} />
-            <span className="text-sm">Identity Verification:</span>
-            <span
-              className={`badge ${ninStatusMap[profile?.ninStatus]?.className || "badge-pending"}`}
-            >
-              {ninStatusMap[profile?.ninStatus]?.label || "Pending"}
-            </span>
-          </div>
+          {profile?.kycRequired !== false && (
+            <div className="flex items-center gap-2">
+              <User size={16} style={{ color: "var(--text-muted)" }} />
+              <span className="text-sm">Identity Verification:</span>
+              <span
+                className={`badge ${ninStatusMap[profile?.ninStatus]?.className || "badge-pending"}`}
+              >
+                {ninStatusMap[profile?.ninStatus]?.label || "Pending"}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Identity Verification Widget (all users, when not yet verified) */}
-      {(profile?.ninStatus === "PENDING" ||
-        profile?.ninStatus === "FAILED") && (
+      {/* Identity Verification Widget — only shown when KYC is required and not verified */}
+      {profile?.kycRequired !== false &&
+        (profile?.ninStatus === "PENDING" ||
+          profile?.ninStatus === "FAILED") && (
         <div className="dashboard-surface dashboard-surface-muted mb-6">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">

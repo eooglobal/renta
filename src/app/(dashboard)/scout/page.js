@@ -14,6 +14,7 @@ export default function ScoutDashboard() {
     totalEarnings: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [kycRequired, setKycRequired] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -28,7 +29,17 @@ export default function ScoutDashboard() {
       }
     };
 
-    if (session) fetchStats();
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch("/api/profile");
+        if (res.ok) {
+          const data = await res.json();
+          setKycRequired(data.kycRequired !== false);
+        }
+      } catch {}
+    };
+
+    if (session) { fetchStats(); fetchProfile(); }
   }, [session]);
 
   return (
@@ -41,8 +52,8 @@ export default function ScoutDashboard() {
         </p>
       </div>
 
-      {/* Verification Alert Banner */}
-      {session?.user?.ninStatus !== "VERIFIED" && (
+      {/* KYC Verification Alert — only shown when KYC is required */}
+      {kycRequired && session?.user?.ninStatus !== "VERIFIED" && (
         <div
           className="dashboard-alert dashboard-alert-error mb-6"
         >
