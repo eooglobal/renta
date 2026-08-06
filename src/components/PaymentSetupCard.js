@@ -142,6 +142,7 @@ export default function PaymentSetupCard({ profile }) {
       setSaving(false);
     }
   };
+  if (!canUseSetup) return null;
 
   return (
     <div className="dashboard-surface dashboard-surface-muted mb-6">

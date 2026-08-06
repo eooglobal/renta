@@ -189,7 +189,7 @@ export default function LandlordTenantsPage() {
                       <DetailItem label="Phone Number" value={rental.tenant.phone} icon={<Phone size={14} />} />
                     )}
                     {rental.tenant?.email && (
-                      <DetailItem label="Email Address" value={rental.tenant.email} icon={<Mail size={14} />} />
+                      <DetailItem label="Email Address" value={rental.tenant.email} icon={<Mail size={14} />} full />
                     )}
                     <DetailItem label="Property" value={rental.property?.title || "Not provided"} icon={<Home size={14} />} />
                     {rental.property?.address && (
@@ -251,11 +251,11 @@ export default function LandlordTenantsPage() {
 
 function DetailItem({ label, value, icon, full = false }) {
   return (
-    <div style={full ? { gridColumn: "1 / -1" } : undefined}>
+    <div style={full ? { gridColumn: "1 / -1", minWidth: 0 } : { minWidth: 0 }}>
       <p className="detail-item-label">{label}</p>
-      <p className="detail-item-value flex items-center gap-2">
+      <p className="detail-item-value flex items-center gap-2" style={{ overflowWrap: 'anywhere' }}>
         {icon}
-        <span>{value}</span>
+        <span style={{ display: 'block', minWidth: 0 }}>{value}</span>
       </p>
     </div>
   );
