@@ -69,7 +69,7 @@ export default function AcceptableUsePolicyPage() {
               <li>Impersonate another person, landlord, tenant, agent, scout, company, or government authority.</li>
               <li>Harass, threaten, discriminate against, exploit, or abuse any user, staff member, vendor, or support agent.</li>
               <li>Use the platform for fraud, money laundering, terrorist financing, scams, phishing, or other illegal activity.</li>
-              <li>Attempt to bypass escrow, identity verification, property verification, security checks, or payment controls.</li>
+              <li>Attempt to bypass identity verification, property verification, security checks, or payment controls.</li>
               <li>Upload malware, spam, automated scraping tools, or content designed to disrupt platform operations.</li>
               <li>Access, test, scan, reverse-engineer, or interfere with systems without written authorization from Renta.</li>
               <li>Use Renta in a way that violates Nigerian law, third-party rights, payment processor rules, or platform policies.</li>

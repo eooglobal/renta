@@ -87,7 +87,7 @@ export default function TenantDashboard() {
                     <span className="text-xs text-muted">Current leases</span>
                 </div>
                 <div className={`card ${styles.statCard}`}>
-                    <span className="text-muted text-sm">Escrow Balance</span>
+                    <span className="text-muted text-sm">Total Rent Paid</span>
                     <div className={styles.statValue}>{loading ? '...' : `₦${Number(stats.escrowBalance).toLocaleString()}`}</div>
                     <span className="text-xs text-muted">Funds being held</span>
                 </div>

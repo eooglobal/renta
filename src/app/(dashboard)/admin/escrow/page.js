@@ -93,14 +93,14 @@ export default function AdminEscrowPage() {
             <div className={styles.propertiesHeader}>
                 <div className="flex flex-col">
                     <h3>Financial Management</h3>
-                    <p className="text-sm text-muted">Manage platform escrow and payout requests.</p>
+                    <p className="text-sm text-muted">Manage platform transactions and payout requests.</p>
                 </div>
                 <div className="tabs flex gap-4">
                     <button
                         onClick={() => { setActiveTab('escrow'); setFilter(''); }}
                         className={`btn ${activeTab === 'escrow' ? 'btn-primary' : 'btn-outline'}`}
                     >
-                        <Shield size={16} className="mr-2" /> Escrow
+                        <Shield size={16} className="mr-2" /> Transactions
                     </button>
                     <button
                         onClick={() => { setActiveTab('withdrawals'); setFilter(''); }}
@@ -131,7 +131,7 @@ export default function AdminEscrowPage() {
                     {escrows.length === 0 ? (
                         <div className={styles.emptyState}>
                             <div className={styles.emptyIcon}><Shield size={48} /></div>
-                            <h3>No escrow records found</h3>
+                            <h3>No transaction records found</h3>
                             <p>Try adjusting your filters or check back later.</p>
                         </div>
                     ) : (
@@ -151,7 +151,7 @@ export default function AdminEscrowPage() {
                                         <tr key={escrow.id}>
                                             <td>
                                                 <strong>{escrow.rental.property.title}</strong>
-                                                <div className="text-xs text-muted">Escrow #{escrow.id}</div>
+                                                <div className="text-xs text-muted">Transaction #{escrow.id}</div>
                                             </td>
                                             <td><strong>₦{Number(escrow.amount).toLocaleString()}</strong></td>
                                             <td className="text-xs">

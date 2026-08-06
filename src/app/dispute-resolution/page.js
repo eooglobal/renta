@@ -80,9 +80,7 @@ export default function DisputeResolutionPolicyPage() {
           <section>
             <h2 style={sectionTitleStyle}>4. Payments During A Dispute</h2>
             <p style={paragraphStyle}>
-              Where a dispute relates to an escrow-held rental payment, Renta may keep the relevant funds on hold while
-              the dispute is reviewed. Funds may be released, refunded, partially allocated, or otherwise handled based
-              on the evidence, platform records, payment records, and applicable law.
+              Because rental payments are processed securely and remitted to the landlord within 24 hours, Renta does not hold funds indefinitely. If a dispute is raised, Renta acts as a mediator between the tenant and the landlord to seek a fair resolution, which may require the landlord to issue a direct refund. Users must report issues immediately before funds are fully settled.
             </p>
             <p style={{ color: 'var(--text-secondary)' }}>
               Users should not attempt to resolve payment disputes through off-platform payment demands, threats, or

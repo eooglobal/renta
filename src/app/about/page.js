@@ -120,9 +120,9 @@ export default function AboutPage() {
                 <br />
                 <br />
                 We physically verify every property before it goes live, and
-                hold all rent payments in a secure Escrow account. The landlord
-                only gets paid when you successfully move in and confirm
-                everything is as promised. We charge a flat, transparent 10%
+                process rent payments via a secure split-payment system directly to the landlord. 
+                By emphasizing detailed video tours and physical inspections before payment, 
+                we ensure you know exactly what you're paying for. We charge a flat, transparent 10%
                 platform fee—no hidden surprises.
               </p>
             </div>

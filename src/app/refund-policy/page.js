@@ -42,8 +42,10 @@ export default function RefundPolicyPage() {
           <section>
             <h2 style={sectionTitleStyle}>1. Overview</h2>
             <p style={paragraphStyle}>
-              Renta uses an escrow-style payment flow to protect tenants and landlords. Rental funds paid through the
-              platform are held until the rental process reaches the required release conditions or until a dispute is resolved.
+              Renta uses a secure split payment system provided by our payment gateway. We do not operate an escrow system and do not hold funds on the platform. Rental funds paid through the platform are processed and remitted directly to the landlord within 24 hours.
+            </p>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              Because funds are processed quickly, tenants must be absolutely certain they want the apartment before making payment. We strongly encourage all tenants to carefully review the landlord's video tour (which provides a better view than pictures alone) and complete a physical inspection before paying.
             </p>
             <p style={{ color: 'var(--text-secondary)' }}>
               This policy explains when refunds may be available and how refund requests are reviewed.
@@ -66,22 +68,22 @@ export default function RefundPolicyPage() {
 
           <section>
             <h2 style={sectionTitleStyle}>3. When A Refund May Be Approved</h2>
-            <p style={paragraphStyle}>A refund may be considered where:</p>
+            <p style={paragraphStyle}>Because Renta does not hold funds in escrow, refunds are strictly limited. A refund may be considered only where:</p>
             <ul style={listStyle}>
-              <li>The property is materially different from the verified listing and the issue is reported promptly.</li>
-              <li>The landlord cannot provide access to the property after a valid platform payment.</li>
-              <li>The property is no longer available before move-in and no acceptable alternative is provided.</li>
+              <li>The payment is still processing and has not yet been settled to the landlord's bank account.</li>
               <li>A duplicate or erroneous payment is confirmed by the payment provider and Renta records.</li>
+              <li>The landlord voluntarily agrees to return the funds and issues the refund directly.</li>
               <li>Renta administration determines, after review, that a refund or reversal should be pursued for the tenant.</li>
             </ul>
           </section>
 
           <section>
-            <h2 style={sectionTitleStyle}>4. Non-Refundable Or Limited-Refund Items</h2>
-            <p style={paragraphStyle}>Refunds may be declined or reduced where:</p>
+            <h2 style={sectionTitleStyle}>4. Non-Refundable Items</h2>
+            <p style={paragraphStyle}>Refunds will be declined where:</p>
             <ul style={listStyle}>
+              <li>The funds have already been processed and remitted to the landlord (usually within 24 hours of payment).</li>
+              <li>The tenant changed their mind after making payment, but the property was accurately represented in the video tour and inspection.</li>
               <li>The tenant paid outside the Renta platform.</li>
-              <li>The tenant changed their mind after the landlord fulfilled the agreed rental conditions.</li>
               <li>The tenant provided false, incomplete, or misleading information during screening or KYC.</li>
               <li>The claim is submitted after settlement has already been validly completed to the landlord.</li>
               <li>The issue results from user misconduct, policy violations, or off-platform arrangements.</li>

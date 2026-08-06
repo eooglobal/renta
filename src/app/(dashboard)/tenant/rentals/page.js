@@ -15,11 +15,11 @@ const statusConfig = {
 };
 
 const escrowLabels = {
-    PENDING: 'Escrow Pending',
-    HELD: 'Escrow Held',
-    RELEASED: 'Escrow Released',
-    DISPUTED: 'Escrow Disputed',
-    REFUNDED: 'Escrow Refunded',
+    PENDING: 'Payment Processing',
+    HELD: 'Payment Secured',
+    RELEASED: 'Payment Remitted',
+    DISPUTED: 'Payment Disputed',
+    REFUNDED: 'Payment Refunded',
 };
 
 export default function TenantRentalsPage() {
@@ -63,7 +63,7 @@ export default function TenantRentalsPage() {
         const reason = window.prompt(
             isDirectSplit
                 ? 'Please explain the issue. Renta support will review this direct split payment case and contact you.'
-                : 'Please detail the reason for the dispute. This will halt escrow release until an Admin reviews it.'
+                : 'Please detail the reason for the dispute. This will halt payment release until an Admin reviews it.'
         );
         if (!reason) return;
         if (reason.length < 10) {
@@ -245,14 +245,14 @@ export default function TenantRentalsPage() {
                                                     Download Receipt
                                                 </a>
 
-                                                {/* Escrow actions */}
+                                                {/* Payment actions */}
                                                 {rental.escrow?.status === 'HELD' && (
                                                     <>
                                                         <button
                                                             className="btn btn-sm"
                                                             style={{ background: 'var(--color-success)', color: 'white' }}
                                                             onClick={async () => {
-                                                                if (confirm('Are you sure you want to confirm access and release the funds to the landlord? This cannot be undone.')) {
+                                                                if (confirm('Are you sure you want to confirm access? This cannot be undone.')) {
                                                                     try {
                                                                         const res = await fetch('/api/escrow/release', {
                                                                             method: 'POST',
@@ -273,7 +273,7 @@ export default function TenantRentalsPage() {
                                                             }}
                                                         >
                                                             <CheckCircle size={14} style={{ marginRight: 4 }} />
-                                                            Release Funds
+                                                            Confirm Move-In
                                                         </button>
                                                         <button
                                                             className="btn btn-sm btn-outline"
