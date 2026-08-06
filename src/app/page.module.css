@@ -99,7 +99,7 @@
 /* Hero */
 .hero {
     padding: calc(var(--header-height) + var(--space-24)) 0 var(--space-24);
-    background: linear-gradient(to right, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.4)), url('/images/hero-bg.png') center/cover no-repeat;
+    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('/images/hero-bg.png') center/cover no-repeat;
     position: relative;
     color: var(--color-white);
 }

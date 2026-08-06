@@ -39,26 +39,27 @@ export default async function Home() {
               Now live in Ilorin
             </div>
             <h1 className={styles.heroTitle}>
-              Rent Verified Apartments at <span className={styles.highlight}>Real Prices</span>
+              Rent Your Next Apartment Without Paying <span className={styles.highlight}>Excessive Agent Fees</span>
             </h1>
             <p className={styles.heroSubtitle}>
-              No agent inflation. No fake listings. No scams. Just verified apartments
-              at landlord-approved prices with secure platform payments.
+              Find verified apartments, see the complete cost upfront, and rent with confidence. With Renta, you know exactly what you will pay before making a decision.
             </p>
-            <div className={styles.searchContainer}>
-              <form action="/rentals" method="GET" className="flex w-full">
-                <input 
-                  type="text" 
-                  name="q"
-                  placeholder="Search for apartments, areas, or landmarks..." 
-                  className={styles.searchInput}
-                  required
-                />
-                <button type="submit" className={styles.searchBtn}>
-                  <Search size={18} /> Search
-                </button>
-              </form>
-            </div>
+            <form action="/rentals" method="GET" className={styles.searchContainer}>
+              <input 
+                type="text" 
+                name="q"
+                placeholder="Search by location, apartment type, or budget" 
+                className={styles.searchInput}
+                required
+              />
+              <button type="submit" className={styles.searchBtn}>
+                <Search size={18} /> Search Apartments
+              </button>
+            </form>
+            <p style={{ marginTop: 'var(--space-4)', opacity: 0.8, fontSize: '0.9rem', fontWeight: 500 }}>
+              Transparent pricing. Verified listings. No hidden charges.<br/>
+              Starting in Ilorin, Kwara State.
+            </p>
             <div className={styles.heroStats}>
               <div className={styles.stat}>
                 <span className={styles.statNumber}>10%</span>
@@ -120,10 +121,10 @@ export default async function Home() {
       <section className={styles.problems}>
         <div className="container">
           <h2 className={styles.sectionTitle}>
-            Tired of rental <span className={styles.highlight}>nightmares?</span>
+            Renting an Apartment Shouldn't Feel Like a <span className={styles.highlight}>Gamble</span>
           </h2>
           <p className={styles.sectionSubtitle}>
-            Renting in Ilorin shouldn&rsquo;t feel like a gamble. Here&rsquo;s what we&rsquo;re fixing.
+            If you've rented an apartment before, this probably sounds familiar. You find a place, then the unexpected costs begin. By the time you're ready to pay, the amount is far higher than you expected.
           </p>
           <div className={`grid grid-4 ${styles.problemsGrid}`}>
             <div className={styles.problemCard}>
@@ -154,34 +155,28 @@ export default async function Home() {
       <section className={styles.howItWorks}>
         <div className="container">
           <h2 className={styles.sectionTitle}>
-            How <span className={styles.highlight}>Renta</span> Works
+            Renting Made <span className={styles.highlight}>Simple</span>
           </h2>
           <p className={styles.sectionSubtitle}>
-            Simple, transparent, and safe — from search to move-in.
+            A simpler, more transparent way to rent apartments.
           </p>
           <div className={styles.steps}>
             <div className={styles.step}>
               <div className={styles.stepNumber}>1</div>
-              <h4>Browse & Search</h4>
-              <p>Filter verified apartments by location, price, and type. Every listing shows the real price.</p>
+              <h4>Search</h4>
+              <p>Browse verified apartments that match your budget and preferred location.</p>
             </div>
             <div className={styles.stepConnector}></div>
             <div className={styles.step}>
               <div className={styles.stepNumber}>2</div>
-              <h4>Book Inspection</h4>
-              <p>Schedule a free inspection at your convenience. See the apartment in person before committing.</p>
+              <h4>Compare</h4>
+              <p>See the complete price before contacting the property. Know the rent. Know the platform fee. Know the total amount.</p>
             </div>
             <div className={styles.stepConnector}></div>
             <div className={styles.step}>
               <div className={styles.stepNumber}>3</div>
-              <h4>Pay Securely</h4>
-              <p>Pay rent + 10% service fee through Renta. Paystack splits settlement to verified recipients and Renta keeps a full payment record.</p>
-            </div>
-            <div className={styles.stepConnector}></div>
-            <div className={styles.step}>
-              <div className={styles.stepNumber}>4</div>
-              <h4>Move In</h4>
-              <p>Move in with your digital rental agreement, receipt, and Renta support record ready. Welcome home!</p>
+              <h4>Apply</h4>
+              <p>Request the apartment directly through Renta and continue the rental process with confidence.</p>
             </div>
           </div>
         </div>
@@ -193,15 +188,16 @@ export default async function Home() {
           <div className={styles.landlordContent}>
             <div className={styles.heroBadge}>For Property Owners</div>
             <h2 className={styles.sectionTitle} style={{ textAlign: 'left' }}>
-              Manage Your Properties <span className={styles.highlight}>Effortlessly</span>
+              Fill Vacant Apartments <span className={styles.highlight}>Faster</span>
             </h2>
+            <p style={{ marginBottom: 'var(--space-6)', color: 'var(--text-secondary)', fontSize: 'var(--text-lg)' }}>
+              Listing your property is only the beginning. Renta actively helps more qualified renters discover your apartments.
+            </p>
             <ul className={styles.landlordFeatures}>
-              <li className="flex items-center gap-2"><Check size={16} /> Set your own rent price — no agent interference</li>
-              <li className="flex items-center gap-2"><Check size={16} /> Get verified tenants with identity verification</li>
-              <li className="flex items-center gap-2"><Check size={16} /> Receive payments directly to your bank</li>
-              <li className="flex items-center gap-2"><Check size={16} /> Digital rental agreements included</li>
-              <li className="flex items-center gap-2"><Check size={16} /> Track maintenance requests in one place</li>
-              <li className="flex items-center gap-2"><Check size={16} /> Centralized property management dashboard</li>
+              <li className="flex items-center gap-2"><Check size={16} /> Exposure through the Renta marketplace</li>
+              <li className="flex items-center gap-2"><Check size={16} /> Digital marketing campaigns</li>
+              <li className="flex items-center gap-2"><Check size={16} /> Trained property scouts</li>
+              <li className="flex items-center gap-2"><Check size={16} /> Affiliate partners</li>
             </ul>
             <Link href="/register?role=landlord" className="btn btn-primary btn-lg">
               List Your Property — Free
@@ -237,30 +233,29 @@ export default async function Home() {
       <section className={styles.pricing}>
         <div className="container">
           <h2 className={styles.sectionTitle}>
-            Transparent <span className={styles.highlight}>Pricing</span>
+            What You See Is <span className={styles.highlight}>What You Pay</span>
           </h2>
           <p className={styles.sectionSubtitle}>
-            What the landlord sets is what you pay. Plus a flat 10% service fee. That&rsquo;s it.
+            Unlike the traditional rental process where additional charges often appear later, Renta shows the complete cost from the beginning.
           </p>
           <div className={styles.priceExample}>
             <div className={styles.priceCard}>
               <h4>Example Breakdown</h4>
               <div className={styles.priceRow}>
-                <span>Landlord&rsquo;s Rent</span>
-                <span className="font-bold">₦200,000</span>
+                <span>Apartment Rent</span>
+                <span className="font-bold">₦500,000</span>
               </div>
               <div className={styles.priceRow}>
-                <span>Renta Service Fee (10%)</span>
-                <span className="font-bold">₦20,000</span>
+                <span>Platform Fee</span>
+                <span className="font-bold">₦50,000</span>
               </div>
               <div className={`${styles.priceRow} ${styles.priceTotal}`}>
-                <span>Total You Pay</span>
-                <span>₦220,000</span>
+                <span>Total Amount Payable</span>
+                <span>₦550,000</span>
               </div>
               <p className={`${styles.priceNote} flex justify-center gap-4`}>
-                <span className="flex items-center gap-1"><Check size={14} /> Secure payment</span>
-                <span className="flex items-center gap-1"><Check size={14} /> No hidden charges</span>
-                <span className="flex items-center gap-1"><Check size={14} /> Paid once yearly</span>
+                <span className="flex items-center gap-1"><Check size={14} /> No hidden calculations</span>
+                <span className="flex items-center gap-1"><Check size={14} /> No unexpected surprises</span>
               </p>
             </div>
           </div>
@@ -300,14 +295,14 @@ export default async function Home() {
       <section className={styles.cta}>
         <div className="container text-center">
           <h2 className={styles.ctaTitle}>
-            Ready to rent without the stress?
+            Your Next Apartment Could Be Just A Few Clicks Away
           </h2>
           <p className={styles.ctaSubtitle}>
-            Join Renta today. Verified apartments. Real prices. Zero scams.
+            Stop guessing. Stop discovering extra charges at the last minute. Find verified apartments with transparent pricing and rent with greater confidence.
           </p>
           <div className={styles.ctaButtons}>
-            <Link href="/register" className="btn btn-primary btn-lg">
-              Create Your Account
+            <Link href="/rentals" className="btn btn-primary btn-lg">
+              Find Your Apartment
             </Link>
           </div>
         </div>
