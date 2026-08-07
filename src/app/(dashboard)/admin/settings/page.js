@@ -838,6 +838,10 @@ export default function AdminSettingsPage() {
                       transition: "width 0.4s ease",
                     }}
                   />
+                </div>
+              </div>
+            </div>
+
             {activeGroup === "EMAIL" && testEmailResult && (
               <div
                 style={{
