@@ -18,18 +18,13 @@ export default function LandlordPropertiesPage() {
 
   const fetchProperties = async () => {
     try {
-      const sessionRes = await fetch("/api/auth/session");
-      const sessionData = await sessionRes.json();
-
-      const propertiesRes = await fetch(
-        `/api/properties?landlordId=${sessionData?.user?.id}`,
-      );
-
-      const propertiesData = await propertiesRes.json();
-      setProperties(propertiesData.properties || []);
+      // Use the authenticated landlord endpoint — no need to pass landlordId
+      const res = await fetch("/api/landlord/properties");
+      const data = await res.json();
+      setProperties(data.properties || []);
 
       const configuredPromotionPrice = Number(
-        propertiesData.promotionSettings?.promotionPrice || 5000,
+        data.promotionSettings?.promotionPrice || 5000,
       );
       setPromotionPrice(configuredPromotionPrice);
     } catch (error) {

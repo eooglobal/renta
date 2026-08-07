@@ -11,33 +11,33 @@ export async function GET() {
 
     const landlordId = parseInt(session.user.id);
 
-    const tenantStatsFilter = {
+    // Only ACTIVE rentals = a tenant who completed payment and is living there
+    const activeRentalFilter = {
       property: { landlordId },
-      status: { in: ["PENDING", "ACTIVE", "DISPUTED"] },
-    };
-
-    const incomeFilter = {
-      property: { landlordId },
-      status: { in: ["PENDING", "ACTIVE"] },
+      status: "ACTIVE",
     };
 
     const [totalProperties, pendingVerification, activeTenants, monthlyIncome] =
       await Promise.all([
+        // Count only properties that are visible/live on the platform
         prisma.property.count({
           where: {
             landlordId,
             status: { in: ["PENDING", "VERIFIED", "RENTED"] },
           },
         }),
+        // Pending verification = properties not yet reviewed by admin
         prisma.property.count({
           where: {
             landlordId,
             status: "PENDING",
           },
         }),
-        prisma.rental.count({ where: tenantStatsFilter }),
+        // Active tenants = unique rentals where payment is confirmed (ACTIVE only)
+        prisma.rental.count({ where: activeRentalFilter }),
+        // Monthly income = sum of rent from ACTIVE tenants only (real confirmed payments)
         prisma.rental.aggregate({
-          where: incomeFilter,
+          where: activeRentalFilter,
           _sum: { rentAmount: true },
         }),
       ]);

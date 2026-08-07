@@ -14,7 +14,7 @@ export default function ScoutDashboard() {
     totalEarnings: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [kycRequired, setKycRequired] = useState(true);
+  const [kycRequired, setKycRequired] = useState(null); // null = not yet loaded
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -52,8 +52,8 @@ export default function ScoutDashboard() {
         </p>
       </div>
 
-      {/* KYC Verification Alert — only shown when KYC is required */}
-      {kycRequired && session?.user?.ninStatus !== "VERIFIED" && (
+      {/* KYC Verification Alert — only shown when KYC is explicitly required */}
+      {kycRequired === true && session?.user?.ninStatus !== "VERIFIED" && (
         <div
           className="dashboard-alert dashboard-alert-error mb-6"
         >

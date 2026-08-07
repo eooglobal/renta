@@ -18,7 +18,7 @@ function DashboardContent() {
     pendingVerification: 0,
   });
   const [properties, setProperties] = useState([]);
-  const [kycRequired, setKycRequired] = useState(true); // default true until loaded
+  const [kycRequired, setKycRequired] = useState(null); // null = not yet loaded
   const [loading, setLoading] = useState(true);
   const [propsLoading, setPropsLoading] = useState(true);
 
@@ -49,7 +49,7 @@ function DashboardContent() {
 
     const fetchProperties = async () => {
       try {
-        const res = await fetch(`/api/properties?landlordId=${session?.user?.id}&limit=5`);
+        const res = await fetch("/api/landlord/properties?limit=5");
         if (res.ok) {
           const data = await res.json();
           setProperties(data.properties || []);
@@ -89,8 +89,8 @@ function DashboardContent() {
         <p className="text-muted">Manage your properties and tenants</p>
       </div>
 
-      {/* KYC Verification Alert — only shown when KYC is required and not verified */}
-      {kycRequired && session?.user?.ninStatus !== "VERIFIED" && (
+      {/* KYC Verification Alert — only shown when KYC is explicitly required and user is unverified */}
+      {kycRequired === true && session?.user?.ninStatus !== "VERIFIED" && (
         <div
           className="dashboard-alert dashboard-alert-error mb-6"
         >

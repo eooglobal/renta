@@ -41,24 +41,31 @@ export default function PaymentSetupCard({ profile }) {
       setLoading(true);
       setError("");
       try {
-        const [setupRes, banksRes] = await Promise.all([
-          fetch("/api/payment-setup"),
-          fetch("/api/banks"),
-        ]);
+        // Fetch setup data first - this is critical
+        const setupRes = await fetch("/api/payment-setup");
         const setupData = await setupRes.json();
-        const banksData = await banksRes.json();
-
         if (!setupRes.ok) throw new Error(setupData.error || "Failed to load payout setup");
-        if (!banksRes.ok) throw new Error(banksData.error || "Failed to load banks");
 
         setSetup(setupData);
-        setBanks(banksData);
         setForm({
           bankName: setupData.bank?.bankName || "",
           bankCode: setupData.bank?.bankCode || "",
           bankAccount: setupData.bank?.bankAccount || "",
         });
         setResolvedName(setupData.bank?.accountName || "");
+
+        // Fetch banks separately - non-critical, failure is handled gracefully
+        try {
+          const banksRes = await fetch("/api/banks");
+          if (banksRes.ok) {
+            const banksData = await banksRes.json();
+            // banksData is an array; if empty it means key not configured yet
+            setBanks(Array.isArray(banksData) ? banksData : []);
+          }
+        } catch {
+          // Banks fetch failed silently - user can still see their existing setup
+          setBanks([]);
+        }
       } catch (err) {
         const friendly = friendlyError(err);
         setError(friendly.message);
@@ -184,16 +191,21 @@ export default function PaymentSetupCard({ profile }) {
                   className="form-input"
                   value={form.bankCode}
                   onChange={handleBankChange}
-                  disabled={!isKycVerified || saving}
+                  disabled={!isKycVerified || saving || banks.length === 0}
                   required
                 >
-                  <option value="">Select bank</option>
+                  <option value="">{banks.length === 0 ? "Banks unavailable" : "Select bank"}</option>
                   {banks.map((bank) => (
                     <option key={bank.code} value={bank.code}>
                       {bank.name}
                     </option>
                   ))}
                 </select>
+                {!loading && banks.length === 0 && (
+                  <p className="text-xs text-muted mt-1">
+                    Bank list unavailable. Please ensure Paystack keys are configured in Admin Settings.
+                  </p>
+                )}
               </div>
               <div className="form-group">
                 <label className="form-label">Account Number</label>
