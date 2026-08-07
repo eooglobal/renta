@@ -128,6 +128,12 @@ export async function getSetting(key, envFallback = null) {
     const dbValue = settings[key];
     if (dbValue && !isPlaceholder(dbValue)) return dbValue;
 
+    // Check alias key in DB if primary key isn't found
+    const aliasKey = key === 'NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY' ? 'NEXT_PUBLIC_PAYSTACK_KEY' : key === 'NEXT_PUBLIC_PAYSTACK_KEY' ? 'NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY' : null;
+    if (aliasKey && settings[aliasKey] && !isPlaceholder(settings[aliasKey])) {
+        return settings[aliasKey];
+    }
+
     // Fall back to env var — use provided envFallback, then the alias map, then the key itself
     const envKey = envFallback || ENV_ALIASES[key] || key;
     return readEnv(envKey);
@@ -149,6 +155,25 @@ export async function getMergedSettings() {
         }
     }
 
+    // Sync legacy/new key pairs bidirectionally so neither UI key appears empty
+    const ALIAS_PAIRS = [
+        ['NEXT_PUBLIC_PAYSTACK_KEY', 'NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY'],
+        ['PAYSTACK_PUBLIC_KEY', 'NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY'],
+        ['EMAIL_SERVER_HOST', 'SMTP_HOST'],
+        ['EMAIL_SERVER_PORT', 'SMTP_PORT'],
+        ['EMAIL_SERVER_USER', 'SMTP_USER'],
+        ['EMAIL_SERVER_PASSWORD', 'SMTP_PASS'],
+        ['ZEPTOMAIL_SEND_TOKEN', 'ZEPTOMAIL_API_TOKEN'],
+    ];
+
+    for (const [k1, k2] of ALIAS_PAIRS) {
+        if (merged[k1] && !merged[k2]) {
+            merged[k2] = { ...merged[k1] };
+        } else if (merged[k2] && !merged[k1]) {
+            merged[k1] = { ...merged[k2] };
+        }
+    }
+
     // Fill in env vars for any known key not already set by DB
     for (const [key, envKey] of Object.entries(ENV_ALIASES)) {
         if (!merged[key]) {
@@ -156,6 +181,15 @@ export async function getMergedSettings() {
             if (envValue) {
                 merged[key] = { value: envValue, source: 'env' };
             }
+        }
+    }
+
+    // Final alias sync after env fallback resolution
+    for (const [k1, k2] of ALIAS_PAIRS) {
+        if (merged[k1] && !merged[k2]) {
+            merged[k2] = { ...merged[k1] };
+        } else if (merged[k2] && !merged[k1]) {
+            merged[k1] = { ...merged[k2] };
         }
     }
 
