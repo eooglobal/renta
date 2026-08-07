@@ -7,13 +7,10 @@ export async function GET() {
     try {
         const isActive = await getSetting('GLOBAL_ANNOUNCEMENT_ACTIVE');
         const text = await getSetting('GLOBAL_ANNOUNCEMENT_TEXT');
+        const active = String(isActive).toLowerCase() === 'true';
         
-        if (String(isActive).toLowerCase() === 'true' && text) {
-            return NextResponse.json({ active: true, text });
-        }
-        
-        return NextResponse.json({ active: false });
+        return NextResponse.json({ active, text: text || '' });
     } catch (error) {
-        return NextResponse.json({ active: false });
+        return NextResponse.json({ active: false, text: '' });
     }
 }

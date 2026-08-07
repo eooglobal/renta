@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { clearSettingsCache } from '@/lib/settings';
 
 export async function POST(req) {
     try {
@@ -37,6 +38,9 @@ export async function POST(req) {
                 },
             }),
         ]);
+
+        // Clear settings cache so changes take effect immediately across all routes
+        clearSettingsCache();
 
         return NextResponse.json({ success: true });
     } catch (error) {

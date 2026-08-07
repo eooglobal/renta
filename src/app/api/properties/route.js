@@ -85,13 +85,15 @@ export async function GET(request) {
         where,
         include: {
           images: {
-            where: { isPrimary: true },
-            take: 1,
+            orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+            take: 5,
           },
           videos: {
             orderBy: { createdAt: "desc" },
             take: 1,
           },
+          area: { select: { id: true, name: true } },
+          city: { select: { id: true, name: true } },
           landlord: {
             select: {
               id: true,

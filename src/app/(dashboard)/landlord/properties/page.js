@@ -159,7 +159,7 @@ export default function LandlordPropertiesPage() {
                   <h4>{property.title}</h4>
                   <div className={styles.propertyMeta}>
                     <span className="flex items-center gap-1">
-                      <MapPin size={14} /> {property.area}
+                      <MapPin size={14} /> {property.area?.name || property.area || ""}
                     </span>
                     <span className="flex items-center gap-1">
                       <Home size={14} /> {formatType(property.type)}

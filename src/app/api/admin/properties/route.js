@@ -116,7 +116,7 @@ export async function PATCH(request) {
     switch (action) {
       case "verify":
         {
-          const blockers = getLandlordPublicationBlockers(property.landlord);
+          const blockers = await getLandlordPublicationBlockers(property.landlord);
           if (blockers.length > 0) {
             return NextResponse.json(
               {
@@ -155,7 +155,7 @@ export async function PATCH(request) {
 
       case "activate":
         {
-          const blockers = getLandlordPublicationBlockers(property.landlord);
+          const blockers = await getLandlordPublicationBlockers(property.landlord);
           if (blockers.length > 0) {
             return NextResponse.json(
               {

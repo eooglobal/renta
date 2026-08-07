@@ -1,7 +1,12 @@
-export function getLandlordPublicationBlockers(landlord = {}) {
+import { getSetting } from './settings';
+
+export async function getLandlordPublicationBlockers(landlord = {}) {
   const blockers = [];
 
-  if (landlord.ninStatus !== 'VERIFIED') {
+  const requireKyc = await getSetting('REQUIRE_KYC');
+  const isKycRequired = requireKyc !== 'false';
+
+  if (isKycRequired && landlord.ninStatus !== 'VERIFIED') {
     blockers.push('identity verification');
   }
 
@@ -15,6 +20,7 @@ export function getLandlordPublicationBlockers(landlord = {}) {
   return blockers;
 }
 
-export function canLandlordPublishProperty(landlord = {}) {
-  return getLandlordPublicationBlockers(landlord).length === 0;
+export async function canLandlordPublishProperty(landlord = {}) {
+  const blockers = await getLandlordPublicationBlockers(landlord);
+  return blockers.length === 0;
 }

@@ -4,9 +4,9 @@ import {
 } from '@/lib/propertyReadiness';
 
 describe('property readiness', () => {
-  it('allows verified landlords with a completed Paystack payout destination', () => {
+  it('allows verified landlords with a completed Paystack payout destination', async () => {
     expect(
-      canLandlordPublishProperty({
+      await canLandlordPublishProperty({
         ninStatus: 'VERIFIED',
         paymentSetupStatus: 'VERIFIED',
         paystackSubaccountCode: 'ACCT_landlord',
@@ -14,9 +14,9 @@ describe('property readiness', () => {
     ).toBe(true);
   });
 
-  it('blocks publication when identity verification is missing', () => {
+  it('blocks publication when identity verification is missing', async () => {
     expect(
-      getLandlordPublicationBlockers({
+      await getLandlordPublicationBlockers({
         ninStatus: 'PENDING',
         paymentSetupStatus: 'VERIFIED',
         paystackSubaccountCode: 'ACCT_landlord',
@@ -24,9 +24,9 @@ describe('property readiness', () => {
     ).toEqual(['identity verification']);
   });
 
-  it('blocks publication when payout setup is incomplete', () => {
+  it('blocks publication when payout setup is incomplete', async () => {
     expect(
-      getLandlordPublicationBlockers({
+      await getLandlordPublicationBlockers({
         ninStatus: 'VERIFIED',
         paymentSetupStatus: 'PENDING',
         paystackSubaccountCode: null,

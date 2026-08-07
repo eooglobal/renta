@@ -19,7 +19,12 @@ export default function AnnouncementBanner() {
             if (dismissed !== data.text) {
               setAnnouncement(data.text);
               setVisible(true);
+            } else {
+              setVisible(false);
             }
+          } else {
+            setVisible(false);
+            setAnnouncement(null);
           }
         }
       } catch (error) {
