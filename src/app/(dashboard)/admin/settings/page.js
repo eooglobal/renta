@@ -386,6 +386,26 @@ export default function AdminSettingsPage() {
   const [saved, setSaved] = useState(null);
   const [activeGroup, setActiveGroup] = useState("PAYSTACK");
   const [revealed, setRevealed] = useState({});
+  const [testingEmail, setTestingEmail] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState(null);
+
+  const handleTestEmail = async () => {
+    setTestingEmail(true);
+    setTestEmailResult(null);
+    try {
+      const res = await fetch("/api/admin/settings/test-email", { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTestEmailResult({ type: "success", text: data.message });
+      } else {
+        setTestEmailResult({ type: "error", text: data.error || "Email delivery test failed." });
+      }
+    } catch (err) {
+      setTestEmailResult({ type: "error", text: "Network error during email test." });
+    } finally {
+      setTestingEmail(false);
+    }
+  };
 
   const fetchSettings = async () => {
     try {
@@ -755,6 +775,27 @@ export default function AdminSettingsPage() {
                     {filledCount} of {activeFields.length} fields configured
                   </p>
                 </div>
+                {activeGroup === "EMAIL" && (
+                  <button
+                    type="button"
+                    onClick={handleTestEmail}
+                    className="btn btn-sm btn-outline"
+                    disabled={testingEmail}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      marginLeft: "auto",
+                    }}
+                  >
+                    {testingEmail ? (
+                      <span className="spinner" style={{ width: 14, height: 14 }} />
+                    ) : (
+                      <Send size={14} />
+                    )}
+                    Test Email Connection
+                  </button>
+                )}
               </div>
 
               {/* Progress bar */}
@@ -797,9 +838,31 @@ export default function AdminSettingsPage() {
                       transition: "width 0.4s ease",
                     }}
                   />
-                </div>
+            {activeGroup === "EMAIL" && testEmailResult && (
+              <div
+                style={{
+                  margin: "16px 32px 0",
+                  padding: "12px 16px",
+                  borderRadius: 10,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  background: testEmailResult.type === "success" ? "#f0fdf4" : "#fee2e2",
+                  color: testEmailResult.type === "success" ? "#166534" : "#991b1b",
+                  border: `1px solid ${testEmailResult.type === "success" ? "#bbf7d0" : "#fca5a5"}`,
+                }}
+              >
+                <span>{testEmailResult.text}</span>
+                <button
+                  onClick={() => setTestEmailResult(null)}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "inherit" }}
+                >
+                  <X size={16} />
+                </button>
               </div>
-            </div>
+            )}
 
             {/* Fields */}
             <div

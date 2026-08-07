@@ -36,7 +36,15 @@ function formatZeptoAuthHeader(rawToken) {
 
 async function sendWithZeptoMail({ to, subject, html, fromAddress, appName }) {
     const token = await getSetting('ZEPTOMAIL_SEND_TOKEN') || await getSetting('ZEPTOMAIL_API_TOKEN');
-    const apiUrl = await getSetting('ZEPTOMAIL_API_URL') || 'https://api.zeptomail.com/v1.1/email';
+    let apiUrl = await getSetting('ZEPTOMAIL_API_URL');
+    if (!apiUrl) {
+        const host = await getSetting('EMAIL_SERVER_HOST');
+        if (host && host.includes('.ca')) {
+            apiUrl = 'https://api.zeptomail.ca/v1.1/email';
+        } else {
+            apiUrl = 'https://api.zeptomail.com/v1.1/email';
+        }
+    }
     const fromName = await getSetting('EMAIL_FROM_NAME') || appName;
 
     if (!token) {
