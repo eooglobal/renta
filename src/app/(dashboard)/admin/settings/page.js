@@ -16,6 +16,9 @@ import {
   EyeOff,
   Zap,
   Cloud,
+  Send,
+  Mail,
+  X,
 } from "lucide-react";
 
 const settingGroups = [
