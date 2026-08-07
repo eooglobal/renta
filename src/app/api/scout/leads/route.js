@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
+import { findOrCreateArea } from '@/lib/areaUtils';
 
 export async function GET() {
     try {
@@ -43,17 +44,20 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
+        // Find existing Area or create a new Area dynamically in the database!
+        const targetArea = await findOrCreateArea(propertyArea);
+
         // Create the lead
         const lead = await prisma.scoutLead.create({
             data: {
-                scoutId,
-                landlordName,
-                landlordPhone,
-                propertyAddress,
-                propertyArea,
-                latitude: latitude || null,
-                longitude: longitude || null,
-                notes,
+                scout: { connect: { id: scoutId } },
+                area: { connect: { id: targetArea.id } },
+                landlordName: String(landlordName).trim(),
+                landlordPhone: String(landlordPhone).trim(),
+                propertyAddress: String(propertyAddress).trim(),
+                latitude: latitude ? parseFloat(latitude) : null,
+                longitude: longitude ? parseFloat(longitude) : null,
+                notes: notes ? String(notes).trim() : null,
                 status: 'SUBMITTED'
             }
         });
@@ -74,6 +78,6 @@ export async function POST(request) {
         return NextResponse.json({ message: 'Lead submitted successfully', data: lead }, { status: 201 });
     } catch (error) {
         console.error('Failed to submit scout lead:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: error.message || 'Failed to submit scout lead' }, { status: 500 });
     }
 }
