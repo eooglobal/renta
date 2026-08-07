@@ -23,7 +23,7 @@ export default function AdminUsersPage() {
     const [modalError, setModalError] = useState('');
     const [modalLoading, setModalLoading] = useState(false);
 
-    const isSuperAdmin = session?.user?.adminRole === 'SUPER_ADMIN';
+    const canManageUsers = session?.user?.role === 'ADMIN';
 
     useEffect(() => { fetchUsers(); }, [filter, searchQuery]);
 
@@ -220,7 +220,7 @@ export default function AdminUsersPage() {
                                                     Activate
                                                 </button>
                                             )}
-                                            {isSuperAdmin && (
+                                             {canManageUsers && (
                                                 <>
                                                     <button className="btn btn-sm btn-outline"
                                                         onClick={() => { setEditUser(user); setModalError(''); }}>
