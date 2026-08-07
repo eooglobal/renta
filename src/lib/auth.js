@@ -57,6 +57,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     lastName: user.lastName,
                     ninStatus: user.ninStatus,
                     status: user.status,
+                    isVerified: Boolean(user.isVerified),
                 };
             },
         }),

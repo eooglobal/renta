@@ -4,7 +4,7 @@ import { getSetting } from "@/lib/settings";
 const PDR_CONTENT = `
 # Renta Platform Knowledge Base
 Renta is a verified-only apartment marketplace in Nigeria, starting in Ilorin.
-Renta is a product of Landmark Property Oasis Ltd.
+Renta is a product of Landmark Property Oasis Ltd (RC 9137107).
 
 ## Core Rules
 - Verification: Every property is physically inspected before it goes live.

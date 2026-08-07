@@ -11,27 +11,28 @@
 /** Known API error string patterns → friendly message */
 const ERROR_MAP = [
     // ── Auth ──────────────────────────────────────────────────────────────────
+    // ── Auth ──────────────────────────────────────────────────────────────────
     {
-        match: /invalid.*credentials|invalid.*password|incorrect.*password/i,
-        title: 'Incorrect Password',
-        message: 'The email or password you entered is wrong. Please double-check and try again.',
+        match: /CredentialsSignin|Configuration|CallbackRouteError|invalid.*credentials|invalid.*email|incorrect.*password|invalid.*password/i,
+        title: 'Incorrect Email or Password',
+        message: 'The email address or password you entered is wrong. Please double-check your credentials and try again.',
     },
     {
-        match: /user.*not.*found|no.*account.*found/i,
+        match: /user.*not.*found|no.*account.*found|no.*account.*exists/i,
         title: 'Account Not Found',
-        message: 'We couldn\'t find an account with that email address. Did you mean to register?',
+        message: 'We couldn\'t find a Renta account with that email address. Did you mean to sign up?',
         action: { label: 'Create an account', href: '/register' },
     },
     {
         match: /email.*already.*exists|already.*registered|duplicate.*email/i,
         title: 'Email Already Registered',
-        message: 'That email address is already linked to an account. Try logging in instead.',
+        message: 'That email address is already linked to a Renta account. Try logging in instead.',
         action: { label: 'Log in', href: '/login' },
     },
     {
-        match: /phone.*already.*in.*use|duplicate.*phone/i,
+        match: /phone.*already.*in.*use|duplicate.*phone|account.*with.*this.*phone/i,
         title: 'Phone Number Already Used',
-        message: 'That phone number is already linked to another account. Please use a different number.',
+        message: 'That phone number is already linked to another Renta account. Please use a different phone number.',
     },
     {
         match: /passwords.*do.*not.*match/i,
@@ -41,7 +42,18 @@ const ERROR_MAP = [
     {
         match: /password.*at.*least.*8|password.*too.*short/i,
         title: 'Password Too Short',
-        message: 'Your password must be at least 8 characters long. Please choose a stronger one.',
+        message: 'Your password must be at least 8 characters long. Please choose a stronger password.',
+    },
+    {
+        match: /rate.*limit|too.*many.*requests|too.*many.*login.*attempts/i,
+        title: 'Too Many Attempts',
+        message: 'Too many login attempts. Please wait 15 minutes before trying again.',
+    },
+    {
+        match: /suspended|suspicious.*activity|account.*suspended/i,
+        title: 'Account Suspended',
+        message: 'Your account has been suspended or restricted. Please contact hello@userenta.com for assistance.',
+        action: { label: 'Contact Support', href: '/contact' },
     },
 
     // ── Authorization ─────────────────────────────────────────────────────────
@@ -125,14 +137,6 @@ const ERROR_MAP = [
         message: 'You need to sign the rental agreement before you can download it.',
     },
 
-    // ── Fraud / Security ──────────────────────────────────────────────────────
-    {
-        match: /suspicious.*activity|account.*suspended/i,
-        title: 'Account Temporarily Suspended',
-        message: 'Suspicious activity was detected on your account. Please contact our support team to resolve this.',
-        action: { label: 'Contact Support', href: '/contact' },
-    },
-
     // ── File / Upload ─────────────────────────────────────────────────────────
     {
         match: /file.*too.*large|exceeds.*maximum.*size/i,
@@ -174,9 +178,10 @@ const ERROR_MAP = [
  */
 export function friendlyError(err, fallback) {
     const raw = err instanceof Error ? err.message : (typeof err === 'string' ? err : String(err ?? ''));
+    const trimmed = raw.trim();
 
     for (const entry of ERROR_MAP) {
-        if (entry.match.test(raw)) {
+        if (entry.match.test(trimmed)) {
             return {
                 title:   entry.title,
                 message: entry.message,
@@ -185,11 +190,19 @@ export function friendlyError(err, fallback) {
         }
     }
 
+    // Catch internal NextAuth string codes that are not human-friendly
+    if (/^(CredentialsSignin|Configuration|CallbackRouteError|Credentials|AccessDenied|OAuthSignin|OAuthCallback)$/i.test(trimmed)) {
+        return {
+            title: 'Incorrect Email or Password',
+            message: 'The email address or password you entered is incorrect. Please check your login details and try again.',
+        };
+    }
+
     // If the error is something specific from the API and short enough, show it
-    if (raw && raw.length < 120 && !raw.includes('undefined') && !raw.includes('null')) {
+    if (trimmed && trimmed.length < 120 && !trimmed.includes('undefined') && !trimmed.includes('null') && !trimmed.includes('[object')) {
         return {
             title:   fallback?.title || 'Action Failed',
-            message: raw,
+            message: trimmed,
             action:  fallback?.action,
         };
     }

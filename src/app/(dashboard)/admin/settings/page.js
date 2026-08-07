@@ -19,6 +19,7 @@ import {
   Send,
   Mail,
   X,
+  ChevronDown,
 } from "lucide-react";
 
 const settingGroups = [
@@ -391,6 +392,7 @@ export default function AdminSettingsPage() {
   const [revealed, setRevealed] = useState({});
   const [testingEmail, setTestingEmail] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState(null);
+  const [mobileTabsOpen, setMobileTabsOpen] = useState(false);
 
   const handleTestEmail = async () => {
     setTestingEmail(true);
@@ -628,9 +630,147 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+      <style jsx>{`
+        @media (max-width: 767px) {
+          .desktop-settings-sidebar {
+            display: none !important;
+          }
+          .mobile-only-settings-tabs {
+            display: block !important;
+          }
+          .settings-main-container {
+            flex-direction: column !important;
+          }
+          .settings-field-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .settings-save-btn {
+            width: 100% !important;
+            margin-top: 6px !important;
+          }
+          .settings-panel-header {
+            padding: 16px !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 12px !important;
+          }
+        }
+        @media (min-width: 768px) {
+          .mobile-only-settings-tabs {
+            display: none !important;
+          }
+          .desktop-settings-sidebar {
+            display: flex !important;
+          }
+        }
+      `}</style>
+
+      {/* ── Mobile Collapsible Category Accordion ── */}
+      <div className="mobile-only-settings-tabs" style={{ marginBottom: 16 }}>
+        <button
+          type="button"
+          onClick={() => setMobileTabsOpen(!mobileTabsOpen)}
+          style={{
+            width: "100%",
+            padding: "14px 18px",
+            borderRadius: "var(--radius-xl)",
+            background: "var(--color-primary)",
+            color: "#000",
+            border: "none",
+            fontWeight: 700,
+            fontSize: "var(--text-sm)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            cursor: "pointer",
+            boxShadow: "0 4px 14px rgba(253,168,41,0.35)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <activeGroupData.icon size={20} />
+            <span>Category: {activeGroupData.label}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                background: "rgba(0,0,0,0.15)",
+                padding: "2px 8px",
+                borderRadius: 999,
+              }}
+            >
+              {activeGroupFields.filter((f) => settings[f.key]).length}/{activeGroupFields.length}
+            </span>
+            <ChevronDown
+              size={18}
+              style={{
+                transform: mobileTabsOpen ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.2s ease",
+              }}
+            />
+          </div>
+        </button>
+
+        {mobileTabsOpen && (
+          <div
+            style={{
+              marginTop: 8,
+              background: "var(--bg-card)",
+              borderRadius: "var(--radius-xl)",
+              padding: 10,
+              boxShadow: "var(--shadow-lg)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+              border: "1px solid var(--border-light)",
+            }}
+          >
+            {settingGroups.map((group) => {
+              const Icon = group.icon;
+              const isActive = activeGroup === group.id;
+              const fields = defaultSettings.filter((s) => s.group === group.id);
+              const filled = fields.filter((f) => settings[f.key]).length;
+
+              return (
+                <button
+                  key={group.id}
+                  onClick={() => {
+                    setActiveGroup(group.id);
+                    setMobileTabsOpen(false);
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "10px 14px",
+                    borderRadius: "var(--radius-lg)",
+                    border: "none",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    width: "100%",
+                    background: isActive ? "var(--color-primary-light)" : "transparent",
+                    color: isActive ? "var(--color-primary-dark)" : "var(--text-secondary)",
+                    fontWeight: isActive ? 700 : 500,
+                  }}
+                >
+                  <Icon size={16} style={{ color: group.color }} />
+                  <span style={{ flex: 1, fontSize: 13 }}>{group.label}</span>
+                  <span style={{ fontSize: 10, opacity: 0.8 }}>
+                    {filled}/{fields.length}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="settings-main-container" style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
         {/* ── Sidebar ── */}
         <aside
+          className="desktop-settings-sidebar"
           style={{
             width: 240,
             flexShrink: 0,
@@ -733,6 +873,7 @@ export default function AdminSettingsPage() {
           >
             {/* Panel Header */}
             <div
+              className="settings-panel-header"
               style={{
                 padding: "24px 32px",
                 borderBottom: "1px solid var(--border-light)",
@@ -947,7 +1088,7 @@ export default function AdminSettingsPage() {
                       </code>
                     </div>
 
-                    <div style={{ display: "flex", gap: 10 }}>
+                    <div className="settings-field-row" style={{ display: "flex", gap: 10 }}>
                       <div style={{ flex: 1, position: "relative" }}>
                         {field.type === "boolean" ? (
                           <select
@@ -1024,7 +1165,7 @@ export default function AdminSettingsPage() {
                       <button
                         onClick={() => handleSave(field.key)}
                         disabled={isSavingKey}
-                        className="btn btn-primary"
+                        className="btn btn-primary settings-save-btn"
                         style={{
                           minWidth: 110,
                           gap: 6,

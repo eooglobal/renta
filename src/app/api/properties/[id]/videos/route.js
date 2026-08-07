@@ -3,11 +3,29 @@ import { prisma } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { uploadToR2 } from '@/lib/r2';
 
+export const maxDuration = 120; // 2 minutes for uploading larger video files
+
 const ALLOWED_VIDEO_TYPES = {
   'video/mp4': '.mp4',
   'video/webm': '.webm',
   'video/quicktime': '.mov',
+  'video/3gpp': '.3gp',
+  'video/x-m4v': '.m4v',
+  'video/m4v': '.mp4',
+  'video/mkv': '.mkv',
+  'video/x-matroska': '.mkv',
 };
+
+const ALLOWED_EXTENSIONS = ['.mp4', '.mov', '.webm', '.3gp', '.m4v', '.mkv'];
+
+function getExtensionForFile(file) {
+  if (ALLOWED_VIDEO_TYPES[file.type]) {
+    return ALLOWED_VIDEO_TYPES[file.type];
+  }
+  const name = String(file.name || '').toLowerCase();
+  const foundExt = ALLOWED_EXTENSIONS.find((ext) => name.endsWith(ext));
+  return foundExt || null;
+}
 
 function getVideoLimit() {
   const configured = Number(process.env.PROPERTY_VIDEO_MAX_COUNT || 3);
@@ -15,13 +33,13 @@ function getVideoLimit() {
 }
 
 function getMaxVideoBytes() {
-  const configuredMb = Number(process.env.PROPERTY_VIDEO_MAX_MB || 50);
-  const safeMb = Number.isFinite(configuredMb) && configuredMb > 0 ? configuredMb : 50;
+  const configuredMb = Number(process.env.PROPERTY_VIDEO_MAX_MB || 150);
+  const safeMb = Number.isFinite(configuredMb) && configuredMb > 0 ? configuredMb : 150;
   return safeMb * 1024 * 1024;
 }
 
 function getMaxVideoMbLabel() {
-  return Number(process.env.PROPERTY_VIDEO_MAX_MB || 50) || 50;
+  return Number(process.env.PROPERTY_VIDEO_MAX_MB || 150) || 150;
 }
 
 async function requirePropertyAccess(propertyId) {
@@ -72,11 +90,11 @@ export async function POST(request, { params }) {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const ext = ALLOWED_VIDEO_TYPES[file.type];
+      const ext = getExtensionForFile(file);
 
       if (!ext) {
         return NextResponse.json(
-          { error: `Invalid file type: ${file.name}. Only MP4, WebM, and QuickTime videos are allowed.` },
+          { error: `Invalid file type: ${file.name}. Allowed formats: MP4, MOV, WebM, 3GP, M4V, MKV.` },
           { status: 400 },
         );
       }

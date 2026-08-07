@@ -29,6 +29,9 @@ model User {
   paystackSubaccountId   Int?                 @map("paystack_subaccount_id")
   paymentSetupStatus     PaymentSetupStatus   @default(NOT_STARTED) @map("payment_setup_status")
   paymentSetupVerifiedAt DateTime?            @map("payment_setup_verified_at")
+  isVerified             Boolean              @default(false) @map("is_verified")
+  otpCode                String?              @map("otp_code")
+  otpExpiresAt           DateTime?            @map("otp_expires_at")
   createdAt              DateTime             @default(now()) @map("created_at")
   updatedAt              DateTime             @updatedAt @map("updated_at")
   affiliateReferrals     AffiliateReferral[]

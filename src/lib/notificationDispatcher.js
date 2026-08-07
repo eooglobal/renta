@@ -5,7 +5,8 @@ import {
   sendWelcomeEmail, 
   sendPropertyVerifiedEmail, 
   sendPropertyRejectedEmail,
-  sendPaymentConfirmation 
+  sendPaymentConfirmation,
+  sendOtpEmail
 } from './email';
 
 function truthy(value) {
@@ -149,4 +150,25 @@ export async function dispatchRentalPaidNotifications(payment) {
   }
 
   return results;
+}
+
+/**
+ * 🔒 Dispatch 6-digit OTP verification code via Email and SMS
+ */
+export async function dispatchOtpNotification(user, otpCode) {
+  const emailPromise = user.email ? sendOtpEmail(user, otpCode).catch(console.error) : null;
+  const dispatchPromise = dispatchNotification({
+    user,
+    type: 'SYSTEM',
+    title: 'Verification Code',
+    message: `Your Renta registration verification code is ${otpCode}. Valid for 10 minutes.`,
+    inApp: false, // User not logged in yet
+    sms: {
+      eventKey: 'SMS_OTP_ENABLED',
+      message: `Renta: Your registration verification code is ${otpCode}. Valid for 10 minutes. Do not share this code.`,
+    },
+  });
+
+  const [emailResult, dispatchResult] = await Promise.all([emailPromise, dispatchPromise]);
+  return { email: emailResult, sms: dispatchResult.sms };
 }

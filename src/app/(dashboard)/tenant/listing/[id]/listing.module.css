@@ -370,6 +370,7 @@
     width: 100%;
     aspect-ratio: 16 / 9;
     border-radius: var(--radius-xl);
-    background: var(--color-gray-900);
-    object-fit: cover;
+    background: #000000;
+    object-fit: contain;
+    border: 1px solid var(--border-light);
 }

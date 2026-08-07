@@ -13,6 +13,7 @@ export const authConfig = {
                 token.lastName = user.lastName;
                 token.ninStatus = user.ninStatus;
                 token.status = user.status;
+                token.isVerified = user.isVerified;
             }
             return token;
         },
@@ -25,6 +26,7 @@ export const authConfig = {
                 session.user.lastName = token.lastName;
                 session.user.ninStatus = token.ninStatus;
                 session.user.status = token.status;
+                session.user.isVerified = token.isVerified;
             }
             return session;
         },

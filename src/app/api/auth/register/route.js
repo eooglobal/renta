@@ -62,6 +62,11 @@ export async function POST(request) {
         // Hashes password
         const passwordHash = await bcrypt.hash(password, 12);
 
+        // Generate 6-digit OTP code for non-admin accounts
+        const isUserRoleAdmin = role === 'ADMIN';
+        const otpCode = isUserRoleAdmin ? null : Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpiresAt = isUserRoleAdmin ? null : new Date(Date.now() + 10 * 60 * 1000);
+
         // SECURE TRANSACTION: Ensure user creation and referral mapping are atomic or sequentially safe
         const user = await prisma.user.create({
             data: {
@@ -71,13 +76,18 @@ export async function POST(request) {
                 firstName,
                 lastName,
                 role: role || 'TENANT',
+                isVerified: isUserRoleAdmin,
+                otpCode,
+                otpExpiresAt,
             },
             select: {
                 id: true,
                 email: true,
+                phone: true,
                 firstName: true,
                 lastName: true,
                 role: true,
+                isVerified: true,
                 createdAt: true,
             },
         });
@@ -91,8 +101,6 @@ export async function POST(request) {
                     where: { id: affiliateId }
                 });
 
-                // Only Affiliates (or potentially Scouts acting as Affiliates) can refer
-                // Let's ensure the referring user exists before mapping
                 if (affiliate && affiliate.role === 'AFFILIATE') {
                     try {
                         await prisma.user.update({
@@ -106,11 +114,21 @@ export async function POST(request) {
             }
         }
 
-        // Send welcome notification (non-blocking)
+        // Send welcome notification & OTP code
         dispatchWelcomeNotification({ id: user.id, email: user.email, firstName: user.firstName, role: user.role, phone: user.phone }).catch(console.error);
 
+        if (!isUserRoleAdmin && otpCode) {
+            const { dispatchOtpNotification } = await import('@/lib/notificationDispatcher');
+            dispatchOtpNotification({ id: user.id, email: user.email, firstName: user.firstName, phone: user.phone }, otpCode).catch(console.error);
+        }
+
         return NextResponse.json(
-            { message: 'Account created successfully', user },
+            { 
+                message: isUserRoleAdmin ? 'Admin account created successfully' : 'Account created. Please verify your 6-digit OTP code.', 
+                requiresOtp: !isUserRoleAdmin,
+                email: user.email,
+                user 
+            },
             { status: 201 }
         );
     } catch (error) {

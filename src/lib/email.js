@@ -70,8 +70,10 @@ async function sendWithZeptoMail({ to, subject, html, fromAddress, appName }) {
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok || data.error) {
-        const errorDetails = data.error?.details ? JSON.stringify(data.error.details) : '';
-        throw new Error(data.error?.message || data.message || `ZeptoMail request failed (HTTP ${response.status}) ${errorDetails}`);
+        const msg = data.error?.message || data.message || data.code || `HTTP ${response.status}`;
+        const details = data.error?.details ? JSON.stringify(data.error.details) : (data.error?.code || '');
+        console.error(`[ZeptoMail Diagnostic Error] Status: ${response.status} | Message: ${msg} | URL: ${apiUrl} | Response:`, JSON.stringify(data));
+        throw new Error(`ZeptoMail Error (${msg}): ${details || 'Access Denied. Check token, IP Whitelisting, and Sender Domain in ZeptoMail Console.'}`);
     }
 
     return {
@@ -605,6 +607,32 @@ export async function sendNewMessageEmail(receiver, senderName) {
                 </a>
             </div>
         `,
+    });
+}
+
+
+/**
+ * 🔒 6-Digit Registration OTP Email
+ */
+export async function sendOtpEmail(user, otpCode) {
+    const subject = `🔒 Verify Your Renta Account - ${otpCode}`;
+    const firstName = user.firstName || 'there';
+    const html = `
+        <h2 style="margin:0 0 12px;font-size:24px;font-weight:800;color:#000;">Verify Your Account 🔑</h2>
+        <p style="margin:0 0 24px;color:#555;font-size:15px;line-height:1.6;">
+            Hello ${firstName}, please use the 6-digit verification code below to activate your <strong>Renta</strong> account:
+        </p>
+
+        <div style="background:#f4f4f0;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;border:1px solid #e5e5e0;">
+            <span style="font-size:36px;font-weight:900;letter-spacing:10px;color:#000;font-family:monospace;">${otpCode}</span>
+            <p style="margin:8px 0 0;font-size:12px;color:#888;">This code expires in 10 minutes. Do not share it with anyone.</p>
+        </div>
+    `;
+
+    return sendEmail({
+        to: user.email,
+        subject,
+        html,
     });
 }
 

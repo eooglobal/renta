@@ -135,23 +135,29 @@ export default function NewPropertyPage() {
     const handleVideoSelect = (e) => {
         const files = Array.from(e.target.files || []);
         const maxVideos = 3;
-        const maxVideoBytes = 50 * 1024 * 1024;
-        const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+        const maxVideoBytes = 150 * 1024 * 1024;
+        const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/3gpp', 'video/x-m4v', 'video/m4v', 'video/mkv', 'video/x-matroska'];
+        const allowedExts = ['.mp4', '.mov', '.webm', '.3gp', '.m4v', '.mkv'];
 
         if (files.length + videos.length > maxVideos) {
             toast.error('Video Limit Exceeded', `Maximum ${maxVideos} videos allowed.`);
             return;
         }
 
-        const invalidFile = files.find(file => !allowedTypes.includes(file.type));
+        const invalidFile = files.find(file => {
+            if (file.type && allowedTypes.includes(file.type)) return false;
+            const name = String(file.name || '').toLowerCase();
+            return !allowedExts.some(ext => name.endsWith(ext));
+        });
+
         if (invalidFile) {
-            toast.error('Unsupported Video', 'Only MP4, WebM, and MOV videos are allowed.');
+            toast.error('Unsupported Video', 'Only MP4, MOV, WebM, 3GP, M4V, and MKV videos are allowed.');
             return;
         }
 
         const oversizedFile = files.find(file => file.size > maxVideoBytes);
         if (oversizedFile) {
-            toast.error('Video Too Large', 'Each video must be 50MB or smaller.');
+            toast.error('Video Too Large', 'Each video must be 150MB or smaller.');
             return;
         }
 
@@ -485,7 +491,7 @@ export default function NewPropertyPage() {
                         
                         <div className={styles.videoUploadBlock}>
                             <input
-                                type="file" id="video-upload" accept="video/mp4,video/webm,video/quicktime" multiple
+                                type="file" id="video-upload" accept="video/*,.mp4,.mov,.webm,.3gp,.m4v,.mkv" multiple
                                 onChange={handleVideoSelect}
                                 className={styles.fileInput}
                             />
@@ -493,7 +499,7 @@ export default function NewPropertyPage() {
                                 <Video size={20} />
                                 <span>Add Walkthrough Video</span>
                             </label>
-                            <p className="text-xs text-muted mt-2">MP4, WebM, or MOV up to 50MB each. Max 3 videos</p>
+                            <p className="text-xs text-muted mt-2">MP4, MOV, WebM, 3GP, M4V, or MKV up to 150MB each. Max 3 videos</p>
                         </div>
 
                         {videoPreviews.length > 0 && (

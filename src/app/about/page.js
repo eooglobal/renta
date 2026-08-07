@@ -148,7 +148,7 @@ export default function AboutPage() {
               Company Information
             </h2>
             <p style={{ color: "#4b5563", lineHeight: "1.8", margin: 0 }}>
-              Renta is a product of Landmark Property Oasis Ltd, a duly
+              Renta is a product of Landmark Property Oasis Ltd (RC 9137107), a duly
               registered company with the Federal Government of Nigeria.
             </p>
           </div>

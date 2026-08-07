@@ -99,7 +99,7 @@ describe('/api/properties/[id]/videos', () => {
     const body = await res.json();
 
     expect(res.status).toBe(400);
-    expect(body.error).toContain('Only MP4, WebM, and QuickTime videos are allowed');
+    expect(body.error).toContain('Allowed formats: MP4, MOV, WebM, 3GP, M4V, MKV');
     expect(uploadToR2).not.toHaveBeenCalled();
   });
 

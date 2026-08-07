@@ -34,7 +34,7 @@ export default function LandingFooter() {
         <div className={styles.footerBottom}>
           <p>© {new Date().getFullYear()} Renta. All rights reserved.</p>
           <p>
-            Renta is a product of Landmark Property Oasis Ltd, a duly registered
+            Renta is a product of Landmark Property Oasis Ltd (RC 9137107), a duly registered
             company with the Federal Government of Nigeria.
           </p>
           <p>

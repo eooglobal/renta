@@ -82,7 +82,13 @@ function RegisterForm() {
                 return;
             }
 
-            // Auto-login after registration
+            if (data.requiresOtp) {
+                toast.success("Account Created!", "Please enter the 6-digit verification code sent to your email and phone.");
+                router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
+                return;
+            }
+
+            // Auto-login for admin registration
             const { signIn } = await import('next-auth/react');
             const result = await signIn('credentials', {
                 email: formData.email,
@@ -91,17 +97,9 @@ function RegisterForm() {
             });
 
             if (result?.error) {
-                // Registration succeeded but login failed — redirect to login
                 router.push('/login?registered=true');
             } else {
-                const roleRoutes = {
-                    TENANT: '/tenant',
-                    LANDLORD: '/landlord',
-                    SCOUT: '/scout',
-                    AFFILIATE: '/affiliate',
-                    ADMIN: '/admin',
-                };
-                router.push(roleRoutes[formData.role] || '/tenant');
+                router.push('/admin');
             }
         } catch (err) {
             const friendly = friendlyError(err);
