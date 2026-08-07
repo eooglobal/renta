@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ClipboardList, Check, X, AlertCircle } from "lucide-react";
+import { ClipboardList, Check, X, AlertCircle, Send } from "lucide-react";
 import styles from "../../tenant/dashboard.module.css";
 
 const statusLabel = (status) => {
@@ -42,13 +42,17 @@ export default function AdminPropertiesPage() {
   const [actionLoading, setActionLoading] = useState(null);
   const [actionError, setActionError] = useState(null);
 
+  // Rejection Modal State
+  const [rejectModalProperty, setRejectModalProperty] = useState(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [submittingReject, setSubmittingReject] = useState(false);
+
   const fetchProperties = async (statusFilter = filter) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (statusFilter === "PENDING") {
         params.set("status", "PENDING");
-        // We do not set verificationStatus to UNVERIFIED so that IN_PROGRESS and SUSPICIOUS are also included
       } else if (statusFilter) {
         params.set("status", statusFilter);
       }
@@ -63,20 +67,13 @@ export default function AdminPropertiesPage() {
   };
 
   const handleAction = async (propertyId, action) => {
-    let reason = "";
-    if (action === "reject") {
-      const input = prompt("Please enter the reason for rejecting this property (sent to landlord via Email & SMS):");
-      if (input === null) return; // User cancelled
-      reason = input.trim();
-    }
-
     setActionLoading(propertyId);
     setActionError(null);
     try {
       const res = await fetch("/api/admin/properties", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ propertyId, action, reason }),
+        body: JSON.stringify({ propertyId, action }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -89,6 +86,39 @@ export default function AdminPropertiesPage() {
       setActionError("Network error. Please check your connection.");
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleConfirmReject = async (e) => {
+    e.preventDefault();
+    if (!rejectModalProperty) return;
+    if (!rejectReason.trim()) return;
+
+    setSubmittingReject(true);
+    setActionError(null);
+    try {
+      const res = await fetch("/api/admin/properties", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          propertyId: rejectModalProperty.id,
+          action: "reject",
+          reason: rejectReason.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRejectModalProperty(null);
+        setRejectReason("");
+        fetchProperties();
+      } else {
+        setActionError(data.error || "Rejection failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Action failed:", error);
+      setActionError("Network error. Please check your connection.");
+    } finally {
+      setSubmittingReject(false);
     }
   };
 
@@ -243,7 +273,7 @@ export default function AdminPropertiesPage() {
                         <button
                           className="btn btn-sm btn-outline"
                           style={{ borderColor: "var(--color-error)", color: "var(--color-error)", display: "flex", alignItems: "center", gap: 4 }}
-                          onClick={() => handleAction(property.id, "reject")}
+                          onClick={() => { setRejectModalProperty(property); setRejectReason(""); }}
                           disabled={actionLoading === property.id}
                         >
                           <X size={14} /> Reject
@@ -273,6 +303,118 @@ export default function AdminPropertiesPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* ── Property Rejection Modal ── */}
+      {rejectModalProperty && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0, 0, 0, 0.55)",
+          backdropFilter: "blur(4px)",
+          zIndex: 1000,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 16,
+        }} className="fade-in">
+          <div style={{
+            background: "var(--bg-card, #ffffff)",
+            borderRadius: 16,
+            maxWidth: 520,
+            width: "100%",
+            padding: 24,
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+            border: "1px solid var(--border-light, #e5e7eb)",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 10,
+                  background: "#fee2e2",
+                  color: "#dc2626",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                  <AlertCircle size={22} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Reject Property Listing</h3>
+                  <p style={{ margin: "2px 0 0", fontSize: 13, color: "var(--text-muted, #6b7280)" }}>
+                    {rejectModalProperty.title}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setRejectModalProperty(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af" }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmReject}>
+              <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 8, color: "var(--text-primary, #111827)" }}>
+                Reason for Rejection <span style={{ color: "#dc2626" }}>*</span>
+              </label>
+              <textarea
+                className="form-input"
+                rows={4}
+                required
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Explain why this property listing is rejected (e.g., Ownership document is unreadable, photos are unclear, or pricing does not match standards)..."
+                style={{ width: "100%", resize: "vertical", fontSize: 14, marginBottom: 12 }}
+                autoFocus
+              />
+
+              <div style={{
+                background: "#fff7ed",
+                border: "1px solid #ffedd5",
+                borderRadius: 8,
+                padding: "10px 14px",
+                marginBottom: 20,
+                fontSize: 12,
+                color: "#c2410c",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}>
+                <Send size={15} style={{ flexShrink: 0 }} />
+                <span>This feedback will be sent directly to the landlord via <strong>Email & SMS</strong>.</span>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setRejectModalProperty(null)}
+                  disabled={submittingReject}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn"
+                  style={{ background: "#dc2626", color: "white", display: "flex", alignItems: "center", gap: 6 }}
+                  disabled={submittingReject || !rejectReason.trim()}
+                >
+                  {submittingReject ? (
+                    <>
+                      <span className="spinner" style={{ width: 14, height: 14, borderColor: "white white transparent transparent" }} />
+                      Sending...
+                    </>
+                  ) : (
+                    <>Reject Listing</>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
