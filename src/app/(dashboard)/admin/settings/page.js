@@ -466,7 +466,8 @@ export default function AdminSettingsPage() {
   const toggleReveal = (key) =>
     setRevealed((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const activeGroupData = settingGroups.find((g) => g.id === activeGroup);
+  const activeGroupData = settingGroups.find((g) => g.id === activeGroup) || settingGroups[0];
+  const ActiveIcon = activeGroupData.icon;
   const activeFields = defaultSettings.filter((s) => s.group === activeGroup);
   // Count fields that have an effective value from any source (DB or env)
   const filledCount = activeFields.filter((f) => !!settings[f.key]).length;
@@ -688,7 +689,7 @@ export default function AdminSettingsPage() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <activeGroupData.icon size={20} />
+            {ActiveIcon && <ActiveIcon size={20} />}
             <span>Category: {activeGroupData.label}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -701,7 +702,7 @@ export default function AdminSettingsPage() {
                 borderRadius: 999,
               }}
             >
-              {activeGroupFields.filter((f) => settings[f.key]).length}/{activeGroupFields.length}
+              {filledCount}/{activeFields.length}
             </span>
             <ChevronDown
               size={18}
@@ -896,7 +897,7 @@ export default function AdminSettingsPage() {
                     color: activeGroupData.color,
                   }}
                 >
-                  <activeGroupData.icon size={22} />
+                  {ActiveIcon && <ActiveIcon size={22} />}
                 </span>
                 <div>
                   <h2

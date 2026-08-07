@@ -903,6 +903,7 @@ textarea.form-input {
   align-items: start;
 }
 
+.dashboard-span-3 { grid-column: span 3; }
 .dashboard-span-4 { grid-column: span 4; }
 .dashboard-span-5 { grid-column: span 5; }
 .dashboard-span-6 { grid-column: span 6; }
@@ -916,6 +917,8 @@ textarea.form-input {
   border: 1px solid rgba(17, 24, 39, 0.07);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
+  padding: var(--space-5);
+  box-sizing: border-box;
 }
 
 .dashboard-surface {
@@ -1115,6 +1118,7 @@ textarea.form-input {
     grid-template-columns: 1fr;
   }
 
+  .dashboard-span-3,
   .dashboard-span-4,
   .dashboard-span-5,
   .dashboard-span-6,

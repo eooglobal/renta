@@ -249,7 +249,7 @@ export default function AdminDashboard() {
         className="grid grid-2 gap-6 mb-8"
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
           gap: "24px",
           marginBottom: "32px",
         }}
