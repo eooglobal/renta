@@ -185,17 +185,28 @@ function wrapInTemplate(appName, title, content) {
 /**
  * ❌ Property Rejected Email — sent when admin rejects a property listing
  */
-export async function sendPropertyRejectedEmail({ landlord, property, reason }) {
+export async function sendPropertyRejectedEmail(landlordOrObj, propertyParam, reasonParam) {
+    let landlord, property, reason;
+    if (landlordOrObj && landlordOrObj.landlord) {
+        landlord = landlordOrObj.landlord;
+        property = landlordOrObj.property;
+        reason = landlordOrObj.reason;
+    } else {
+        landlord = landlordOrObj;
+        property = propertyParam;
+        reason = reasonParam;
+    }
+
     const appName = await getSetting('NEXT_PUBLIC_APP_NAME') || 'Renta';
     const appUrl  = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
     const reasonText = reason || 'The submitted details require revision. Please verify your property information.';
 
     return sendEmail({
-        to: landlord.email,
-        subject: `Property Verification Update - ${property.title}`,
+        to: landlord?.email,
+        subject: `Property Verification Update - ${property?.title || 'Listing'}`,
         html: `
             <h2 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#000;">Action Required: Property Verification</h2>
-            <p style="margin:0 0 24px;color:#555;">Your property listing "<strong>${property.title}</strong>" was reviewed by our verification team and requires update before it can go live.</p>
+            <p style="margin:0 0 24px;color:#555;">Your property listing "<strong>${property?.title || 'Listing'}</strong>" was reviewed by our verification team and requires update before it can go live.</p>
 
             <div style="background:#fff1f0;border:1px solid #ffccc7;border-radius:12px;padding:20px;margin-bottom:24px;">
                 <h4 style="margin:0 0 8px;color:#cf1322;font-size:15px;font-weight:700;">Reason for Rejection:</h4>
@@ -390,34 +401,6 @@ export async function sendPropertyVerifiedEmail({ landlord, property }) {
             <div style="text-align:center;">
                 <a href="${appUrl}/landlord/properties" style="display:inline-block;background:#FDA829;color:#000;font-weight:700;padding:13px 36px;border-radius:50px;text-decoration:none;">
                     View My Listing →
-                </a>
-            </div>
-        `,
-    });
-}
-
-/**
- * ❌ Property Rejected
- */
-export async function sendPropertyRejectedEmail(landlord, property, reason) {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
-    return sendEmail({
-        to: landlord.email,
-        subject: `⚠️ Action Required — ${property.title}`,
-        html: `
-            <h2 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#000;">Listing Update Needed 📋</h2>
-            <p style="margin:0 0 24px;color:#555;">Our team reviewed <strong>${property.title}</strong> and it needs some changes before it can go live.</p>
-
-            <div style="background:#fff7ed;border-left:4px solid #f97316;border-radius:8px;padding:20px 24px;margin-bottom:28px;">
-                <p style="margin:0 0 6px;font-weight:700;color:#9a3412;">📌 Reviewer Feedback:</p>
-                <p style="margin:0;color:#c2410c;">${reason}</p>
-            </div>
-
-            <p style="color:#555;margin-bottom:28px;">Please update your listing and resubmit. Our team will re-verify within 24 hours.</p>
-
-            <div style="text-align:center;">
-                <a href="${appUrl}/landlord/properties" style="display:inline-block;background:#000;color:#FDA829;font-weight:700;padding:13px 36px;border-radius:50px;text-decoration:none;">
-                    Update My Listing →
                 </a>
             </div>
         `,
