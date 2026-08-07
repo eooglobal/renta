@@ -124,8 +124,8 @@ export default function TermsPage() {
             >
               <li>
                 <strong>Tenants:</strong> Are responsible for inspecting
-                properties before payment. Renta provides free inspections for
-                this purpose.
+                properties before payment. Renta provides physical property
+                inspections for a flat fee of ₦2,000.
               </li>
               <li>
                 <strong>Landlords:</strong> Must ensure properties are as

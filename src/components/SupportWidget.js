@@ -12,7 +12,7 @@ export default function SupportWidget() {
   const scrollRef = useRef(null);
 
   const quickQuestions = [
-    "Is inspection free?",
+    "How much is inspection fee?",
     "How do I verify my home?",
     "What are the service fees?",
     "How do payments work?",
