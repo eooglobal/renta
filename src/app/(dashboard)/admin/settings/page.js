@@ -338,6 +338,7 @@ const defaultSettings = [
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState({});
+  const [sources, setSources] = useState({}); // tracks whether each key comes from 'db' or 'env'
   const [health, setHealth] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(null);
@@ -350,11 +351,14 @@ export default function AdminSettingsPage() {
       const res = await fetch("/api/admin/settings");
       if (res.ok) {
         const data = await res.json();
-        const map = data.settings.reduce(
-          (acc, s) => ({ ...acc, [s.key]: s.value }),
-          {},
-        );
+        const map = {};
+        const srcMap = {};
+        for (const s of data.settings) {
+          map[s.key] = s.value;
+          srcMap[s.key] = s.source; // 'db' | 'env'
+        }
         setSettings(map);
+        setSources(srcMap);
         setHealth(data.health);
       }
     } catch (err) {
@@ -398,7 +402,8 @@ export default function AdminSettingsPage() {
 
   const activeGroupData = settingGroups.find((g) => g.id === activeGroup);
   const activeFields = defaultSettings.filter((s) => s.group === activeGroup);
-  const filledCount = activeFields.filter((f) => settings[f.key]).length;
+  // Count fields that have an effective value from any source (DB or env)
+  const filledCount = activeFields.filter((f) => !!settings[f.key]).length;
 
   if (loading) {
     return (
@@ -796,18 +801,24 @@ export default function AdminSettingsPage() {
                           fontSize: "var(--text-sm)",
                           fontWeight: 600,
                           color: "var(--text-secondary)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          flexWrap: "wrap",
                         }}
                       >
                         {field.label}
-                        {hasValue && (
-                          <span
-                            style={{
-                              marginLeft: 6,
-                              color: "var(--color-success)",
-                              fontSize: 11,
-                            }}
-                          >
-                            ✓ Set
+                        {hasValue && sources[field.key] === 'env' && (
+                          <span style={{
+                            fontSize: 10, fontWeight: 700, padding: "1px 7px",
+                            borderRadius: 999, background: "#dbeafe", color: "#1d4ed8",
+                          }}>
+                            From .env
+                          </span>
+                        )}
+                        {hasValue && sources[field.key] === 'db' && (
+                          <span style={{ color: "var(--color-success)", fontSize: 11 }}>
+                            ✓ Saved
                           </span>
                         )}
                       </label>
