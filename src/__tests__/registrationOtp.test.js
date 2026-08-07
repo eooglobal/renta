@@ -47,6 +47,7 @@ describe('6-Digit Registration OTP Verification Flow', () => {
                 password: 'password123',
                 firstName: 'Jane',
                 lastName: 'Doe',
+                phone: '08031234567',
                 role: 'TENANT',
             }),
         });

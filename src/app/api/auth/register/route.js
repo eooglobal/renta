@@ -25,8 +25,9 @@ export async function POST(request) {
         const validationResult = userRegistrationSchema.safeParse(body);
 
         if (!validationResult.success) {
+            const firstMessage = validationResult.error.issues?.[0]?.message || 'Invalid data format';
             return NextResponse.json(
-                { error: 'Invalid data format', details: validationResult.error.format() },
+                { error: firstMessage, details: validationResult.error.format() },
                 { status: 400 }
             );
         }

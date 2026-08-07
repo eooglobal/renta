@@ -190,7 +190,7 @@ function RegisterForm() {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="phone" className="form-label">Phone Number <span className="text-muted text-xs">(optional)</span></label>
+                            <label htmlFor="phone" className="form-label">Phone Number <span style={{ color: 'var(--color-danger)' }}>*</span></label>
                             <input
                                 id="phone"
                                 type="tel"
@@ -199,6 +199,7 @@ function RegisterForm() {
                                 placeholder="08012345678"
                                 value={formData.phone}
                                 onChange={handleChange}
+                                required
                             />
                         </div>
 
