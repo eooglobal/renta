@@ -43,8 +43,11 @@ export async function POST(req) {
 
         // Send emails, catching individual failures
         const emailPromises = users.map(user =>
-            sendEmail(user.email, subject, body, `Hello ${user.firstName},<br><br>${body}`)
-                .catch(err => console.error(`Failed to send email to ${user.email}:`, err))
+            sendEmail({
+                to: user.email,
+                subject,
+                html: `Hello ${user.firstName},<br><br>${body}`,
+            }).catch(err => console.error(`Failed to send email to ${user.email}:`, err))
         );
 
         await Promise.all(emailPromises);

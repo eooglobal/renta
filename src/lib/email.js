@@ -25,6 +25,15 @@ function normalizeEmailRecipients(to) {
     });
 }
 
+function formatZeptoAuthHeader(rawToken) {
+    if (!rawToken) return '';
+    const clean = rawToken.trim();
+    if (clean.toLowerCase().startsWith('zoho-enczapikey ') || clean.toLowerCase().startsWith('sendmailtoken ')) {
+        return clean;
+    }
+    return `Zoho-enczapikey ${clean}`;
+}
+
 async function sendWithZeptoMail({ to, subject, html, fromAddress, appName }) {
     const token = await getSetting('ZEPTOMAIL_SEND_TOKEN') || await getSetting('ZEPTOMAIL_API_TOKEN');
     const apiUrl = await getSetting('ZEPTOMAIL_API_URL') || 'https://api.zeptomail.com/v1.1/email';
@@ -34,12 +43,14 @@ async function sendWithZeptoMail({ to, subject, html, fromAddress, appName }) {
         throw new Error('ZeptoMail send token is not configured.');
     }
 
+    const authHeader = formatZeptoAuthHeader(token);
+
     const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json',
-            Authorization: `Zoho-enczapikey ${token}`,
+            Authorization: authHeader,
         },
         body: JSON.stringify({
             from: { address: fromAddress, name: fromName },
@@ -51,7 +62,8 @@ async function sendWithZeptoMail({ to, subject, html, fromAddress, appName }) {
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok || data.error) {
-        throw new Error(data.error?.message || data.message || 'ZeptoMail request failed');
+        const errorDetails = data.error?.details ? JSON.stringify(data.error.details) : '';
+        throw new Error(data.error?.message || data.message || `ZeptoMail request failed (HTTP ${response.status}) ${errorDetails}`);
     }
 
     return {
@@ -88,9 +100,21 @@ async function createTransporter() {
 }
 
 /**
- * Core send function — uses SMTP via Nodemailer
+ * Core send function — supports both object signature sendEmail({ to, subject, html })
+ * and positional signature sendEmail(to, subject, html)
  */
-export async function sendEmail({ to, subject, html }) {
+export async function sendEmail(toOrObj, subjectParam, htmlParam) {
+    let to, subject, html;
+    if (toOrObj && typeof toOrObj === 'object' && !Array.isArray(toOrObj) && (toOrObj.to || toOrObj.subject || toOrObj.html)) {
+        to = toOrObj.to;
+        subject = toOrObj.subject;
+        html = toOrObj.html;
+    } else {
+        to = toOrObj;
+        subject = subjectParam;
+        html = htmlParam;
+    }
+
     const fromAddress = await getSetting('EMAIL_FROM') || 'noreply@userenta.com';
     const appName     = await getSetting('NEXT_PUBLIC_APP_NAME') || 'Renta';
     const provider    = String(await getSetting('EMAIL_PROVIDER') || '').toLowerCase();
@@ -100,7 +124,7 @@ export async function sendEmail({ to, subject, html }) {
     try {
         if (useZeptoMail) {
             const result = await sendWithZeptoMail({ to, subject, html, fromAddress, appName });
-            console.log(`[ZeptoMail] Email sent to ${to} | RequestId: ${result.messageId || 'unknown'}`);
+            console.log(`[ZeptoMail] Email sent to ${typeof to === 'object' ? JSON.stringify(to) : to} | RequestId: ${result.messageId || 'unknown'}`);
             return result;
         }
 
@@ -116,7 +140,7 @@ export async function sendEmail({ to, subject, html }) {
         console.log(`[SMTP] Email sent to ${to} | MessageId: ${info.messageId}`);
         return { success: true, provider: 'smtp', messageId: info.messageId };
     } catch (error) {
-        console.error(`[Email] CRITICAL: Failed to send email to ${to}:`, error.message);
+        console.error(`[Email] CRITICAL: Failed to send email to ${typeof to === 'object' ? JSON.stringify(to) : to}:`, error.message);
         return { success: false, provider: useZeptoMail ? 'zeptomail' : 'smtp', error: error.message };
     }
 }
