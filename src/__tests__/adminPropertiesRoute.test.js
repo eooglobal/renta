@@ -14,6 +14,9 @@ jest.mock('@/lib/db', () => ({
       findUnique: jest.fn(),
       update: jest.fn(),
     },
+    platformSetting: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
   },
 }));
 
