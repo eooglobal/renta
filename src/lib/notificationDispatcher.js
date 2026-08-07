@@ -52,13 +52,22 @@ export async function dispatchNotification({ user, userId, type, title, message,
 export async function dispatchWelcomeNotification(user) {
   // Fire email in background
   sendWelcomeEmail(user).catch(console.error);
-  
+
+  const roleRoutes = {
+    TENANT: '/tenant',
+    LANDLORD: '/landlord',
+    SCOUT: '/scout',
+    AFFILIATE: '/affiliate',
+    ADMIN: '/admin',
+  };
+  const userDashboardLink = roleRoutes[user?.role] || '/tenant';
+
   return dispatchNotification({
     user,
     type: 'SYSTEM',
     title: 'Welcome to Renta',
     message: `Welcome to Renta, ${user.firstName}! Your account is ready.`,
-    link: '/dashboard',
+    link: userDashboardLink,
     inApp: true,
     sms: {
       eventKey: 'SMS_WELCOME_ENABLED',

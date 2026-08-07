@@ -32,6 +32,12 @@ export default function LoginPage() {
             });
 
             if (result?.error) {
+                if (result.error.includes('UNVERIFIED_OTP')) {
+                    const unverifiedEmail = result.error.split('UNVERIFIED_OTP:')[1] || formData.email;
+                    toast.info("Verification Required", "Please enter the 6-digit verification code sent to your email and phone.");
+                    window.location.href = `/verify-otp?email=${encodeURIComponent(unverifiedEmail)}`;
+                    return;
+                }
                 const friendly = friendlyError(result.error);
                 toast.error(friendly.title, friendly.message);
             } else {

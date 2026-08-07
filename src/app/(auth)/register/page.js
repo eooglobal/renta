@@ -84,7 +84,7 @@ function RegisterForm() {
 
             if (data.requiresOtp) {
                 toast.success("Account Created!", "Please enter the 6-digit verification code sent to your email and phone.");
-                router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
+                window.location.href = `/verify-otp?email=${encodeURIComponent(formData.email)}`;
                 return;
             }
 

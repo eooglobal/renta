@@ -34,6 +34,19 @@ function formatZeptoAuthHeader(rawToken) {
     return `Zoho-enczapikey ${clean}`;
 }
 
+function stripHtmlToPlainText(html) {
+    if (!html) return '';
+    return String(html)
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<br\s*[\/]?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<\/tr>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/\n\s*\n/g, '\n\n')
+        .trim();
+}
+
 async function sendWithZeptoMail({ to, subject, html, fromAddress, appName }) {
     const token = await getSetting('ZEPTOMAIL_SEND_TOKEN') || await getSetting('ZEPTOMAIL_API_TOKEN');
     let apiUrl = await getSetting('ZEPTOMAIL_API_URL');
@@ -46,12 +59,15 @@ async function sendWithZeptoMail({ to, subject, html, fromAddress, appName }) {
         }
     }
     const fromName = await getSetting('EMAIL_FROM_NAME') || appName;
+    const replyToAddress = await getSetting('EMAIL_REPLY_TO') || fromAddress;
 
     if (!token) {
         throw new Error('ZeptoMail send token is not configured.');
     }
 
     const authHeader = formatZeptoAuthHeader(token);
+    const fullHtml = wrapInTemplate(appName, subject, html);
+    const plainText = stripHtmlToPlainText(html);
 
     const response = await fetch(apiUrl, {
         method: 'POST',
@@ -63,8 +79,10 @@ async function sendWithZeptoMail({ to, subject, html, fromAddress, appName }) {
         body: JSON.stringify({
             from: { address: fromAddress, name: fromName },
             to: normalizeEmailRecipients(to),
+            reply_to: [{ address: replyToAddress, name: fromName }],
             subject,
-            htmlbody: wrapInTemplate(appName, subject, html),
+            htmlbody: fullHtml,
+            textbody: plainText,
         }),
     });
 

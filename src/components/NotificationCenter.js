@@ -3,15 +3,36 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Bell, Check, Info, ShieldCheck, CreditCard, MessageSquare, Calendar } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import styles from './NotificationCenter.module.css';
 
 export default function NotificationCenter() {
+    const { data: session } = useSession();
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const dropdownRef = useRef(null);
+
+    const getRoleDashboard = () => {
+        const role = session?.user?.role;
+        const roleMap = {
+            TENANT: '/tenant',
+            LANDLORD: '/landlord',
+            SCOUT: '/scout',
+            AFFILIATE: '/affiliate',
+            ADMIN: '/admin',
+        };
+        return roleMap[role] || '/tenant';
+    };
+
+    const getValidLink = (link) => {
+        if (!link || link === '#' || link === '/dashboard' || link === '/notifications') {
+            return getRoleDashboard();
+        }
+        return link;
+    };
 
     const fetchNotifications = async () => {
         try {
@@ -109,7 +130,7 @@ export default function NotificationCenter() {
                             notifications.map((notif) => (
                                 <Link
                                     key={notif.id}
-                                    href={notif.link || '#'}
+                                    href={getValidLink(notif.link)}
                                     className={`${styles.notificationItem} ${!notif.isRead ? styles.unread : ''}`}
                                     onClick={() => {
                                         if (!notif.isRead) markAsRead(notif.id);
@@ -135,8 +156,8 @@ export default function NotificationCenter() {
                     </div>
 
                     <div className={styles.footer}>
-                        <Link href="/notifications" onClick={() => setIsOpen(false)}>
-                            See all activity
+                        <Link href={getRoleDashboard()} onClick={() => setIsOpen(false)}>
+                            Go to Dashboard
                         </Link>
                     </div>
                 </div>
