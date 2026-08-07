@@ -67,6 +67,13 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: `Cannot dispute a rental in ${rental.status} state.` }, { status: 400 });
     }
 
+    const hoursSincePayment = (Date.now() - new Date(rental.createdAt).getTime()) / (1000 * 60 * 60);
+    if (hoursSincePayment > 24) {
+      return NextResponse.json({
+        error: 'Disputes can only be submitted within the 24-hour payment settlement window. Please contact support@userenta.com for assistance.',
+      }, { status: 400 });
+    }
+
     const updatedRental = await prisma.rental.update({
       where: { id: rental.id },
       data: {
