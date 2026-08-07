@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Lock, Eye, EyeOff, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import styles from '../login/login.module.css';
 import { useToast } from '@/components/Toast';
 
@@ -73,24 +73,9 @@ function ResetPasswordForm() {
     return (
         <div className={styles.authCard}>
             <div className={styles.authHeader}>
-                <div style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-color)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 16px auto',
-                    color: 'var(--text-main)'
-                }}>
-                    <Lock size={22} />
-                </div>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--text-main)' }}>Set New Password</h2>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                    Enter the 6-digit code sent to your email and choose your new password.
-                </p>
+                <Link href="/" className={styles.authLogo}>Renta</Link>
+                <h2>Set New Password</h2>
+                <p>Enter the 6-digit code sent to your email and your new password</p>
             </div>
 
             <form onSubmit={handleReset} className={styles.authForm}>
@@ -169,19 +154,23 @@ function ResetPasswordForm() {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="btn btn-primary w-full"
-                    style={{ padding: '12px', fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    className={`btn btn-primary btn-full btn-lg ${styles.submitBtn}`}
                 >
-                    {loading ? 'Resetting Password...' : <><ShieldCheck size={16} /> Reset Password</>}
+                    {loading ? (
+                        <span className="flex items-center justify-center gap-2">
+                            <span className="spinner"></span>
+                            Resetting Password...
+                        </span>
+                    ) : (
+                        'Reset Password'
+                    )}
                 </button>
             </form>
 
-            <div className="text-center mt-6" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Did not receive a code?{' '}
-                <Link href="/forgot-password" style={{ fontWeight: '600', color: 'var(--color-primary)' }}>
-                    Resend email
-                </Link>
-            </div>
+            <p className={styles.authSwitch}>
+                Didn&rsquo;t receive a code?{' '}
+                <Link href="/forgot-password">Resend code</Link>
+            </p>
         </div>
     );
 }
@@ -191,12 +180,33 @@ export default function ResetPasswordPage() {
         <div className={styles.authPage}>
             <div className={styles.authLeft}>
                 <Link href="/forgot-password" className={styles.backLink}>
-                    <ArrowLeft size={16} style={{ marginRight: '6px' }} /> Back
+                    ← Back
                 </Link>
 
                 <Suspense fallback={<div className="card text-center p-8 text-muted">Loading reset form...</div>}>
                     <ResetPasswordForm />
                 </Suspense>
+            </div>
+
+            <div className={styles.authRight}>
+                <div className={styles.authRightContent}>
+                    <h2>Your account security matters.</h2>
+                    <p>Set a strong password to protect your rentals and platform transactions.</p>
+                    <div className={styles.features}>
+                        <div className={styles.feature}>
+                            <span className={styles.featureIcon}><CheckCircle2 size={16} /></span>
+                            <span>Min 8 characters required</span>
+                        </div>
+                        <div className={styles.feature}>
+                            <span className={styles.featureIcon}><CheckCircle2 size={16} /></span>
+                            <span>Encrypted database storage</span>
+                        </div>
+                        <div className={styles.feature}>
+                            <span className={styles.featureIcon}><CheckCircle2 size={16} /></span>
+                            <span>Instant login upon update</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

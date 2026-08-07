@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, KeyRound, Mail, Send } from 'lucide-react';
+import { ArrowLeft, KeyRound, Mail, Send, CheckCircle2 } from 'lucide-react';
 import styles from '../login/login.module.css';
 import { useToast } from '@/components/Toast';
 
@@ -43,74 +43,71 @@ export default function ForgotPasswordPage() {
         <div className={styles.authPage}>
             <div className={styles.authLeft}>
                 <Link href="/login" className={styles.backLink}>
-                    <ArrowLeft size={16} style={{ marginRight: '6px' }} /> Back to log in
+                    ← Back to log in
                 </Link>
 
                 <div className={styles.authCard}>
                     <div className={styles.authHeader}>
-                        <div style={{
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: '50%',
-                            background: 'var(--bg-secondary)',
-                            border: '1px solid var(--border-color)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            margin: '0 auto 16px auto',
-                            color: 'var(--text-main)'
-                        }}>
-                            <KeyRound size={22} />
-                        </div>
-                        <h2 style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--text-main)' }}>Forgot Password?</h2>
-                        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                            No worries! Enter your account email address and we&apos;ll send you a 6-digit verification code to reset your password.
-                        </p>
+                        <Link href="/" className={styles.authLogo}>Renta</Link>
+                        <h2>Forgot Password?</h2>
+                        <p>Enter your email address to receive a 6-digit verification code</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className={styles.authForm}>
                         <div className="form-group">
                             <label htmlFor="email" className="form-label">Account Email Address</label>
-                            <div style={{ position: 'relative' }}>
-                                <input
-                                    id="email"
-                                    type="email"
-                                    className="form-input"
-                                    placeholder="you@example.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    autoComplete="email"
-                                    style={{ paddingLeft: '38px' }}
-                                />
-                                <Mail
-                                    size={18}
-                                    style={{
-                                        position: 'absolute',
-                                        left: '12px',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        color: 'var(--text-muted)'
-                                    }}
-                                />
-                            </div>
+                            <input
+                                id="email"
+                                type="email"
+                                className="form-input"
+                                placeholder="you@example.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                autoComplete="email"
+                            />
                         </div>
 
                         <button
                             type="submit"
                             disabled={loading}
-                            className="btn btn-primary w-full"
-                            style={{ padding: '12px', fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                            className={`btn btn-primary btn-full btn-lg ${styles.submitBtn}`}
                         >
-                            {loading ? 'Sending Code...' : <><Send size={16} /> Send Reset Code</>}
+                            {loading ? (
+                                <span className="flex items-center justify-center gap-2">
+                                    <span className="spinner"></span>
+                                    Sending Code...
+                                </span>
+                            ) : (
+                                'Send Reset Code'
+                            )}
                         </button>
                     </form>
 
-                    <div className="text-center mt-6" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                    <p className={styles.authSwitch}>
                         Remember your password?{' '}
-                        <Link href="/login" style={{ fontWeight: '600', color: 'var(--color-primary)' }}>
-                            Log in
-                        </Link>
+                        <Link href="/login">Log in</Link>
+                    </p>
+                </div>
+            </div>
+
+            <div className={styles.authRight}>
+                <div className={styles.authRightContent}>
+                    <h2>Account recovery made easy.</h2>
+                    <p>We keep your Renta account secure with verified reset codes.</p>
+                    <div className={styles.features}>
+                        <div className={styles.feature}>
+                            <span className={styles.featureIcon}><CheckCircle2 size={16} /></span>
+                            <span>Instant 6-digit verification email</span>
+                        </div>
+                        <div className={styles.feature}>
+                            <span className={styles.featureIcon}><CheckCircle2 size={16} /></span>
+                            <span>Secure password encryption</span>
+                        </div>
+                        <div className={styles.feature}>
+                            <span className={styles.featureIcon}><CheckCircle2 size={16} /></span>
+                            <span>24/7 account protection</span>
+                        </div>
                     </div>
                 </div>
             </div>
