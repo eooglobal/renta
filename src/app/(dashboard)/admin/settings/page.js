@@ -84,7 +84,7 @@ const defaultSettings = [
     description: "Your Paystack Secret Key. Keep this private.",
   },
   {
-    key: "NEXT_PUBLIC_PAYSTACK_KEY",
+    key: "NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY",
     group: "PAYSTACK",
     label: "Public Key",
     type: "text",
@@ -95,9 +95,13 @@ const defaultSettings = [
     key: "ACTIVE_PAYMENT_GATEWAY",
     group: "PAYMENT_GATEWAY",
     label: "Active Gateway",
-    type: "text",
+    type: "select",
+    options: [
+      { value: "paystack", label: "Paystack (Recommended)" },
+      { value: "nomba", label: "Nomba Gateway" },
+    ],
     description:
-      'Set to "paystack" or "nomba" to switch gateways instantly without redeploying.',
+      "Switch active payment gateway for rental checkout transactions.",
   },
   {
     key: "NOMBA_BASE_URL",
@@ -271,16 +275,53 @@ const defaultSettings = [
     key: "TERMII_CHANNEL",
     group: "SMS",
     label: "Termii Channel",
-    type: "text",
+    type: "select",
+    options: [
+      { value: "dnd", label: "DND Channel (Direct Delivery)" },
+      { value: "generic", label: "Generic Channel" },
+      { value: "whatsapp", label: "WhatsApp Channel" },
+    ],
     description: "Defaults to 'dnd' (e.g., generic, dnd, whatsapp).",
+  },
+  {
+    key: "SMS_WELCOME_ENABLED",
+    group: "SMS",
+    label: "SMS on Welcome / Registration",
+    type: "boolean",
+    description: "Send SMS alert when a new user creates an account.",
+  },
+  {
+    key: "SMS_PROPERTY_VERIFIED_ENABLED",
+    group: "SMS",
+    label: "SMS on Property Verification",
+    type: "boolean",
+    description: "Send SMS alert to landlord when their listing is approved.",
+  },
+  {
+    key: "SMS_RENTAL_PAID_ENABLED",
+    group: "SMS",
+    label: "SMS on Rental Payment",
+    type: "boolean",
+    description: "Send SMS alert to tenant and landlord on rental payment.",
+  },
+  {
+    key: "SMS_PROPERTY_REJECTED_ENABLED",
+    group: "SMS",
+    label: "SMS on Property Rejection",
+    type: "boolean",
+    description: "Send SMS alert to landlord if property verification is rejected.",
   },
 
   {
     key: "EMAIL_PROVIDER",
     group: "EMAIL",
     label: "Email Provider",
-    type: "text",
-    description: "Use zeptomail for ZeptoMail API delivery or smtp for SMTP fallback.",
+    type: "select",
+    options: [
+      { value: "zeptomail", label: "ZeptoMail REST API (Recommended)" },
+      { value: "smtp", label: "SMTP / Nodemailer Server" },
+    ],
+    description: "Select which provider Renta uses to send transactional emails.",
   },
   {
     key: "ZEPTOMAIL_SEND_TOKEN",
@@ -851,6 +892,23 @@ export default function AdminSettingsPage() {
                           >
                             <option value="true">Enabled (True)</option>
                             <option value="false">Disabled (False)</option>
+                          </select>
+                        ) : field.type === "select" ? (
+                          <select
+                            value={settings[field.key] || field.options?.[0]?.value || ""}
+                            onChange={(e) =>
+                              setSettings({
+                                ...settings,
+                                [field.key]: e.target.value,
+                              })
+                            }
+                            className="form-input"
+                          >
+                            {field.options?.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
                           </select>
                         ) : (
                           <input

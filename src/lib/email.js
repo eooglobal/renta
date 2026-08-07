@@ -182,6 +182,40 @@ function wrapInTemplate(appName, title, content) {
   `;
 }
 
+/**
+ * ❌ Property Rejected Email — sent when admin rejects a property listing
+ */
+export async function sendPropertyRejectedEmail({ landlord, property, reason }) {
+    const appName = await getSetting('NEXT_PUBLIC_APP_NAME') || 'Renta';
+    const appUrl  = process.env.NEXT_PUBLIC_APP_URL || 'https://userenta.com';
+    const reasonText = reason || 'The submitted details require revision. Please verify your property information.';
+
+    return sendEmail({
+        to: landlord.email,
+        subject: `Property Verification Update - ${property.title}`,
+        html: `
+            <h2 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#000;">Action Required: Property Verification</h2>
+            <p style="margin:0 0 24px;color:#555;">Your property listing "<strong>${property.title}</strong>" was reviewed by our verification team and requires update before it can go live.</p>
+
+            <div style="background:#fff1f0;border:1px solid #ffccc7;border-radius:12px;padding:20px;margin-bottom:24px;">
+                <h4 style="margin:0 0 8px;color:#cf1322;font-size:15px;font-weight:700;">Reason for Rejection:</h4>
+                <p style="margin:0;color:#434343;font-size:14px;line-height:1.6;">${reasonText}</p>
+            </div>
+
+            <p style="margin:0 0 24px;color:#555;font-size:14px;">
+                Please log in to your landlord dashboard to edit the property listing details or update missing information.
+            </p>
+
+            <div style="text-align:center;margin:32px 0 24px;">
+                <a href="${appUrl}/landlord/properties"
+                   style="display:inline-block;background:#000000;color:#FFFFFF;font-weight:700;font-size:15px;padding:14px 40px;border-radius:50px;text-decoration:none;">
+                    Edit Property Listing →
+                </a>
+            </div>
+        `,
+    });
+}
+
 // ==========================================
 // ✉️  EMAIL TEMPLATES
 // ==========================================

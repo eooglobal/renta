@@ -63,13 +63,20 @@ export default function AdminPropertiesPage() {
   };
 
   const handleAction = async (propertyId, action) => {
+    let reason = "";
+    if (action === "reject") {
+      const input = prompt("Please enter the reason for rejecting this property (sent to landlord via Email & SMS):");
+      if (input === null) return; // User cancelled
+      reason = input.trim();
+    }
+
     setActionLoading(propertyId);
     setActionError(null);
     try {
       const res = await fetch("/api/admin/properties", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ propertyId, action }),
+        body: JSON.stringify({ propertyId, action, reason }),
       });
       const data = await res.json();
       if (res.ok) {

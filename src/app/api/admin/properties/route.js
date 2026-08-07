@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { createNotification } from "@/lib/notifications";
-import { dispatchPropertyVerifiedNotification } from "@/lib/notificationDispatcher";
+import { dispatchPropertyVerifiedNotification, dispatchPropertyRejectedNotification } from "@/lib/notificationDispatcher";
 import { normalizePropertyImages } from "@/lib/images/normalize";
 import { getLandlordPublicationBlockers } from "@/lib/propertyReadiness";
 
@@ -139,14 +139,10 @@ export async function PATCH(request) {
 
       case "reject":
         updateData = {
+          status: "INACTIVE",
           verificationStatus: "REJECTED",
         };
-        createNotification(property.landlordId, {
-          type: "VERIFICATION",
-          title: "Property Rejected",
-          message: `Your property listing "${property.title}" was not approved. ${reason || "Please check your details."}`,
-          link: "/landlord/properties",
-        });
+        dispatchPropertyRejectedNotification(property.landlord, property, reason).catch(console.error);
         break;
 
       case "freeze":

@@ -51,7 +51,7 @@ describe('/api/inspections platform requests', () => {
     const res = await POST(jsonRequest({
       propertyId: 'prop_1',
       tenantPhone: '08030000000',
-      preferredDate: '2026-08-01',
+      preferredDate: '2026-08-25',
       preferredTimeWindow: 'Morning',
     }));
     const body = await res.json();
@@ -99,7 +99,7 @@ describe('/api/inspections platform requests', () => {
     const res = await POST(jsonRequest({
       propertyId: 'prop_1',
       tenantPhone: '08030000000',
-      preferredDate: '2026-08-01',
+      preferredDate: '2026-08-25',
       preferredTimeWindow: 'Morning',
     }));
     const body = await res.json();

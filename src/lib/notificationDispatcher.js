@@ -4,6 +4,7 @@ import { getSetting } from './settings';
 import { 
   sendWelcomeEmail, 
   sendPropertyVerifiedEmail, 
+  sendPropertyRejectedEmail,
   sendPaymentConfirmation 
 } from './email';
 
@@ -79,6 +80,25 @@ export async function dispatchPropertyVerifiedNotification(landlord, property) {
     sms: {
       eventKey: 'SMS_PROPERTY_VERIFIED_ENABLED',
       message: `Renta: Great news! Your property '${property.title}' has been verified and is now live.`,
+    },
+  });
+}
+
+export async function dispatchPropertyRejectedNotification(landlord, property, reason) {
+  const reasonText = reason || 'Listing details require revision.';
+  // Fire email in background
+  sendPropertyRejectedEmail({ landlord, property, reason: reasonText }).catch(console.error);
+
+  return dispatchNotification({
+    user: landlord,
+    type: 'PROPERTY_STATUS',
+    title: 'Property Requires Action',
+    message: `Your property "${property.title}" was not approved: ${reasonText}`,
+    link: '/landlord/properties',
+    inApp: true,
+    sms: {
+      eventKey: 'SMS_PROPERTY_REJECTED_ENABLED',
+      message: `Renta Notice: Your property '${property.title}' was not approved. Reason: ${reasonText}`,
     },
   });
 }

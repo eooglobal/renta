@@ -3,6 +3,13 @@ import {
   getLandlordPublicationBlockers,
 } from '@/lib/propertyReadiness';
 
+jest.mock('@/lib/settings', () => ({
+  getSetting: jest.fn().mockImplementation(async (key) => {
+    if (key === 'REQUIRE_KYC') return 'true';
+    return null;
+  }),
+}));
+
 describe('property readiness', () => {
   it('allows verified landlords with a completed Paystack payout destination', async () => {
     expect(

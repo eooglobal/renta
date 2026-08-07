@@ -147,7 +147,7 @@ const ERROR_MAP = [
 
     // ── Network / Server ──────────────────────────────────────────────────────
     {
-        match: /failed.*to.*fetch|network.*error|fetch.*failed/i,
+        match: /^typeerror:.*failed to fetch$|^failed to fetch$|networkerror|net::err/i,
         title: 'Connection Problem',
         message: 'We\'re having trouble reaching our servers. Please check your internet connection and try again.',
     },
