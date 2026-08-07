@@ -5,6 +5,9 @@ import Image from 'next/image';
 import { FileText, Home, MapPin, Calendar, Shield, CheckCircle, Clock, AlertTriangle, MessageCircle, Download } from 'lucide-react';
 import Link from 'next/link';
 import RentalAgreementModal from '@/components/RentalAgreementModal';
+import { useToast } from '@/components/Toast';
+import ConfirmModal from '@/components/ConfirmModal';
+import { formatDisplayId } from '@/lib/idFormatter';
 
 const statusConfig = {
     PENDING: { label: 'Pending', badge: 'badge-pending', icon: Clock },
@@ -23,9 +26,12 @@ const escrowLabels = {
 };
 
 export default function TenantRentalsPage() {
+    const toast = useToast();
     const [rentals, setRentals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [signingRental, setSigningRental] = useState(null);
+    const [confirmMoveInRentalId, setConfirmMoveInRentalId] = useState(null);
+    const [moveInLoading, setMoveInLoading] = useState(false);
 
     const fetchRentals = async () => {
         try {
@@ -67,7 +73,7 @@ export default function TenantRentalsPage() {
         );
         if (!reason) return;
         if (reason.length < 10) {
-            alert('Please provide a more detailed reason for the dispute (at least 10 characters).');
+            toast.error('Reason Too Short', 'Please provide a more detailed reason for the dispute (at least 10 characters).');
             return;
         }
 
@@ -83,14 +89,36 @@ export default function TenantRentalsPage() {
             });
             const data = await res.json();
             if (res.ok) {
-                alert(data.message);
+                toast.success('Dispute Logged', data.message || 'Your dispute has been logged successfully.');
                 await fetchRentals();
             } else {
-                alert(data.error);
+                toast.error('Dispute Error', data.error || 'Failed to submit dispute.');
             }
         } catch (err) {
-            console.error('Dispute failed', err);
-            alert('Failed to submit dispute.');
+            toast.error('Network Error', 'Failed to submit dispute.');
+        }
+    };
+
+    const handleConfirmMoveIn = async (rentalId) => {
+        setMoveInLoading(true);
+        try {
+            const res = await fetch('/api/escrow/release', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rentalId, action: 'confirm_access' })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                toast.success('Move-In Confirmed', data.message || 'Payment released to landlord.');
+                setConfirmMoveInRentalId(null);
+                await fetchRentals();
+            } else {
+                toast.error('Release Failed', data.error || 'Failed to release funds.');
+            }
+        } catch (e) {
+            toast.error('Action Failed', 'Failed to release funds.');
+        } finally {
+            setMoveInLoading(false);
         }
     };
 
@@ -102,6 +130,17 @@ export default function TenantRentalsPage() {
                 <h1 style={{ fontSize: 'var(--text-2xl)' }}>My Rentals</h1>
                 <p className="text-muted">Track all your rental agreements and payment status.</p>
             </header>
+
+            <ConfirmModal
+                isOpen={!!confirmMoveInRentalId}
+                title={`Confirm Move-In Access (${formatDisplayId('RNT', confirmMoveInRentalId)})`}
+                message="Are you sure you want to confirm access to this property? This will release the secured rent payment to the landlord and cannot be undone."
+                confirmText="Confirm & Release Rent"
+                variant="primary"
+                loading={moveInLoading}
+                onConfirm={() => handleConfirmMoveIn(confirmMoveInRentalId)}
+                onClose={() => setConfirmMoveInRentalId(null)}
+            />
 
             {loading ? (
                 <div className="card text-center text-muted" style={{ padding: 'var(--space-8)' }}>Loading your rentals...</div>
@@ -144,6 +183,9 @@ export default function TenantRentalsPage() {
                                     {/* Content */}
                                     <div className="rental-card-content">
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-2)' }}>
+                                            <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: '600', background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: '4px' }}>
+                                                {formatDisplayId('RNT', rental.id)}
+                                            </span>
                                             <span className={`badge ${status.badge} flex items-center gap-1`}>
                                                 <StatusIcon size={12} /> {status.label}
                                             </span>
@@ -155,7 +197,7 @@ export default function TenantRentalsPage() {
                                         </div>
 
                                         <h4 className="font-bold" style={{ fontSize: 'var(--text-base)', marginBottom: 'var(--space-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                            {rental.property?.title || `Rental #${rental.id}`}
+                                            {rental.property?.title || `Rental ${formatDisplayId('RNT', rental.id)}`}
                                         </h4>
 
                                         <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap', marginTop: 'var(--space-1)' }}>
@@ -251,26 +293,7 @@ export default function TenantRentalsPage() {
                                                         <button
                                                             className="btn btn-sm"
                                                             style={{ background: 'var(--color-success)', color: 'white' }}
-                                                            onClick={async () => {
-                                                                if (confirm('Are you sure you want to confirm access? This cannot be undone.')) {
-                                                                    try {
-                                                                        const res = await fetch('/api/escrow/release', {
-                                                                            method: 'POST',
-                                                                            headers: { 'Content-Type': 'application/json' },
-                                                                            body: JSON.stringify({ rentalId: rental.id, action: 'confirm_access' })
-                                                                        });
-                                                                        const data = await res.json();
-                                                                        if (res.ok) {
-                                                                            alert(data.message);
-                                                                            window.location.reload();
-                                                                        } else {
-                                                                            alert(data.error);
-                                                                        }
-                                                                    } catch (e) {
-                                                                        alert('Failed to release funds');
-                                                                    }
-                                                                }
-                                                            }}
+                                                            onClick={() => setConfirmMoveInRentalId(rental.id)}
                                                         >
                                                             <CheckCircle size={14} style={{ marginRight: 4 }} />
                                                             Confirm Move-In

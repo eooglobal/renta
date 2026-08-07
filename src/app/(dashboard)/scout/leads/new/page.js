@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, UserPlus, Phone, MapPin, Map, FileText, PlusCircle, Sparkles, Send, ShieldCheck } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 export default function NewScoutLeadPage() {
     const router = useRouter();
+    const toast = useToast();
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [areas, setAreas] = useState([]);
@@ -103,7 +105,7 @@ export default function NewScoutLeadPage() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
 
-            alert('Awesome! Lead submitted successfully. You will be notified when it gets verified.');
+            toast.success('Lead Submitted!', 'Awesome! Lead submitted successfully. You will be notified when it gets verified.');
             router.push('/scout/leads');
         } catch (err) {
             setError(err.message);

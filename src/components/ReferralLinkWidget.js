@@ -2,10 +2,12 @@
 
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
-import { Copy, Check, Link as LinkIcon } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 export default function ReferralLinkWidget() {
     const { data: session } = useSession();
+    const toast = useToast();
     const [copied, setCopied] = useState(false);
     const [baseUrl, setBaseUrl] = useState('');
 
@@ -22,49 +24,52 @@ export default function ReferralLinkWidget() {
         try {
             await navigator.clipboard.writeText(referralLink);
             setCopied(true);
+            toast.success('Link Copied!', 'Your affiliate tracking link has been copied to your clipboard.');
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
-            console.error('Failed to copy text', err);
+            toast.error('Copy Failed', 'Could not copy link to clipboard.');
         }
     };
 
     return (
-        <div className="card" style={{ background: 'var(--color-primary-light)', border: '1px solid var(--color-primary)' }}>
-            <h3 className="mb-2 flex items-center gap-2" style={{ fontSize: 'var(--text-lg)' }}>
-                <LinkIcon size={18} style={{ color: 'var(--color-primary)' }} /> Your Affiliate Link
+        <div className="card" style={{ background: '#F8FAFC', border: '1px solid var(--border-color)', padding: '20px' }}>
+            <h3 className="mb-1" style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-main)' }}>
+                Your Unique Affiliate Referral Link
             </h3>
-            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-                Share this link. Anyone who signs up via this link will be tracked. Whenever they pay rent on Renta, you instantly earn a 2% commission.
+            <p className="text-sm mb-4" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                Share this link on social media or direct messages. Anyone who registers will earn you 2% lifetime commission on every rent payment.
             </p>
 
-            <div className="flex" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', background: '#fff', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
                 <input
                     type="text"
                     readOnly
                     value={referralLink}
                     style={{
                         flex: 1,
-                        padding: 'var(--space-3) var(--space-4)',
+                        padding: '10px 14px',
                         border: 'none',
                         outline: 'none',
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 'var(--font-medium)',
-                        color: 'var(--text-primary)',
+                        fontSize: '0.875rem',
+                        fontWeight: '500',
+                        color: 'var(--text-main)',
                         background: 'transparent',
                         minWidth: 0
                     }}
                 />
                 <button
                     onClick={copyToClipboard}
-                    className="btn"
+                    className="btn btn-primary"
                     style={{
                         borderRadius: 0,
-                        background: copied ? 'var(--color-success)' : 'var(--color-primary)',
-                        color: copied ? 'white' : 'var(--text-on-primary)',
-                        flexShrink: 0
+                        padding: '10px 16px',
+                        fontSize: '0.85rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
                     }}
                 >
-                    {copied ? <><Check size={16} /> Copied!</> : <><Copy size={16} /> Copy</>}
+                    {copied ? <><Check size={16} /> Copied!</> : <><Copy size={16} /> Copy Link</>}
                 </button>
             </div>
         </div>

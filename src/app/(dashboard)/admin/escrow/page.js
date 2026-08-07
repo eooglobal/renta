@@ -3,13 +3,23 @@
 import { useState, useEffect } from 'react';
 import { Shield, Banknote, CheckCircle, XCircle, Search, Filter, MessageSquare, ExternalLink } from 'lucide-react';
 import styles from '../../tenant/dashboard.module.css';
+import { useToast } from '@/components/Toast';
+import ConfirmModal from '@/components/ConfirmModal';
+import { formatDisplayId } from '@/lib/idFormatter';
 
 export default function AdminEscrowPage() {
+    const toast = useToast();
     const [escrows, setEscrows] = useState([]);
     const [withdrawals, setWithdrawals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('escrow'); // 'escrow' or 'withdrawals'
     const [filter, setFilter] = useState('');
+    const [confirmState, setConfirmState] = useState({
+        isOpen: false,
+        escrowId: null,
+        action: '',
+        loading: false
+    });
 
     const fetchEscrows = async () => {
         try {
@@ -42,32 +52,20 @@ export default function AdminEscrowPage() {
         loadInitialData();
     }, [filter]);
 
-    const handleWithdrawalAction = async (id, status, requireNotes = false) => {
-        let adminNotes = '';
-        if (requireNotes) {
-            adminNotes = prompt(`Please enter a reason for marking this as ${status}:`);
-            if (adminNotes === null) return;
-        } else if (!confirm(`Are you sure you want to mark this withdrawal as ${status}?`)) {
-            return;
-        }
-
-        try {
-            const res = await fetch(`/api/admin/withdrawals/${id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status, adminNotes })
-            });
-            if (res.ok) {
-                alert('Withdrawal status updated.');
-                fetchWithdrawals();
-            }
-        } catch (error) {
-            alert('Action failed');
-        }
+    const openEscrowConfirm = (escrowId, action) => {
+        setConfirmState({
+            isOpen: true,
+            escrowId,
+            action,
+            loading: false
+        });
     };
 
-    const handleEscrowAction = async (escrowId, action) => {
-        if (!confirm(`Are you sure you want to ${action.toLowerCase()} this escrow?`)) return;
+    const handleConfirmEscrowAction = async () => {
+        const { escrowId, action } = confirmState;
+        if (!escrowId || !action) return;
+
+        setConfirmState(prev => ({ ...prev, loading: true }));
 
         try {
             const res = await fetch('/api/admin/escrow/resolve', {
@@ -77,14 +75,17 @@ export default function AdminEscrowPage() {
             });
             const data = await res.json();
             if (res.ok) {
-                alert(data.message);
+                toast.success('Escrow Updated', data.message || `Escrow ${formatDisplayId('ESC', escrowId)} ${action.toLowerCase()} successfully.`);
+                setConfirmState({ isOpen: false, escrowId: null, action: '', loading: false });
                 fetchEscrows();
                 fetchWithdrawals();
             } else {
-                alert(data.error);
+                toast.error('Action Failed', data.error || 'Could not resolve escrow.');
+                setConfirmState(prev => ({ ...prev, loading: false }));
             }
         } catch (error) {
-            alert('Action failed');
+            toast.error('Action Error', error.message || 'Failed to update escrow status.');
+            setConfirmState(prev => ({ ...prev, loading: false }));
         }
     };
 
@@ -95,6 +96,17 @@ export default function AdminEscrowPage() {
                     <h3>Financial Management</h3>
                     <p className="text-sm text-muted">Manage platform transactions and payout requests.</p>
                 </div>
+
+                <ConfirmModal
+                    isOpen={confirmState.isOpen}
+                    title={`Confirm Escrow ${formatDisplayId('ESC', confirmState.escrowId)}`}
+                    message={`Are you sure you want to ${confirmState.action.toLowerCase()} escrow ${formatDisplayId('ESC', confirmState.escrowId)}?`}
+                    confirmText={confirmState.action === 'RELEASE' ? 'Release Funds' : 'Refund Tenant'}
+                    variant={confirmState.action === 'REFUND' ? 'danger' : 'primary'}
+                    loading={confirmState.loading}
+                    onConfirm={handleConfirmEscrowAction}
+                    onClose={() => setConfirmState({ isOpen: false, escrowId: null, action: '', loading: false })}
+                />
                 <div className="tabs flex gap-4">
                     <button
                         onClick={() => { setActiveTab('escrow'); setFilter(''); }}
@@ -151,12 +163,12 @@ export default function AdminEscrowPage() {
                                         <tr key={escrow.id}>
                                             <td>
                                                 <strong>{escrow.rental.property.title}</strong>
-                                                <div className="text-xs text-muted">Transaction #{escrow.id}</div>
+                                                <div className="text-xs text-muted font-mono">{formatDisplayId('ESC', escrow.id)}</div>
                                             </td>
                                             <td><strong>₦{Number(escrow.amount).toLocaleString()}</strong></td>
                                             <td className="text-xs">
-                                                <div><strong>L:</strong> {escrow.rental.property.landlord.firstName} {escrow.rental.property.landlord.lastName}</div>
-                                                <div><strong>T:</strong> {escrow.rental.tenant.firstName} {escrow.rental.tenant.lastName}</div>
+                                                <div><strong>L:</strong> {formatDisplayId('USR', escrow.rental.property.landlord.id)} ({escrow.rental.property.landlord.firstName} {escrow.rental.property.landlord.lastName})</div>
+                                                <div><strong>T:</strong> {formatDisplayId('USR', escrow.rental.tenant.id)} ({escrow.rental.tenant.firstName} {escrow.rental.tenant.lastName})</div>
                                             </td>
                                             <td>
                                                 <span className={`badge badge-${escrow.status === 'RELEASED' ? 'verified' : escrow.status === 'HELD' ? 'pending' : 'error'}`}>
@@ -166,8 +178,8 @@ export default function AdminEscrowPage() {
                                             <td>
                                                 {escrow.status === 'HELD' || escrow.status === 'DISPUTED' ? (
                                                     <div className="flex gap-1">
-                                                        <button onClick={() => handleEscrowAction(escrow.id, 'RELEASE')} className="btn btn-sm" style={{ background: 'var(--color-success)', color: 'white' }}>Release</button>
-                                                        <button onClick={() => handleEscrowAction(escrow.id, 'REFUND')} className="btn btn-sm btn-outline text-danger">Refund</button>
+                                                        <button onClick={() => openEscrowConfirm(escrow.id, 'RELEASE')} className="btn btn-sm" style={{ background: 'var(--color-success)', color: 'white' }}>Release</button>
+                                                        <button onClick={() => openEscrowConfirm(escrow.id, 'REFUND')} className="btn btn-sm btn-outline text-danger">Refund</button>
                                                     </div>
                                                 ) : (
                                                     <span className="text-xs text-muted">Resolved</span>

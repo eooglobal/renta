@@ -5,8 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { Home, MapPin } from "lucide-react";
 import styles from "../../tenant/dashboard.module.css";
+import { useToast } from "@/components/Toast";
+import { formatDisplayId } from "@/lib/idFormatter";
 
 export default function LandlordPropertiesPage() {
+  const toast = useToast();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [promotingId, setPromotingId] = useState(null);
@@ -65,7 +68,7 @@ export default function LandlordPropertiesPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(`Error: ${data.error}`);
+        toast.error('Promotion Failed', data.error || 'Could not initialize promotion');
         return;
       }
 
@@ -75,7 +78,7 @@ export default function LandlordPropertiesPage() {
       }
     } catch (error) {
       console.error("Promotion error:", error);
-      alert("An error occurred while initializing promotion.");
+      toast.error('Promotion Error', 'An error occurred while initializing promotion.');
     } finally {
       setPromotingId(null);
     }

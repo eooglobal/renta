@@ -2,14 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { UserPlus, Edit, Trash2, Search, X, AlertCircle, Check } from 'lucide-react';
+import { UserPlus, Edit, Trash2, Search, X, AlertCircle, Check, Users } from 'lucide-react';
 import styles from '../../tenant/dashboard.module.css';
+import { useToast } from '@/components/Toast';
+import { formatDisplayId } from '@/lib/idFormatter';
 
 const ROLES = ['TENANT', 'LANDLORD', 'SCOUT', 'AFFILIATE', 'ADMIN'];
 const ADMIN_ROLES = ['SUPER_ADMIN', 'VERIFICATION_OFFICER', 'SUPPORT'];
 
 export default function AdminUsersPage() {
     const { data: session } = useSession();
+    const toast = useToast();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('');
@@ -51,13 +54,15 @@ export default function AdminUsersPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId, action }),
             });
-            if (res.ok) fetchUsers();
-            else {
+            if (res.ok) {
+                toast.success('User Updated', `User ${formatDisplayId('USR', userId)} updated successfully.`);
+                fetchUsers();
+            } else {
                 const data = await res.json();
-                alert(data.error || 'Action failed');
+                toast.error('Action Failed', data.error || 'Could not perform user action.');
             }
         } catch (error) {
-            console.error('Action failed:', error);
+            toast.error('Action Error', error.message || 'Something went wrong.');
         } finally {
             setActionLoading(null);
         }

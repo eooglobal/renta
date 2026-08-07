@@ -1,69 +1,125 @@
 import ReferralLinkWidget from '@/components/ReferralLinkWidget';
-import { Lightbulb } from 'lucide-react';
 
 export const metadata = {
-    title: 'Referral Links - Renta',
+    title: 'Referral Links — Renta',
 };
 
 export default function AffiliateLinksPage() {
     return (
-        <div className="fade-in">
-            <header className="mb-6">
-                <h1 style={{ fontSize: 'var(--text-2xl)' }}>Referral Links</h1>
-                <p className="text-muted">Generate and manage your tracking links to earn commission.</p>
-            </header>
+        <div className="fade-in" style={{ maxWidth: '960px', margin: '0 auto' }}>
+            
+            {/* Header */}
+            <div style={{ marginBottom: '24px' }}>
+                <h1 style={{ fontSize: '1.35rem', fontWeight: '700', color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+                    Referral Links
+                </h1>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: 0 }}>
+                    Generate your custom tracking link to share with potential tenants.
+                </p>
+            </div>
 
-            <div className="flex flex-col gap-6">
-                {/* The Link Generator */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {/* Link Generator Widget */}
                 <ReferralLinkWidget />
 
-                {/* How It Works */}
-                <div className="card">
-                    <h3 style={{ fontSize: 'var(--text-xl)', marginBottom: 'var(--space-6)' }}>How the Affiliate Program Works</h3>
-                    <div className="grid grid-3">
-                        <div className="card" style={{ textAlign: 'center', background: 'var(--bg-secondary)' }}>
+                {/* How It Works Card */}
+                <div className="card" style={{ padding: '24px' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+                        How the Renta Affiliate Program Works
+                    </h3>
+
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                        gap: '16px',
+                        marginBottom: '20px'
+                    }}>
+                        <div className="card" style={{ padding: '16px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
                             <div style={{
-                                width: '48px', height: '48px', borderRadius: '50%',
-                                background: 'var(--color-primary-light)', color: 'var(--color-primary)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                margin: '0 auto var(--space-4)', fontWeight: 'var(--font-bold)', fontSize: 'var(--text-xl)'
-                            }}>1</div>
-                            <h4 style={{ fontSize: 'var(--text-base)', marginBottom: 'var(--space-2)' }}>Share Your Link</h4>
-                            <p className="text-sm text-muted">Place your unique Renta URL on your WhatsApp status, TikTok, or blog to direct traffic.</p>
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                background: '#E0F2FE',
+                                color: '#0369A1',
+                                fontWeight: '700',
+                                fontSize: '0.85rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginBottom: '10px'
+                            }}>
+                                1
+                            </div>
+                            <h4 style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+                                Share Your Link
+                            </h4>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+                                Post your link on WhatsApp, TikTok, Instagram, or blogs to direct property seekers to Renta.
+                            </p>
                         </div>
-                        <div className="card" style={{ textAlign: 'center', background: 'var(--bg-secondary)' }}>
+
+                        <div className="card" style={{ padding: '16px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
                             <div style={{
-                                width: '48px', height: '48px', borderRadius: '50%',
-                                background: 'var(--color-primary-light)', color: 'var(--color-primary)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                margin: '0 auto var(--space-4)', fontWeight: 'var(--font-bold)', fontSize: 'var(--text-xl)'
-                            }}>2</div>
-                            <h4 style={{ fontSize: 'var(--text-base)', marginBottom: 'var(--space-2)' }}>Users Register</h4>
-                            <p className="text-sm text-muted">When they sign up within 30 days of clicking, your ID is permanently tied to their account.</p>
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                background: '#E0F2FE',
+                                color: '#0369A1',
+                                fontWeight: '700',
+                                fontSize: '0.85rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginBottom: '10px'
+                            }}>
+                                2
+                            </div>
+                            <h4 style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+                                Tenants Register
+                            </h4>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+                                When users register after clicking your link, your affiliate ID is mapped permanently to their profile.
+                            </p>
                         </div>
-                        <div className="card" style={{ textAlign: 'center', background: 'var(--bg-secondary)' }}>
+
+                        <div className="card" style={{ padding: '16px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
                             <div style={{
-                                width: '48px', height: '48px', borderRadius: '50%',
-                                background: 'var(--color-success-light)', color: 'var(--color-success)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                margin: '0 auto var(--space-4)', fontWeight: 'var(--font-bold)', fontSize: 'var(--text-xl)'
-                            }}>₦</div>
-                            <h4 style={{ fontSize: 'var(--text-base)', marginBottom: 'var(--space-2)' }}>Earn 2% Lifetime</h4>
-                            <p className="text-sm text-muted">Whenever they successfully rent ANY property on Renta, you earn a 2% commission straight to your Wallet.</p>
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                background: '#D1FAE5',
+                                color: '#065F46',
+                                fontWeight: '700',
+                                fontSize: '0.85rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginBottom: '10px'
+                            }}>
+                                3
+                            </div>
+                            <h4 style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+                                Earn 2% Lifetime
+                            </h4>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+                                Whenever your referred tenant pays for ANY property on Renta, 2% commission is deposited instantly to your wallet.
+                            </p>
                         </div>
                     </div>
 
-                    <div className="mt-6" style={{
-                        padding: 'var(--space-4)',
-                        background: 'var(--color-primary-light)',
-                        borderRadius: 'var(--radius-md)',
-                        border: '1px solid rgba(253, 168, 41, 0.24)'
+                    <div style={{
+                        padding: '14px 16px',
+                        background: '#FEF3C7',
+                        border: '1px solid #FCD34D',
+                        borderRadius: 'var(--radius-lg)',
+                        fontSize: '0.825rem',
+                        color: '#92400E'
                     }}>
-                        <h4 className="font-bold" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-primary-dark)', marginBottom: 'var(--space-1)', display: 'flex', alignItems: 'center', gap: '6px' }}><Lightbulb size={15} /> Pro Tip</h4>
-                        <p className="text-sm">Focus on referring students looking for hostels or corp members (NYSC) moving into town. They are highly motivated to rent quickly!</p>
+                        <strong>Pro Tip:</strong> Share links in student groups looking for hostels or NYSC corp member forums moving to Kwara. They rent quickly!
                     </div>
                 </div>
             </div>
+
         </div>
     );
 }

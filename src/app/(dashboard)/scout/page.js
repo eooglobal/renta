@@ -1,10 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
-import Link from "next/link";
-import { Plus, ClipboardList, DollarSign } from "lucide-react";
-import styles from "../tenant/dashboard.module.css";
+import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 
 export default function ScoutDashboard() {
   const { data: session } = useSession();
@@ -14,16 +12,16 @@ export default function ScoutDashboard() {
     totalEarnings: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [kycRequired, setKycRequired] = useState(null); // null = not yet loaded
+  const [kycRequired, setKycRequired] = useState(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch("/api/scout/stats");
+        const res = await fetch('/api/scout/stats');
         const data = await res.json();
         if (res.ok) setStats(data);
       } catch (error) {
-        console.error("Failed to fetch scout stats", error);
+        console.error('Failed to fetch scout stats', error);
       } finally {
         setLoading(false);
       }
@@ -31,7 +29,7 @@ export default function ScoutDashboard() {
 
     const fetchProfile = async () => {
       try {
-        const res = await fetch("/api/profile");
+        const res = await fetch('/api/profile');
         if (res.ok) {
           const data = await res.json();
           setKycRequired(data.kycRequired !== false);
@@ -39,131 +37,163 @@ export default function ScoutDashboard() {
       } catch {}
     };
 
-    if (session) { fetchStats(); fetchProfile(); }
+    if (session) {
+      fetchStats();
+      fetchProfile();
+    }
   }, [session]);
 
   return (
-    <div className="fade-in">
-      <div className={styles.welcomeSection}>
-        <h2>Scout Dashboard</h2>
-        <p className="text-muted">
-          Welcome, {session?.user?.firstName}! Help landlords list on Renta and
-          earn 3% commission.
+    <div className="fade-in" style={{ maxWidth: '960px', margin: '0 auto' }}>
+      
+      {/* Header */}
+      <div style={{ marginBottom: '24px' }}>
+        <h1 style={{ fontSize: '1.35rem', fontWeight: '700', color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+          Scout Dashboard
+        </h1>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: 0 }}>
+          Welcome back, {session?.user?.firstName || 'Scout'}! Submit unlisted properties to earn 3% commission.
         </p>
       </div>
 
-      {/* KYC Verification Alert — only shown when KYC is explicitly required */}
-      {kycRequired === true && session?.user?.ninStatus !== "VERIFIED" && (
-        <div
-          className="dashboard-alert dashboard-alert-error mb-6"
-        >
-          <div className="flex items-start gap-3">
-            <div style={{ color: "var(--color-error)", marginTop: "2px" }}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-                <path d="M12 9v4" />
-                <path d="M12 17h.01" />
-              </svg>
-            </div>
-            <div style={{ flex: 1 }}>
-              <h4
-                style={{
-                  fontSize: "15px",
-                  fontWeight: "bold",
-                  color: "var(--color-error)",
-                  margin: "0 0 4px 0",
-                }}
-              >
-                Action Required: Verify Your Identity
-              </h4>
-              <p
-                style={{
-                  fontSize: "14px",
-                  margin: "0 0 12px 0",
-                  color: "var(--text-color)",
-                }}
-              >
-                To submit leads, please complete your National Identity Number
-                (NIN) verification.
-              </p>
-              <Link
-                href="/scout/profile"
-                className="btn btn-sm"
-                style={{
-                  background: "var(--color-error)",
-                  color: "white",
-                  border: "none",
-                }}
-              >
-                Verify Now
-              </Link>
-            </div>
+      {/* Identity Verification Alert */}
+      {kycRequired === true && session?.user?.ninStatus !== 'VERIFIED' && (
+        <div style={{
+          background: '#FFFBEB',
+          border: '1px solid #FCD34D',
+          borderRadius: 'var(--radius-lg)',
+          padding: '16px 20px',
+          marginBottom: '24px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          flexWrap: 'wrap'
+        }}>
+          <div>
+            <h4 style={{ fontSize: '0.9rem', fontWeight: '600', color: '#92400E', margin: '0 0 2px 0' }}>
+              Action Required: Identity Verification
+            </h4>
+            <p style={{ fontSize: '0.85rem', color: '#B45309', margin: 0 }}>
+              Complete your National Identity Number (NIN) verification to unlock lead payouts.
+            </p>
           </div>
+          <Link
+            href="/scout/profile"
+            className="btn btn-sm"
+            style={{
+              background: '#D97706',
+              color: '#fff',
+              border: 'none',
+              fontSize: '0.85rem',
+              fontWeight: '600',
+              padding: '6px 14px'
+            }}
+          >
+            Verify Identity
+          </Link>
         </div>
       )}
 
-      <div className={styles.quickActions}>
-        <Link href="/scout/leads/new" className={styles.actionCard}>
-          <span className={styles.actionIcon}>
-            <Plus size={24} />
+      {/* Metrics Grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        gap: '16px',
+        marginBottom: '28px'
+      }}>
+        <div className="card" style={{ padding: '20px' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+            Leads Submitted
           </span>
-          <div>
-            <h4>Submit New Lead</h4>
-            <p>Add a new property and landlord info</p>
-          </div>
+          <span style={{ fontSize: '1.6rem', fontWeight: '700', color: 'var(--text-main)' }}>
+            {loading ? '...' : stats.leadsSubmitted}
+          </span>
+        </div>
+
+        <div className="card" style={{ padding: '20px' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+            Verified Properties
+          </span>
+          <span style={{ fontSize: '1.6rem', fontWeight: '700', color: 'var(--text-main)' }}>
+            {loading ? '...' : stats.verifiedProperties}
+          </span>
+        </div>
+
+        <div className="card" style={{ padding: '20px' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+            Total Earnings
+          </span>
+          <span style={{ fontSize: '1.6rem', fontWeight: '700', color: 'var(--color-primary)' }}>
+            {loading ? '...' : `₦${Number(stats.totalEarnings).toLocaleString()}`}
+          </span>
+        </div>
+      </div>
+
+      {/* Quick Actions Navigation */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+        gap: '16px'
+      }}>
+        <Link
+          href="/scout/leads/new"
+          className="card"
+          style={{
+            padding: '20px',
+            textDecoration: 'none',
+            color: 'inherit',
+            transition: 'border-color 0.2s, box-shadow 0.2s',
+            border: '1px solid var(--border-color)'
+          }}
+        >
+          <h4 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+            Submit New Lead
+          </h4>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+            Enter details of an unlisted property to initiate verification.
+          </p>
         </Link>
-        <Link href="/scout/leads" className={styles.actionCard}>
-          <span className={styles.actionIcon}>
-            <ClipboardList size={24} />
-          </span>
-          <div>
-            <h4>My Leads</h4>
-            <p>Track verification status of your leads</p>
-          </div>
+
+        <Link
+          href="/scout/leads"
+          className="card"
+          style={{
+            padding: '20px',
+            textDecoration: 'none',
+            color: 'inherit',
+            transition: 'border-color 0.2s, box-shadow 0.2s',
+            border: '1px solid var(--border-color)'
+          }}
+        >
+          <h4 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+            My Leads
+          </h4>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+            Track live status and verification progress of submitted properties.
+          </p>
         </Link>
-        <Link href="/scout/earnings" className={styles.actionCard}>
-          <span className={styles.actionIcon}>
-            <DollarSign size={24} />
-          </span>
-          <div>
-            <h4>Earnings</h4>
-            <p>View your commission history</p>
-          </div>
+
+        <Link
+          href="/scout/earnings"
+          className="card"
+          style={{
+            padding: '20px',
+            textDecoration: 'none',
+            color: 'inherit',
+            transition: 'border-color 0.2s, box-shadow 0.2s',
+            border: '1px solid var(--border-color)'
+          }}
+        >
+          <h4 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+            Earnings & Wallet
+          </h4>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+            View commission history and initiate bank withdrawals.
+          </p>
         </Link>
       </div>
 
-      <div className={`grid grid-3 ${styles.statsGrid}`}>
-        <div className={`card ${styles.statCard}`}>
-          <span className="text-muted text-sm">Leads Submitted</span>
-          <div className={styles.statValue}>
-            {loading ? "..." : stats.leadsSubmitted}
-          </div>
-        </div>
-        <div className={`card ${styles.statCard}`}>
-          <span className="text-muted text-sm">Verified Properties</span>
-          <div className={styles.statValue}>
-            {loading ? "..." : stats.verifiedProperties}
-          </div>
-        </div>
-        <div className={`card ${styles.statCard}`}>
-          <span className="text-muted text-sm">Total Earnings</span>
-          <div className={styles.statValue}>
-            {loading
-              ? "..."
-              : `₦${Number(stats.totalEarnings).toLocaleString()}`}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

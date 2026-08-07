@@ -2,13 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Scale } from 'lucide-react';
+import { Scale, CheckCircle, XCircle } from 'lucide-react';
 import styles from '../../tenant/dashboard.module.css';
+import { useToast } from '@/components/Toast';
+import ConfirmModal from '@/components/ConfirmModal';
+import { formatDisplayId } from '@/lib/idFormatter';
 
 export default function AdminDisputesPage() {
+    const toast = useToast();
     const [disputes, setDisputes] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [actionLoading, setActionLoading] = useState(null);
+    
+    // Modal state
+    const [confirmState, setConfirmState] = useState({
+        isOpen: false,
+        escrowId: null,
+        action: '',
+        loading: false
+    });
 
     useEffect(() => {
         fetchDisputes();
@@ -17,7 +28,6 @@ export default function AdminDisputesPage() {
     const fetchDisputes = async () => {
         setLoading(true);
         try {
-            // Fetch escrows specifically marked as DISPUTED
             const res = await fetch('/api/admin/escrow?status=DISPUTED');
             const data = await res.json();
             setDisputes(data.escrows || []);
@@ -28,88 +38,131 @@ export default function AdminDisputesPage() {
         }
     };
 
-    const handleResolution = async (escrowId, action) => {
-        if (!confirm(`Are you sure you want to ${action} this escrow? This action cannot be undone.`)) return;
+    const openConfirmModal = (escrowId, action) => {
+        setConfirmState({
+            isOpen: true,
+            escrowId,
+            action,
+            loading: false
+        });
+    };
 
-        setActionLoading(escrowId);
+    const handleConfirmResolution = async () => {
+        const { escrowId, action } = confirmState;
+        if (!escrowId || !action) return;
+
+        setConfirmState(prev => ({ ...prev, loading: true }));
+
         try {
             const res = await fetch('/api/admin/escrow/resolve', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ escrowId, action }), // action: 'RELEASE' or 'REFUND'
+                body: JSON.stringify({ escrowId, action }),
             });
 
+            const data = await res.json();
             if (res.ok) {
+                toast.success('Dispute Resolved', data.message || `Dispute ${formatDisplayId('ESC', escrowId)} ${action.toLowerCase()} successfully.`);
+                setConfirmState({ isOpen: false, escrowId: null, action: '', loading: false });
                 fetchDisputes();
             } else {
-                const errData = await res.json();
-                alert(`Error: ${errData.error}`);
+                toast.error('Action Failed', data.error || 'Failed to resolve dispute.');
+                setConfirmState(prev => ({ ...prev, loading: false }));
             }
         } catch (error) {
-            console.error('Failed to resolve dispute:', error);
-        } finally {
-            setActionLoading(null);
+            toast.error('Action Error', error.message || 'Something went wrong.');
+            setConfirmState(prev => ({ ...prev, loading: false }));
         }
     };
 
     return (
-        <div className="fade-in">
-            <div className={styles.propertiesHeader}>
-                <h3>Dispute Resolution Center</h3>
-                <p className="text-muted">Manage tenant complaints and escrow holds.</p>
+        <div className="fade-in" style={{ maxWidth: '960px', margin: '0 auto' }}>
+            
+            {/* Header */}
+            <div className={styles.propertiesHeader} style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: '700', color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+                    Dispute Resolution Center
+                </h3>
+                <p className="text-muted" style={{ margin: 0 }}>
+                    Manage tenant complaints and escrow holds.
+                </p>
             </div>
 
+            {/* Confirm Modal */}
+            <ConfirmModal
+                isOpen={confirmState.isOpen}
+                title={`Resolve Dispute ${formatDisplayId('ESC', confirmState.escrowId)}`}
+                message={`Are you sure you want to ${confirmState.action.toLowerCase()} funds for transaction ${formatDisplayId('ESC', confirmState.escrowId)}? This action cannot be undone.`}
+                confirmText={confirmState.action === 'RELEASE' ? 'Release to Landlord' : 'Refund Tenant'}
+                variant={confirmState.action === 'REFUND' ? 'danger' : 'primary'}
+                loading={confirmState.loading}
+                onConfirm={handleConfirmResolution}
+                onClose={() => setConfirmState({ isOpen: false, escrowId: null, action: '', loading: false })}
+            />
+
             {loading ? (
-                <div className="flex justify-center" style={{ padding: '60px 0' }}>
-                    <div className="spinner" style={{ width: 32, height: 32 }}></div>
+                <div className="card text-center" style={{ padding: '40px 20px', color: 'var(--text-muted)' }}>
+                    Loading active disputes...
                 </div>
             ) : disputes.length === 0 ? (
-                <div className={styles.emptyState}>
-                    <div className={styles.emptyIcon}><Scale size={48} /></div>
-                    <h3>No active disputes</h3>
-                    <p>All escrow payments are processing smoothly.</p>
+                <div className="card text-center" style={{ padding: '48px 24px' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '8px' }}>
+                        No Active Disputes
+                    </h3>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: 0 }}>
+                        All rental payments are processing smoothly with zero active disputes.
+                    </p>
                 </div>
             ) : (
-                <div className="grid grid-2">
+                <div className="flex flex-col gap-4">
                     {disputes.map(escrow => (
-                        <div key={escrow.id} className="card">
-                            <div className="flex justify-between items-start" style={{ marginBottom: 'var(--space-4)' }}>
-                                <div>
-                                    <h4 style={{ margin: 0, color: 'var(--color-error)' }}>Active Dispute</h4>
-                                    <p className="text-sm text-muted m-0">Reported on {new Date(escrow.updatedAt).toLocaleDateString()}</p>
+                        <div key={escrow.id} className="card p-6 border flex flex-col md:flex-row justify-between gap-6 items-start">
+                            <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                                    <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', fontWeight: '600', background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: '4px' }}>
+                                        {formatDisplayId('ESC', escrow.id)}
+                                    </span>
+                                    <span className="badge badge-error">DISPUTED</span>
                                 </div>
-                                <span className="badge badge-error">₦{Number(escrow.amount).toLocaleString()}</span>
+
+                                <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)', margin: '0 0 8px 0' }}>
+                                    {escrow.rental?.property?.title || 'Rental Property'}
+                                </h4>
+
+                                <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px', marginBottom: '12px' }}>
+                                    <div><strong>Tenant:</strong> {formatDisplayId('USR', escrow.rental?.tenant?.id)} ({escrow.rental?.tenant?.firstName} {escrow.rental?.tenant?.lastName})</div>
+                                    <div><strong>Landlord:</strong> {formatDisplayId('USR', escrow.rental?.property?.landlord?.id)} ({escrow.rental?.property?.landlord?.firstName} {escrow.rental?.property?.landlord?.lastName})</div>
+                                    <div><strong>Disputed Amount:</strong> ₦{Number(escrow.amount).toLocaleString()}</div>
+                                </div>
+
+                                {escrow.disputeReason && (
+                                    <div style={{ background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: 'var(--radius-md)', padding: '10px 14px', color: '#92400E', fontSize: '0.85rem' }}>
+                                        <strong>Reason:</strong> {escrow.disputeReason}
+                                    </div>
+                                )}
                             </div>
 
-                            <div style={{ background: 'var(--color-surface)', padding: 'var(--space-3)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
-                                <p className="text-sm" style={{ margin: 0 }}><strong>Property:</strong> {escrow.rental.property.title}</p>
-                                <p className="text-sm" style={{ margin: '4px 0 0 0' }}><strong>Tenant:</strong> {escrow.rental.tenant.firstName} {escrow.rental.tenant.lastName}</p>
-                                <p className="text-sm" style={{ margin: '4px 0 0 0' }}><strong>Landlord:</strong> {escrow.rental.property.landlord.firstName} {escrow.rental.property.landlord.lastName}</p>
-                            </div>
-
-                            <div style={{ marginBottom: 'var(--space-4)' }}>
-                                <h5 style={{ margin: '0 0 8px 0' }}>Complaint Details</h5>
-                                <p className="text-sm bg-gray-50 p-3 rounded border" style={{ margin: 0 }}>
-                                    {escrow.disputeReason || "No details provided by the tenant."}
-                                </p>
-                            </div>
-
-                            <div className="flex gap-2">
-                                <button className="btn flex-1 btn-outline" style={{ borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
-                                    onClick={() => handleResolution(escrow.id, 'REFUND')}
-                                    disabled={actionLoading === escrow.id}>
-                                    Refund Tenant
-                                </button>
-                                <button className="btn flex-1 bg-primary text-white"
-                                    onClick={() => handleResolution(escrow.id, 'RELEASE')}
-                                    disabled={actionLoading === escrow.id}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', maxWidth: '200px' }}>
+                                <button
+                                    onClick={() => openConfirmModal(escrow.id, 'RELEASE')}
+                                    className="btn btn-primary btn-sm"
+                                    style={{ background: 'var(--color-success)', borderColor: 'var(--color-success)', color: '#fff' }}
+                                >
                                     Release to Landlord
+                                </button>
+                                <button
+                                    onClick={() => openConfirmModal(escrow.id, 'REFUND')}
+                                    className="btn btn-outline btn-sm"
+                                    style={{ color: 'var(--color-error)', borderColor: 'var(--color-error)' }}
+                                >
+                                    Refund Tenant
                                 </button>
                             </div>
                         </div>
                     ))}
                 </div>
             )}
+
         </div>
     );
 }
