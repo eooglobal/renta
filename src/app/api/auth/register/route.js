@@ -115,10 +115,10 @@ export async function POST(request) {
             }
         }
 
-        // Send welcome notification & OTP code
-        dispatchWelcomeNotification({ id: user.id, email: user.email, firstName: user.firstName, role: user.role, phone: user.phone }).catch(console.error);
-
-        if (!isUserRoleAdmin && otpCode) {
+        // Send OTP verification code (Welcome email is held until OTP is verified)
+        if (isUserRoleAdmin) {
+            dispatchWelcomeNotification({ id: user.id, email: user.email, firstName: user.firstName, role: user.role, phone: user.phone }).catch(console.error);
+        } else if (otpCode) {
             const { dispatchOtpNotification } = await import('@/lib/notificationDispatcher');
             dispatchOtpNotification({ id: user.id, email: user.email, firstName: user.firstName, phone: user.phone }, otpCode).catch(console.error);
         }

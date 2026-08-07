@@ -59,6 +59,10 @@ export async function POST(request) {
             },
         });
 
+        // Send Welcome Email & Notification now that OTP is confirmed
+        const { dispatchWelcomeNotification } = await import('@/lib/notificationDispatcher');
+        dispatchWelcomeNotification({ id: user.id, email: user.email, firstName: user.firstName, role: user.role, phone: user.phone }).catch(console.error);
+
         return NextResponse.json({
             success: true,
             message: 'Account verified successfully!',
