@@ -5,6 +5,8 @@ import { MapPin, Calendar, Bed, Bath, Shield, CheckCircle } from 'lucide-react';
 import LandingHeader from '@/components/LandingHeader';
 import LandingFooter from '@/components/LandingFooter';
 
+export const dynamic = 'force-dynamic';
+
 export default async function PublicRentalDetailsPage({ params }) {
   const apt = await prisma.rental.findUnique({
     where: { id: parseInt(params.id) },

@@ -206,7 +206,7 @@ export async function DELETE(request) {
             return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 });
         }
 
-        // 1. Clean up properties if they have no active rentals
+        // 1. Properties clean-up (if no active rentals)
         const userProperties = await prisma.property.findMany({
             where: { landlordId: userId },
             select: { id: true }
@@ -227,21 +227,21 @@ export async function DELETE(request) {
             await prisma.propertyImage.deleteMany({ where: { propertyId: { in: propertyIds } } }).catch(() => {});
             await prisma.propertyVideo.deleteMany({ where: { propertyId: { in: propertyIds } } }).catch(() => {});
             await prisma.inspectionRequest.deleteMany({ where: { propertyId: { in: propertyIds } } }).catch(() => {});
-            await prisma.review.deleteMany({ where: { propertyId: { in: propertyIds } } }).catch(() => {});
             await prisma.property.deleteMany({ where: { id: { in: propertyIds } } }).catch(() => {});
         }
 
-        // 2. Clean tenant rentals if no active disputes/payments
+        // 2. Tenant rentals clean-up (if 0 active rentals)
         const userRentals = await prisma.rental.findMany({ where: { tenantId: userId }, select: { id: true } });
         if (userRentals.length > 0) {
             const rentalIds = userRentals.map(r => r.id);
             await prisma.payment.deleteMany({ where: { rentalId: { in: rentalIds } } }).catch(() => {});
-            await prisma.dispute.deleteMany({ where: { rentalId: { in: rentalIds } } }).catch(() => {});
+            await prisma.rentalAgreement.deleteMany({ where: { rentalId: { in: rentalIds } } }).catch(() => {});
             await prisma.escrow.deleteMany({ where: { rentalId: { in: rentalIds } } }).catch(() => {});
+            await prisma.commission.deleteMany({ where: { rentalId: { in: rentalIds } } }).catch(() => {});
             await prisma.rental.deleteMany({ where: { tenantId: userId } }).catch(() => {});
         }
 
-        // 3. Clean wallet child records first (transactions & withdrawal requests)
+        // 3. Clean wallet and wallet dependencies
         const userWallets = await prisma.wallet.findMany({ where: { userId }, select: { id: true } });
         if (userWallets.length > 0) {
             const walletIds = userWallets.map(w => w.id);
@@ -250,13 +250,7 @@ export async function DELETE(request) {
             await prisma.wallet.deleteMany({ where: { id: { in: walletIds } } }).catch(() => {});
         }
 
-        // 4. Clean ALL dependent model records to prevent foreign key errors (P2003)
-        await prisma.tenantProfile.deleteMany({ where: { userId } }).catch(() => {});
-        await prisma.affiliateReferral.deleteMany({ where: { OR: [{ affiliateId: userId }, { referredUserId: userId }] } }).catch(() => {});
-        await prisma.commission.deleteMany({ where: { userId } }).catch(() => {});
-        await prisma.scoutArea.deleteMany({ where: { scoutId: userId } }).catch(() => {});
-        
-        // Unlink scout leads properties before deleting scout leads
+        // 4. Clean scout leads and unlink property associations
         const userScoutLeads = await prisma.scoutLead.findMany({ where: { scoutId: userId }, select: { id: true } });
         if (userScoutLeads.length > 0) {
             const leadIds = userScoutLeads.map(l => l.id);
@@ -264,19 +258,20 @@ export async function DELETE(request) {
             await prisma.scoutLead.deleteMany({ where: { scoutId: userId } }).catch(() => {});
         }
 
+        // 5. Clean remaining valid Prisma relations from schema.prisma
+        await prisma.tenantProfile.deleteMany({ where: { userId } }).catch(() => {});
+        await prisma.affiliateReferral.deleteMany({ where: { OR: [{ affiliateId: userId }, { referredUserId: userId }] } }).catch(() => {});
+        await prisma.commission.deleteMany({ where: { userId } }).catch(() => {});
+        await prisma.scoutArea.deleteMany({ where: { userId } }).catch(() => {});
         await prisma.maintenanceRequest.deleteMany({ where: { tenantId: userId } }).catch(() => {});
         await prisma.notification.deleteMany({ where: { userId } }).catch(() => {});
-        await prisma.auditLog.deleteMany({ where: { userId } }).catch(() => {});
-        await prisma.bankAccount.deleteMany({ where: { userId } }).catch(() => {});
         await prisma.inspectionRequest.deleteMany({ where: { OR: [{ tenantId: userId }, { assignedStaffId: userId }] } }).catch(() => {});
-        await prisma.message.deleteMany({ where: { OR: [{ senderId: userId }, { recipientId: userId }] } }).catch(() => {});
-        await prisma.review.deleteMany({ where: { tenantId: userId } }).catch(() => {});
-        await prisma.kycDocument.deleteMany({ where: { userId } }).catch(() => {});
+        await prisma.message.deleteMany({ where: { OR: [{ senderId: userId }, { receiverId: userId }] } }).catch(() => {});
         await prisma.user.updateMany({ where: { referredById: userId }, data: { referredById: null } }).catch(() => {});
         await prisma.property.updateMany({ where: { verifiedById: userId }, data: { verifiedById: null } }).catch(() => {});
         await prisma.escrow.updateMany({ where: { releasedByAdminId: userId }, data: { releasedByAdminId: null } }).catch(() => {});
 
-        // 5. Delete user record cleanly
+        // 6. Delete user record cleanly
         await prisma.user.delete({ where: { id: userId } });
 
         return NextResponse.json({ message: 'User deleted successfully' });

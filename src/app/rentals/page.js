@@ -4,6 +4,8 @@ import { Search, MapPin } from 'lucide-react';
 import LandingHeader from '@/components/LandingHeader';
 import LandingFooter from '@/components/LandingFooter';
 
+export const dynamic = 'force-dynamic';
+
 export default async function PublicRentalsPage({ searchParams }) {
   const q = searchParams.q || '';
   
