@@ -83,6 +83,7 @@ export default function EditPropertyPage() {
   }, []);
 
   useEffect(() => {
+    if (!propertyId) return;
     const fetchProperty = async () => {
       try {
         const res = await fetch(`/api/properties/${propertyId}`);
@@ -120,7 +121,7 @@ export default function EditPropertyPage() {
       }
     };
     fetchProperty();
-  }, [propertyId, toast]);
+  }, [propertyId]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
