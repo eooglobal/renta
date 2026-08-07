@@ -15,7 +15,7 @@ export async function POST(request, { params }) {
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     const property = await prisma.property.findUnique({
       where: { id },
     });

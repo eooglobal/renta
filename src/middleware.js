@@ -34,6 +34,8 @@ export default NextAuth(authConfig).auth((req) => {
     "/login",
     "/register",
     "/verify-otp",
+    "/forgot-password",
+    "/reset-password",
     "/rentals",
     "/listings",
     "/about",

@@ -654,4 +654,29 @@ export async function sendOtpEmail(user, otpCode) {
     });
 }
 
+/**
+ * 🔑 Password Reset OTP Email
+ */
+export async function sendPasswordResetEmail(user, resetCode) {
+    const subject = `🔑 Reset Your Renta Password - ${resetCode}`;
+    const firstName = user.firstName || 'there';
+    const html = `
+        <h2 style="margin:0 0 12px;font-size:24px;font-weight:800;color:#000;">Reset Your Password 🔐</h2>
+        <p style="margin:0 0 24px;color:#555;font-size:15px;line-height:1.6;">
+            Hello ${firstName}, we received a request to reset your password for your <strong>Renta</strong> account. Use the 6-digit verification code below:
+        </p>
+
+        <div style="background:#f4f4f0;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;border:1px solid #e5e5e0;">
+            <span style="font-size:36px;font-weight:900;letter-spacing:10px;color:#000;font-family:monospace;">${resetCode}</span>
+            <p style="margin:8px 0 0;font-size:12px;color:#888;">This verification code expires in 15 minutes. If you did not request a password reset, please ignore this email.</p>
+        </div>
+    `;
+
+    return sendEmail({
+        to: user.email,
+        subject,
+        html,
+    });
+}
+
 export default sendEmail;

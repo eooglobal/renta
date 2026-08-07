@@ -25,7 +25,8 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized. Only tenants can initiate rental disputes.' }, { status: 403 });
     }
 
-    const rentalId = parseInt(params.id, 10);
+    const { id } = await params;
+    const rentalId = parseInt(id, 10);
     if (!rentalId) {
       return NextResponse.json({ error: 'Rental ID required' }, { status: 400 });
     }

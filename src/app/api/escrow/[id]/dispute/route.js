@@ -11,7 +11,8 @@ export async function POST(request, { params }) {
             return NextResponse.json({ error: 'Unauthorized. Only tenants can initiate disputes.' }, { status: 403 });
         }
 
-        const escrowId = params.id;
+        const { id } = await params;
+        const escrowId = id;
         const body = await request.json();
         const { reason } = body;
 

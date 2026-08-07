@@ -10,7 +10,8 @@ export async function PATCH(request, { params }) {
         }
 
         const adminId = parseInt(session.user.id);
-        const withdrawalId = parseInt(params.id);
+        const { id } = await params;
+        const withdrawalId = parseInt(id);
         const body = await request.json();
         const { status, adminNotes } = body;
 

@@ -15,7 +15,8 @@ export async function PATCH(request, { params }) {
             return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
         }
 
-        const leadId = parseInt(params.id);
+        const { id } = await params;
+        const leadId = parseInt(id);
         const body = await request.json();
         const { status } = body;
 
