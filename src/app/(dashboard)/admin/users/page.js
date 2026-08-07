@@ -146,7 +146,7 @@ export default function AdminUsersPage() {
                     ))}
 
                     {/* Create Button */}
-                    {isSuperAdmin && (
+                    {canManageUsers && (
                         <button className="btn btn-primary btn-sm" onClick={() => { setShowCreateModal(true); setModalError(''); }}>
                             <UserPlus size={16} /> Add User
                         </button>

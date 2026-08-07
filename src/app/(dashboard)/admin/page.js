@@ -268,7 +268,7 @@ export default function AdminDashboard() {
             Revenue Trend (6 Months)
           </h4>
           <div style={{ flex: 1, width: "100%" }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <AreaChart data={analytics.revenue}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -335,7 +335,7 @@ export default function AdminDashboard() {
             User Acquisition
           </h4>
           <div style={{ flex: 1, width: "100%" }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={analytics.users}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis
