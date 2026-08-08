@@ -32,12 +32,21 @@ export default function LoginPage() {
             });
 
             if (result?.error) {
-                if (result.error.includes('UNVERIFIED_OTP')) {
-                    const unverifiedEmail = result.error.split('UNVERIFIED_OTP:')[1] || formData.email;
-                    toast.info("Verification Required", "Please enter the 6-digit verification code sent to your email and phone.");
-                    window.location.href = `/verify-otp?email=${encodeURIComponent(unverifiedEmail)}`;
-                    return;
+                // NextAuth v5 sanitizes error strings into 'CredentialsSignin'.
+                // Check if account exists, is unverified, and had a fresh OTP generated for a valid password match:
+                try {
+                    const statusRes = await fetch(`/api/auth/user-status?email=${encodeURIComponent(formData.email.trim())}`);
+                    const statusData = await statusRes.json();
+
+                    if (statusData.exists && statusData.isVerified === false && statusData.isFreshOtp === true) {
+                        toast.info("Verification Required", "Please enter the 6-digit verification code sent to your email.");
+                        router.push(`/verify-otp?email=${encodeURIComponent(formData.email.trim())}`);
+                        return;
+                    }
+                } catch (statusErr) {
+                    console.error('Failed to check user verification status:', statusErr);
                 }
+
                 const friendly = friendlyError(result.error);
                 toast.error(friendly.title, friendly.message);
             } else {
