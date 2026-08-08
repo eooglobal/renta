@@ -4,11 +4,16 @@ import LandingHeader from "@/components/LandingHeader";
 import LandingFooter from "@/components/LandingFooter";
 import styles from "../page.module.css";
 
-export const metadata = {
-  title: "About Us | Renta",
-  description:
-    "Learn about Renta, the trusted platform for verified apartment rentals in Ilorin, Nigeria. We are eliminating scams and agent inflation.",
-};
+import FaqStructuredData from "@/components/FaqStructuredData";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "About Us — Renta Verified Apartment Rentals",
+  description: "Learn about Renta, the trusted platform for verified apartment rentals in Ilorin, Kwara State. Eliminating scams, ghost listings, and agent price inflation.",
+  image: "/og-image.png",
+  path: "/about",
+  keywords: "about Renta, verified apartment rental Ilorin, no agent fee rental Nigeria, Unilorin student housing platform",
+});
 
 export default function AboutPage() {
   return (

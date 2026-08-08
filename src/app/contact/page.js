@@ -4,11 +4,15 @@ import LandingHeader from "@/components/LandingHeader";
 import LandingFooter from "@/components/LandingFooter";
 import styles from "../page.module.css";
 
-export const metadata = {
-  title: "Contact Us | Renta",
-  description:
-    "Get in touch with the Renta team. We provide 24/7 support for tenants, landlords, and scouts in Ilorin.",
-};
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Contact Us — Renta Support",
+  description: "Get in touch with the Renta support team. 24/7 assistance for tenants, landlords, scouts, and affiliates in Ilorin, Kwara State.",
+  image: "/og-image.png",
+  path: "/contact",
+  keywords: "contact Renta, Renta support Ilorin, customer service Renta Nigeria",
+});
 
 export default function ContactPage() {
   return (

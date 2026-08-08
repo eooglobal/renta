@@ -11,7 +11,7 @@ import AnnouncementBanner from '@/components/AnnouncementBanner';
 import {
     Home, Search, FileText, Wrench, MessageSquare, User,
     Building, Plus, Users, Wallet, ClipboardList, Link as LinkIcon,
-    Shield, DollarSign, AlertTriangle, Settings, LogOut, Menu, X, Star, Calendar
+    Shield, DollarSign, AlertTriangle, Settings, LogOut, Menu, X, Star, Calendar, Share2
 } from 'lucide-react';
 
 const MENU_ITEMS = {
@@ -26,7 +26,6 @@ const MENU_ITEMS = {
     LANDLORD: [
         { href: '/landlord', icon: Home, label: 'Dashboard' },
         { href: '/landlord/properties', icon: Building, label: 'My Properties' },
-        { href: '/landlord/properties/new', icon: Plus, label: 'Add Property' },
         { href: '/landlord/tenants', icon: Users, label: 'Tenants' },
         { href: '/landlord/payments', icon: Wallet, label: 'Payments' },
         { href: '/landlord/maintenance', icon: Wrench, label: 'Maintenance' },
@@ -36,13 +35,12 @@ const MENU_ITEMS = {
     SCOUT: [
         { href: '/scout', icon: Home, label: 'Dashboard' },
         { href: '/scout/leads', icon: ClipboardList, label: 'My Leads' },
-        { href: '/scout/leads/new', icon: Plus, label: 'Submit Lead' },
         { href: '/scout/earnings', icon: DollarSign, label: 'Earnings' },
         { href: '/scout/profile', icon: User, label: 'Profile' },
     ],
     AFFILIATE: [
         { href: '/affiliate', icon: Home, label: 'Dashboard' },
-        { href: '/affiliate/links', icon: LinkIcon, label: 'Referral Links' },
+        { href: '/affiliate/links', icon: Share2, label: 'Promote Listings' },
         { href: '/affiliate/earnings', icon: DollarSign, label: 'Earnings' },
         { href: '/affiliate/profile', icon: User, label: 'Profile' },
     ],

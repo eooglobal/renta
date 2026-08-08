@@ -5,18 +5,16 @@ import { prisma } from '@/lib/db';
 import LandingHeader from '@/components/LandingHeader';
 import LandingFooter from '@/components/LandingFooter';
 
-export const metadata = {
-  title: 'Renta — Verified Apartments for Rent in Ilorin',
-  description: 'Find verified apartments for rent in Ilorin, Kwara State. Zero agent inflation, secure Paystack payments, and verified property listings.',
-  openGraph: {
-    title: 'Renta — Rent Verified Apartments at Real Prices',
-    description: 'No agent inflation. No fake listings. Rent securely through Renta.',
-    url: 'https://userenta.com',
-    siteName: 'Renta',
-    locale: 'en_NG',
-    type: 'website',
-  },
-};
+import FaqStructuredData from '@/components/FaqStructuredData';
+import { buildPageMetadata } from '@/lib/seo';
+
+export const metadata = buildPageMetadata({
+  title: 'Renta — Verified Apartments for Rent in Ilorin, Kwara State',
+  description: 'Find physically verified apartments for rent in Ilorin, Nigeria. Zero agent price inflation, transparent 10% platform fee, and secure Paystack-backed payments.',
+  image: '/og-image.png',
+  path: '/',
+  keywords: 'rent apartment Ilorin, self contain Tanke, student housing Unilorin, verified apartments Kwara, Renta Nigeria',
+});
 
 export const dynamic = 'force-dynamic';
 
@@ -312,6 +310,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* FAQ Structured Data for AEO */}
+      <FaqStructuredData />
 
       {/* Footer */}
       <LandingFooter />

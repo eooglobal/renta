@@ -1,4 +1,5 @@
 import ReferralLinkWidget from '@/components/ReferralLinkWidget';
+import AffiliatePropertyListings from '@/components/AffiliatePropertyListings';
 
 export const metadata = {
     title: 'Referral Links — Renta',
@@ -11,16 +12,19 @@ export default function AffiliateLinksPage() {
             {/* Header */}
             <div style={{ marginBottom: '24px' }}>
                 <h1 style={{ fontSize: '1.35rem', fontWeight: '700', color: 'var(--text-main)', margin: '0 0 4px 0' }}>
-                    Referral Links
+                    Referral Links & Active Listings
                 </h1>
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: 0 }}>
-                    Generate your custom tracking link to share with potential tenants.
+                    Generate custom tracking links and promote active properties to earn 2% lifetime commission.
                 </p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                {/* Link Generator Widget */}
+                {/* General Link Generator Widget */}
                 <ReferralLinkWidget />
+
+                {/* Active Property Listings Promotion Feed & Modal */}
+                <AffiliatePropertyListings />
 
                 {/* How It Works Card */}
                 <div className="card" style={{ padding: '24px' }}>
@@ -51,10 +55,10 @@ export default function AffiliateLinksPage() {
                                 1
                             </div>
                             <h4 style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 4px 0' }}>
-                                Share Your Link
+                                Share Property Links
                             </h4>
                             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
-                                Post your link on WhatsApp, TikTok, Instagram, or blogs to direct property seekers to Renta.
+                                Post specific property links or your general link on WhatsApp, TikTok, X, or Instagram.
                             </p>
                         </div>
 
@@ -99,27 +103,15 @@ export default function AffiliateLinksPage() {
                                 3
                             </div>
                             <h4 style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 4px 0' }}>
-                                Earn 2% Lifetime
+                                Earn 2% Commission
                             </h4>
                             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
-                                Whenever your referred tenant pays for ANY property on Renta, 2% commission is deposited instantly to your wallet.
+                                Earn 2% lifetime commission on every rent payment made by tenants you referred.
                             </p>
                         </div>
                     </div>
-
-                    <div style={{
-                        padding: '14px 16px',
-                        background: '#FEF3C7',
-                        border: '1px solid #FCD34D',
-                        borderRadius: 'var(--radius-lg)',
-                        fontSize: '0.825rem',
-                        color: '#92400E'
-                    }}>
-                        <strong>Pro Tip:</strong> Share links in student groups looking for hostels or NYSC corp member forums moving to Kwara. They rent quickly!
-                    </div>
                 </div>
             </div>
-
         </div>
     );
 }

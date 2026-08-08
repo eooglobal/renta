@@ -5,17 +5,15 @@ import LandingFooter from '@/components/LandingFooter';
 import styles from '@/app/page.module.css';
 import scoutStyles from './scout.module.css';
 
-export const metadata = {
-    title: 'Become a Scout — Earn by Verifying Properties | Renta',
-    description: 'Join the Renta Scout Program. Physically verify apartment listings in Ilorin and earn commissions for every successful rental. Apply now.',
-    openGraph: {
-        title: 'Renta Scout Program — Earn by Verifying Properties',
-        description: 'Earn real income by helping verify rental listings in your neighborhood. No experience needed.',
-        url: 'https://userenta.com/scout-program',
-        siteName: 'Renta',
-        type: 'website',
-    },
-};
+import { buildPageMetadata } from '@/lib/seo';
+
+export const metadata = buildPageMetadata({
+    title: 'Become a Scout — Earn 3% Commission Verifying Properties | Renta',
+    description: 'Join the Renta Scout Program. Submit and verify physical apartment listings in Ilorin and earn 3% commission on successful rentals.',
+    image: '/og-image.png',
+    path: '/scout-program',
+    keywords: 'scout program Ilorin, earn real estate commission Kwara, property scout jobs Nigeria, Renta scout',
+});
 
 const STEPS = [
     {

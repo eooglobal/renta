@@ -14,6 +14,8 @@ const formatType = (type) => {
     return type.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
 };
 
+import { getAbsoluteImageUrl, buildPageMetadata } from '@/lib/seo';
+
 // 1. Generate SEO Metadata for social sharing
 export async function generateMetadata({ params }) {
     const { id } = await params;
@@ -27,25 +29,24 @@ export async function generateMetadata({ params }) {
         include: { images: true, videos: true, city: true, area: true }
     });
 
-    if (!property) return { title: 'Property Not Found - Renta' };
+    if (!property) return { title: 'Property Not Found — Renta' };
 
     const formattedType = formatType(property.type);
-    const title = `${property.title} - ${formattedType} in ${property.area.name} | Renta`;
-    const description = property.description.substring(0, 160) + '...';
+    const areaName = property.area?.name || 'Ilorin';
+    const cityName = property.city?.name || 'Kwara State';
+    const title = `${property.title} — ${formattedType} in ${areaName} | Renta`;
+    const description = `${property.title} (${formattedType}) in ${areaName}, ${cityName}. Rent: ₦${Number(property.rentPrice).toLocaleString()}/year. ${property.description ? property.description.substring(0, 110) : 'Verified listing with transparent fees.'}`;
 
-    const primaryImage = property.images.find(img => img.isPrimary)?.url || property.images[0]?.url || '/placeholder.jpg';
+    const rawPrimaryImage = property.images?.find(img => img.isPrimary)?.url || property.images?.[0]?.url || '/og-image.png';
+    const absoluteImage = getAbsoluteImageUrl(rawPrimaryImage);
 
-    return {
+    return buildPageMetadata({
         title,
         description,
-        openGraph: {
-            title,
-            description,
-            url: `https://userenta.com/listing/${property.slug || property.id}`,
-            images: [{ url: primaryImage, width: 1200, height: 630, alt: property.title }],
-            type: 'article',
-        }
-    };
+        image: absoluteImage,
+        path: `/listing/${property.slug || property.id}`,
+        keywords: `${property.title}, apartment in ${areaName}, rent ${formattedType} Ilorin, Renta verified listings`,
+    });
 }
 
 export default async function PublicPropertyDetailsPage({ params }) {

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import ReferralLinkWidget from '@/components/ReferralLinkWidget';
+import AffiliatePropertyListings from '@/components/AffiliatePropertyListings';
 
 export default function AffiliateDashboard() {
   const { data: session } = useSession();
@@ -12,7 +14,6 @@ export default function AffiliateDashboard() {
     totalEarnings: 0,
   });
   const [loading, setLoading] = useState(true);
-
   const [kycRequired, setKycRequired] = useState(null);
 
   useEffect(() => {
@@ -79,29 +80,18 @@ export default function AffiliateDashboard() {
               Complete identity verification to unlock full commission payouts to your bank account.
             </p>
           </div>
-          <Link
-            href="/affiliate/profile"
-            className="btn btn-sm"
-            style={{
-              background: '#D97706',
-              color: '#fff',
-              border: 'none',
-              fontSize: '0.85rem',
-              fontWeight: '600',
-              padding: '6px 14px'
-            }}
-          >
+          <Link href="/affiliate/profile" className="btn btn-sm" style={{ background: '#D97706', color: '#fff', border: 'none' }}>
             Verify Identity
           </Link>
         </div>
       )}
 
-      {/* Metrics Grid */}
+      {/* Overview Stats Cards */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
         gap: '16px',
-        marginBottom: '28px'
+        marginBottom: '24px'
       }}>
         <div className="card" style={{ padding: '20px' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
@@ -129,6 +119,15 @@ export default function AffiliateDashboard() {
             {loading ? '...' : `₦${Number(stats.totalEarnings).toLocaleString()}`}
           </span>
         </div>
+      </div>
+
+      {/* Main Affiliate Tools */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '24px' }}>
+        {/* Unique Link Generator */}
+        <ReferralLinkWidget />
+
+        {/* Active Property Listings Feed & Promote Modal */}
+        <AffiliatePropertyListings />
       </div>
 
       {/* Quick Actions Navigation */}
@@ -168,10 +167,10 @@ export default function AffiliateDashboard() {
           }}
         >
           <h4 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)', margin: '0 0 4px 0' }}>
-            Earnings & Wallet
+            Earnings & Payouts
           </h4>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
-            View commission history and initiate bank account withdrawals.
+            View lifetime earnings and request bank withdrawals.
           </p>
         </Link>
       </div>

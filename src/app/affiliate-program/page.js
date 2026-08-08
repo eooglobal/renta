@@ -4,17 +4,15 @@ import LandingHeader from '@/components/LandingHeader';
 import LandingFooter from '@/components/LandingFooter';
 import styles from './affiliate.module.css';
 
-export const metadata = {
-    title: 'Affiliate Program — Earn Commissions by Referring Tenants | Renta',
-    description: 'Join the Renta Affiliate Program. Share your referral link, refer tenants and landlords, and earn commissions on every successful rental. Apply today.',
-    openGraph: {
-        title: 'Renta Affiliate Program — Earn by Referring Renters',
-        description: 'Share your unique referral link and earn a commission on every successful rental you bring to Renta.',
-        url: 'https://userenta.com/affiliate-program',
-        siteName: 'Renta',
-        type: 'website',
-    },
-};
+import { buildPageMetadata } from '@/lib/seo';
+
+export const metadata = buildPageMetadata({
+    title: 'Affiliate Program — Earn 2% Lifetime Commission | Renta',
+    description: 'Join the Renta Affiliate Program. Share custom property links, refer tenants and landlords, and earn 2% lifetime commission on every rent payment.',
+    image: '/og-image.png',
+    path: '/affiliate-program',
+    keywords: 'affiliate program Nigeria, real estate affiliate Kwara, refer and earn Ilorin, Renta affiliate',
+});
 
 const HOW_IT_WORKS = [
     {
