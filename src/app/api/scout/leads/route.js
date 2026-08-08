@@ -16,6 +16,7 @@ export async function GET() {
             where: { scoutId },
             orderBy: { createdAt: 'desc' },
             include: {
+                area: { select: { id: true, name: true } },
                 properties: { select: { id: true, title: true, status: true, verificationStatus: true } }
             }
         });

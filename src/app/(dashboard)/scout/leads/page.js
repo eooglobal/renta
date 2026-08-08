@@ -110,7 +110,7 @@ export default function ScoutLeadsPage() {
                                         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{lead.landlordPhone}</div>
                                     </td>
                                     <td style={{ padding: '14px 16px', color: 'var(--text-main)' }}>
-                                        {lead.propertyArea}
+                                        {lead.area?.name || lead.propertyArea || '—'}
                                     </td>
                                     <td style={{ padding: '14px 16px' }}>
                                         <StatusBadge status={lead.status} />

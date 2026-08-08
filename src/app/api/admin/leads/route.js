@@ -18,6 +18,7 @@ export async function GET() {
         const leads = await prisma.scoutLead.findMany({
             orderBy: { createdAt: 'desc' },
             include: {
+                area: { select: { id: true, name: true } },
                 scout: { select: { id: true, firstName: true, lastName: true, phone: true } },
                 properties: { select: { id: true, status: true, title: true } }
             }

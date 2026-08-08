@@ -303,7 +303,7 @@ export default function AdminScoutLeadsPage() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', color: 'var(--text-main)', fontWeight: '500' }}>
                   <MapPin size={16} style={{ shrink: 0, marginTop: '2px', color: 'var(--text-muted)' }} />
-                  <span>{lead.propertyAddress}, <strong>{lead.propertyArea}</strong></span>
+                  <span>{lead.propertyAddress}, <strong>{lead.area?.name || lead.propertyArea || 'N/A'}</strong></span>
                 </div>
               </div>
 
