@@ -13,6 +13,8 @@ export default function AffiliateDashboard() {
   });
   const [loading, setLoading] = useState(true);
 
+  const [kycRequired, setKycRequired] = useState(null);
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -26,7 +28,20 @@ export default function AffiliateDashboard() {
       }
     };
 
-    if (session) fetchStats();
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch('/api/profile');
+        if (res.ok) {
+          const data = await res.json();
+          setKycRequired(data.kycRequired !== false);
+        }
+      } catch {}
+    };
+
+    if (session) {
+      fetchStats();
+      fetchProfile();
+    }
   }, [session]);
 
   return (
@@ -43,7 +58,7 @@ export default function AffiliateDashboard() {
       </div>
 
       {/* Verification Alert Banner */}
-      {session?.user?.ninStatus !== 'VERIFIED' && (
+      {kycRequired === true && session?.user?.ninStatus !== 'VERIFIED' && (
         <div style={{
           background: '#FFFBEB',
           border: '1px solid #FCD34D',

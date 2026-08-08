@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { createPaymentDestination, resolveAccount } from '@/lib/paymentGateway';
@@ -45,6 +45,10 @@ export async function GET() {
     const { session, error } = await requireEarningSession();
     if (error) return error;
 
+    const { getSetting } = await import('@/lib/settings');
+    const requireKycSetting = await getSetting('REQUIRE_KYC');
+    const kycRequired = requireKycSetting !== 'false';
+
     const user = await prisma.user.findUnique({
       where: { id: parseInt(session.user.id, 10) },
       select: {
@@ -67,6 +71,7 @@ export async function GET() {
     return NextResponse.json({
       role: user.role,
       kycStatus: user.ninStatus,
+      kycRequired,
       paymentSetupStatus: user.paymentSetupStatus,
       paymentSetupVerifiedAt: user.paymentSetupVerifiedAt,
       bank: {
@@ -120,7 +125,11 @@ export async function POST(request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    if (user.ninStatus !== 'VERIFIED') {
+    const { getSetting } = await import('@/lib/settings');
+    const requireKycSetting = await getSetting('REQUIRE_KYC');
+    const kycRequired = requireKycSetting !== 'false';
+
+    if (kycRequired && user.ninStatus !== 'VERIFIED') {
       return NextResponse.json(
         { error: 'Identity verification required before payout setup. Please complete verification first.' },
         { status: 403 }
